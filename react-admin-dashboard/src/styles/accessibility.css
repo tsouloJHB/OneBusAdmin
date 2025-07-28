@@ -1,0 +1,332 @@
+/* Accessibility and Responsive Design Enhancements */
+
+/* High contrast focus indicators */
+*:focus-visible {
+  outline: 2px solid #1976d2 !important;
+  outline-offset: 2px !important;
+  border-radius: 2px;
+}
+
+/* Skip link for screen readers */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #1976d2;
+  color: white;
+  padding: 8px 12px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 9999;
+  font-weight: 500;
+  transition: top 0.2s ease-in-out;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Ensure minimum touch target sizes */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.MuiButton-root,
+.MuiIconButton-root,
+.MuiChip-root {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Improve text contrast */
+.MuiTypography-body2 {
+  color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.MuiTypography-caption {
+  color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Enhanced table accessibility */
+.MuiDataGrid-root {
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+.MuiDataGrid-cell:focus,
+.MuiDataGrid-columnHeader:focus {
+  outline: 2px solid #1976d2 !important;
+  outline-offset: -2px !important;
+}
+
+.MuiDataGrid-row:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.MuiDataGrid-row.Mui-selected {
+  background-color: rgba(25, 118, 210, 0.08) !important;
+}
+
+/* Form field enhancements */
+.MuiTextField-root .MuiInputBase-root {
+  min-height: 56px;
+}
+
+.MuiFormControl-root .MuiSelect-select {
+  min-height: 24px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+/* Dialog accessibility */
+.MuiDialog-paper {
+  max-height: calc(100vh - 64px);
+  margin: 32px;
+}
+
+@media (max-width: 600px) {
+  .MuiDialog-paper {
+    margin: 16px;
+    max-height: calc(100vh - 32px);
+  }
+}
+
+/* Card hover states for better interaction feedback */
+.MuiCard-root {
+  transition: box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.MuiCard-root:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Loading states */
+.MuiSkeleton-root {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Error states with better contrast */
+.MuiAlert-standardError {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef5350;
+}
+
+.MuiAlert-standardWarning {
+  background-color: #fff8e1;
+  color: #ef6c00;
+  border: 1px solid #ffb74d;
+}
+
+.MuiAlert-standardSuccess {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #66bb6a;
+}
+
+.MuiAlert-standardInfo {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #42a5f5;
+}
+
+/* Responsive typography */
+@media (max-width: 600px) {
+  .MuiTypography-h1 {
+    font-size: 2rem !important;
+  }
+  
+  .MuiTypography-h2 {
+    font-size: 1.75rem !important;
+  }
+  
+  .MuiTypography-h3 {
+    font-size: 1.5rem !important;
+  }
+  
+  .MuiTypography-h4 {
+    font-size: 1.25rem !important;
+  }
+  
+  .MuiTypography-h5 {
+    font-size: 1.125rem !important;
+  }
+  
+  .MuiTypography-h6 {
+    font-size: 1rem !important;
+  }
+}
+
+/* Responsive spacing */
+@media (max-width: 600px) {
+  .MuiContainer-root {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  
+  .MuiCard-root {
+    margin: 8px 0 !important;
+  }
+  
+  .MuiCardContent-root {
+    padding: 16px !important;
+  }
+  
+  .MuiCardContent-root:last-child {
+    padding-bottom: 16px !important;
+  }
+}
+
+/* Improved navigation accessibility */
+.MuiListItemButton-root {
+  min-height: 48px;
+  border-radius: 8px;
+  margin: 4px 8px;
+}
+
+.MuiListItemButton-root:focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+
+.MuiListItemButton-root.Mui-selected {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+.MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
+  color: white !important;
+}
+
+.MuiListItemButton-root.Mui-selected:hover {
+  background-color: #1565c0 !important;
+}
+
+/* Drawer responsive behavior */
+@media (max-width: 900px) {
+  .MuiDrawer-paper {
+    width: 240px !important;
+  }
+}
+
+/* Status indicators with better contrast */
+.MuiChip-colorSuccess {
+  background-color: #e8f5e8 !important;
+  color: #2e7d32 !important;
+  border: 1px solid #4caf50 !important;
+}
+
+.MuiChip-colorWarning {
+  background-color: #fff8e1 !important;
+  color: #ef6c00 !important;
+  border: 1px solid #ff9800 !important;
+}
+
+.MuiChip-colorError {
+  background-color: #ffebee !important;
+  color: #c62828 !important;
+  border: 1px solid #ef5350 !important;
+}
+
+/* Loading spinner accessibility */
+.MuiCircularProgress-root {
+  color: #1976d2;
+}
+
+/* Tooltip improvements */
+.MuiTooltip-tooltip {
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  font-size: 0.75rem;
+  max-width: 300px;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+/* Menu accessibility */
+.MuiMenu-paper {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.MuiMenuItem-root {
+  min-height: 48px;
+  padding: 8px 16px;
+}
+
+.MuiMenuItem-root:focus {
+  background-color: rgba(25, 118, 210, 0.08);
+  outline: none;
+}
+
+/* Print styles */
+@media print {
+  .MuiAppBar-root,
+  .MuiDrawer-root,
+  .MuiButton-root,
+  .MuiIconButton-root,
+  .skip-link {
+    display: none !important;
+  }
+  
+  .MuiContainer-root {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  
+  .MuiCard-root {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+  
+  .MuiTypography-root {
+    color: black !important;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .MuiCircularProgress-root {
+    animation: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .MuiButton-contained {
+    border: 2px solid currentColor;
+  }
+  
+  .MuiCard-root {
+    border: 2px solid rgba(0, 0, 0, 0.2);
+  }
+  
+  .MuiDataGrid-cell {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  .MuiDataGrid-columnHeaders {
+    border-bottom: 3px solid rgba(0, 0, 0, 0.3) !important;
+  }
+}
+
+/* Dark mode support (if implemented) */
+@media (prefers-color-scheme: dark) {
+  .skip-link {
+    background: #90caf9;
+    color: #000;
+  }
+  
+  *:focus-visible {
+    outline-color: #90caf9 !important;
+  }
+}

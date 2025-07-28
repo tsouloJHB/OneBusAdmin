@@ -1,0 +1,289 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import ProtectedRoute, { AdminProtectedRoute, OperatorProtectedRoute } from '../ProtectedRoute';
+import * as authHooks from '../../../hooks/useAuthState';
+import * as tokenHooks from '../../../hooks/useAuthToken';
+
+// Mock the useAuthState hook
+jest.mock('../../../hooks/useAuthState');
+const mockUseAuthState = authHooks.useAuthState as jest.Mock;
+
+// Mock the useAuthToken hook
+jest.mock('../../../hooks/useAuthToken');
+const mockUseAuthToken = tokenHooks.useAuthToken as jest.Mock;
+
+describe('ProtectedRoute', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders loading spinner when authentication is in progress', () => {
+    mockUseAuthState.mockReturnValue({
+      isFullyAuthenticated: false,
+      isAuthenticating: true,
+      user: null,
+      userPermissions: {},
+    });
+
+    render(
+      <MemoryRouter>
+        <ProtectedRoute>
+          <div>Protected Content</div>
+        </ProtectedRoute>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Checking authentication...')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+
+  it('redirects to login when user is not authenticated', () => {
+    mockUseAuthState.mockReturnValue({
+      isFullyAuthenticated: false,
+      isAuthenticating: false,
+      user: null,
+      userPermissions: {},
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <div>Protected Content</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/login" element={<div>Login Page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Login Page')).toBeInTheDocument();
+    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+  });
+
+  it('renders children when user is authenticated', () => {
+    mockUseAuthState.mockReturnValue({
+      isFullyAuthenticated: true,
+      isAuthenticating: false,
+      user: { role: 'admin' },
+      userPermissions: { isAdmin: true },
+    });
+    mockUseAuthToken.mockReturnValue({
+      hasRole: () => true,
+      hasAnyRole: () => true,
+    });
+
+    render(
+      <MemoryRouter>
+        <ProtectedRoute>
+          <div>Protected Content</div>
+        </ProtectedRoute>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
+  });
+
+  it('shows access denied when user does not have required role', () => {
+    mockUseAuthState.mockReturnValue({
+      isFullyAuthenticated: true,
+      isAuthenticating: false,
+      user: { role: 'operator' },
+      userPermissions: { isAdmin: false, isOperator: true },
+    });
+    mockUseAuthToken.mockReturnValue({
+      hasRole: (role: string) => role === 'operator',
+      hasAnyRole: (roles: string[]) => roles.includes('operator'),
+    });
+
+    render(
+      <MemoryRouter>
+        <ProtectedRoute requiredRole="admin">
+          <div>Admin Content</div>
+        </ProtectedRoute>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Access Denied')).toBeInTheDocument();
+    expect(screen.getByText('Required role: admin')).toBeInTheDocument();
+    expect(screen.getByText('Your role: operator')).toBeInTheDocument();
+    expect(screen.queryByText('Admin Content')).not.toBeInTheDocument();
+  });
+
+  it('shows access denied when user does not have any required roles', () => {
+    mockUseAuthState.mockReturnValue({
+      isFullyAuthenticated: true,
+      isAuthenticating: false,
+      user: { role: 'guest' },
+      userPermissions: { isAdmin: false, isOperator: false },
+    });
+    mockUseAuthToken.mockReturnValue({
+      hasRole: () => false,
+      hasAnyRole: () => false,
+    });
+
+    render(
+      <MemoryRouter>
+        <ProtectedRoute requiredRoles={['admin', 'operator']}>
+          <div>Staff Content</div>
+        </ProtectedRoute>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Access Denied')).toBeInTheDocument();
+    expect(screen.getByText('Required roles: admin, operator')).toBeInTheDocument();
+    expect(screen.getByText('Your role: guest')).toBeInTheDocument();
+    expect(screen.queryByText('Staff Content')).not.toBeInTheDocument();
+  });
+
+  it('redirects to custom fallback path when specified', () => {
+    mockUseAuthState.mockReturnValue({
+      isFullyAuthenticated: false,
+      isAuthenticating: false,
+      user: null,
+      userPermissions: {},
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Routes>
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute fallbackPath="/custom-login">
+                <div>Protected Content</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/custom-login" element={<div>Custom Login Page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Custom Login Page')).toBeInTheDocument();
+  });
+
+  describe('AdminProtectedRoute', () => {
+    it('allows access for admin users', () => {
+      mockUseAuthState.mockReturnValue({
+        isFullyAuthenticated: true,
+        isAuthenticating: false,
+        user: { role: 'admin' },
+        userPermissions: { isAdmin: true },
+      });
+      mockUseAuthToken.mockReturnValue({
+        hasRole: (role: string) => role === 'admin',
+        hasAnyRole: (roles: string[]) => roles.includes('admin'),
+      });
+
+      render(
+        <MemoryRouter>
+          <AdminProtectedRoute>
+            <div>Admin Content</div>
+          </AdminProtectedRoute>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText('Admin Content')).toBeInTheDocument();
+    });
+
+    it('denies access for non-admin users', () => {
+      mockUseAuthState.mockReturnValue({
+        isFullyAuthenticated: true,
+        isAuthenticating: false,
+        user: { role: 'operator' },
+        userPermissions: { isAdmin: false, isOperator: true },
+      });
+      mockUseAuthToken.mockReturnValue({
+        hasRole: (role: string) => role === 'operator',
+        hasAnyRole: (roles: string[]) => roles.includes('operator'),
+      });
+
+      render(
+        <MemoryRouter>
+          <AdminProtectedRoute>
+            <div>Admin Content</div>
+          </AdminProtectedRoute>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText('Access Denied')).toBeInTheDocument();
+    });
+  });
+
+  describe('OperatorProtectedRoute', () => {
+    it('allows access for operators', () => {
+      mockUseAuthState.mockReturnValue({
+        isFullyAuthenticated: true,
+        isAuthenticating: false,
+        user: { role: 'operator' },
+        userPermissions: { isAdmin: false, isOperator: true },
+      });
+      mockUseAuthToken.mockReturnValue({
+        hasRole: (role: string) => role === 'operator',
+        hasAnyRole: (roles: string[]) => roles.includes('operator'),
+      });
+
+      render(
+        <MemoryRouter>
+          <OperatorProtectedRoute>
+            <div>Operator Content</div>
+          </OperatorProtectedRoute>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText('Operator Content')).toBeInTheDocument();
+    });
+
+    it('allows access for admins (since they have higher privileges)', () => {
+      mockUseAuthState.mockReturnValue({
+        isFullyAuthenticated: true,
+        isAuthenticating: false,
+        user: { role: 'admin' },
+        userPermissions: { isAdmin: true, isOperator: false },
+      });
+      mockUseAuthToken.mockReturnValue({
+        hasRole: (role: string) => role === 'admin',
+        hasAnyRole: (roles: string[]) => roles.includes('admin'),
+      });
+
+      render(
+        <MemoryRouter>
+          <OperatorProtectedRoute>
+            <div>Operator Content</div>
+          </OperatorProtectedRoute>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText('Operator Content')).toBeInTheDocument();
+    });
+
+    it('denies access for guests', () => {
+      mockUseAuthState.mockReturnValue({
+        isFullyAuthenticated: true,
+        isAuthenticating: false,
+        user: { role: 'guest' },
+        userPermissions: { isAdmin: false, isOperator: false },
+      });
+      mockUseAuthToken.mockReturnValue({
+        hasRole: () => false,
+        hasAnyRole: () => false,
+      });
+
+      render(
+        <MemoryRouter>
+          <OperatorProtectedRoute>
+            <div>Operator Content</div>
+          </OperatorProtectedRoute>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText('Access Denied')).toBeInTheDocument();
+    });
+  });
+});
