@@ -79,8 +79,8 @@ const RouteMapFallback: React.FC<RouteMapFallbackProps> = ({
                   <ListItemText
                     primary={`${index + 1}. ${stop.name}`}
                     secondary={
-                      stop.coordinates 
-                        ? `Coordinates: ${stop.coordinates.lat.toFixed(6)}, ${stop.coordinates.lng.toFixed(6)}`
+                      stop.latitude && stop.longitude
+                        ? `Coordinates: ${stop.latitude.toFixed(6)}, ${stop.longitude.toFixed(6)}`
                         : 'Coordinates not available'
                     }
                   />

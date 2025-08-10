@@ -36,28 +36,34 @@ const theme = createTheme();
 // Sample data
 const mockRoutes = [
   {
-    id: 'route1',
+    id: 1,
     name: 'Downtown Express',
     startPoint: 'Central Station',
     endPoint: 'Business District',
     stops: [
       {
-        id: 'stop1',
+        id: 1,
         name: 'Central Station',
-        coordinates: { lat: 40.7128, lng: -74.006 },
-        order: 1
+        latitude: 40.7128,
+        longitude: -74.006,
+        order: 1,
+        routeId: 1
       },
       {
-        id: 'stop2',
+        id: 2,
         name: 'City Hall',
-        coordinates: { lat: 40.7138, lng: -74.0059 },
-        order: 2
+        latitude: 40.7138,
+        longitude: -74.0059,
+        order: 2,
+        routeId: 1
       },
       {
-        id: 'stop3',
+        id: 3,
         name: 'Business District',
-        coordinates: { lat: 40.7148, lng: -74.0058 },
-        order: 3
+        latitude: 40.7148,
+        longitude: -74.0058,
+        order: 3,
+        routeId: 1
       }
     ],
     schedule: [
@@ -73,22 +79,26 @@ const mockRoutes = [
     updatedAt: new Date('2023-01-01'),
   },
   {
-    id: 'route2',
+    id: 2,
     name: 'Airport Shuttle',
     startPoint: 'Downtown Terminal',
     endPoint: 'International Airport',
     stops: [
       {
-        id: 'stop4',
+        id: 4,
         name: 'Downtown Terminal',
-        coordinates: { lat: 40.7228, lng: -74.016 },
-        order: 1
+        latitude: 40.7228,
+        longitude: -74.016,
+        order: 1,
+        routeId: 2
       },
       {
-        id: 'stop5',
+        id: 5,
         name: 'International Airport',
-        coordinates: { lat: 40.6413, lng: -73.7781 },
-        order: 2
+        latitude: 40.6413,
+        longitude: -73.7781,
+        order: 2,
+        routeId: 2
       }
     ],
     schedule: [
@@ -161,22 +171,26 @@ describe('Routes Management Integration', () => {
   it('creates a new route', async () => {
     // Mock create route API
     mockRouteService.createRoute.mockResolvedValue({
-      id: 'route3',
+      id: 3,
       name: 'Beach Express',
       startPoint: 'City Center',
       endPoint: 'Ocean Beach',
       stops: [
         {
-          id: 'stop6',
+          id: 6,
           name: 'City Center',
-          coordinates: { lat: 40.7128, lng: -74.006 },
-          order: 1
+          latitude: 40.7128,
+          longitude: -74.006,
+          order: 1,
+          routeId: 3
         },
         {
-          id: 'stop7',
+          id: 7,
           name: 'Ocean Beach',
-          coordinates: { lat: 40.7028, lng: -74.016 },
-          order: 2
+          latitude: 40.7028,
+          longitude: -74.016,
+          order: 2,
+          routeId: 3
         }
       ],
       schedule: [

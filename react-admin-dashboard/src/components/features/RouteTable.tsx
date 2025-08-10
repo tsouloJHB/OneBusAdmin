@@ -38,9 +38,9 @@ interface RouteTableProps {
   onPageSizeChange: (pageSize: number) => void;
   onSortChange: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   onEdit: (route: Route) => void;
-  onDelete: (routeId: string) => void;
+  onDelete: (routeId: number) => void;
   onView?: (route: Route) => void;
-  onViewMap?: (route: Route) => void;
+  onMapView?: (route: Route) => void;
   onRetry?: () => void;
 }
 
@@ -58,7 +58,7 @@ const RouteTable: React.FC<RouteTableProps> = ({
   onEdit,
   onDelete,
   onView,
-  onViewMap,
+  onMapView,
   onRetry,
 }) => {
   const [sortModel, setSortModel] = useState<GridSortModel>([
@@ -99,7 +99,7 @@ const RouteTable: React.FC<RouteTableProps> = ({
   );
 
   const handleDelete = useCallback(
-    (routeId: string) => () => {
+    (routeId: number) => () => {
       onDelete(routeId);
     },
     [onDelete]
@@ -114,14 +114,16 @@ const RouteTable: React.FC<RouteTableProps> = ({
     [onView]
   );
 
-  const handleViewMap = useCallback(
+  const handleMapView = useCallback(
     (route: Route) => () => {
-      if (onViewMap) {
-        onViewMap(route);
+      if (onMapView) {
+        onMapView(route);
       }
     },
-    [onViewMap]
+    [onMapView]
   );
+
+
 
   const formatStops = (stops: Route['stops']) => {
     if (!stops || stops.length === 0) return 'No stops';
@@ -219,26 +221,11 @@ const RouteTable: React.FC<RouteTableProps> = ({
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 160,
+      width: 200,
       getActions: (params: GridRowParams<Route>) => {
         const actions = [];
 
-        // Add View in Map action
-        if (onViewMap) {
-          actions.push(
-            <GridActionsCellItem
-              key="viewMap"
-              icon={
-                <Tooltip title="View in Map">
-                  <MapIcon color="primary" />
-                </Tooltip>
-              }
-              label="View Map"
-              onClick={handleViewMap(params.row)}
-              aria-label={`View route ${params.row.name} in map`}
-            />
-          );
-        }
+
 
         if (onView) {
           actions.push(
@@ -252,6 +239,22 @@ const RouteTable: React.FC<RouteTableProps> = ({
               label="View"
               onClick={handleView(params.row)}
               aria-label={`View route ${params.row.name}`}
+            />
+          );
+        }
+
+        if (onMapView) {
+          actions.push(
+            <GridActionsCellItem
+              key="map"
+              icon={
+                <Tooltip title="View on Map">
+                  <MapIcon />
+                </Tooltip>
+              }
+              label="Map"
+              onClick={handleMapView(params.row)}
+              aria-label={`View route ${params.row.name} on map`}
             />
           );
         }

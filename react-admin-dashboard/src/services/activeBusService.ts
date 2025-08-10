@@ -21,7 +21,7 @@ const mockActiveBuses: ActiveBus[] = [
       updatedAt: new Date('2023-01-01'),
     },
     route: {
-      id: 'route1',
+      id: 1,
       name: 'Johannesburg CBD to Soweto',
       startPoint: 'Johannesburg CBD',
       endPoint: 'Soweto',
@@ -59,7 +59,7 @@ const mockActiveBuses: ActiveBus[] = [
       updatedAt: new Date('2023-01-02'),
     },
     route: {
-      id: 'route2',
+      id: 2,
       name: 'Airport Shuttle',
       startPoint: 'Johannesburg CBD',
       endPoint: 'OR Tambo Airport',
@@ -120,7 +120,7 @@ export const activeBusService = {
       }
       
       if (filters?.routeId) {
-        filteredBuses = filteredBuses.filter(bus => bus.route.id === filters.routeId);
+        filteredBuses = filteredBuses.filter(bus => bus.route.id.toString() === filters.routeId);
       }
       
       if (filters?.status) {
@@ -143,7 +143,7 @@ export const activeBusService = {
       }
       
       if (filters?.routeId) {
-        filteredBuses = filteredBuses.filter(bus => bus.route.id === filters.routeId);
+        filteredBuses = filteredBuses.filter(bus => bus.route.id.toString() === filters.routeId);
       }
       
       if (filters?.status) {

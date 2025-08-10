@@ -1,180 +1,233 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Box, CircularProgress, Alert, Typography } from '@mui/material';
-import { config } from '../../config';
-import { LatLngLiteral, MapMouseEvent, MapIcon } from '../../types/google-maps';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { Box, CircularProgress, Alert } from '@mui/material';
 
-interface MapProps {
-  center: LatLngLiteral;
-  zoom: number;
-  style?: React.CSSProperties;
+export interface GoogleMapProps {
+  center: google.maps.LatLngLiteral;
+  zoom?: number;
+  height?: string | number;
+  width?: string | number;
   children?: React.ReactNode;
-  onClick?: (e: MapMouseEvent) => void;
-  onIdle?: (map: any) => void;
+  onClick?: (event: google.maps.MapMouseEvent) => void;
+  onMapReady?: (map: google.maps.Map) => void;
+  mapOptions?: Partial<google.maps.MapOptions>;
 }
 
-interface MarkerProps {
-  position: LatLngLiteral;
-  map?: any;
-  title?: string;
-  icon?: string | MapIcon;
-  onClick?: () => void;
-}
-
-// Map component that renders the actual Google Map
-const Map: React.FC<MapProps> = ({
+const GoogleMap: React.FC<GoogleMapProps> = ({
   center,
-  zoom,
-  style,
+  zoom = 12,
+  height = 400,
+  width = '100%',
   children,
   onClick,
-  onIdle,
+  onMapReady,
+  mapOptions = {}
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const initializingRef = useRef(false);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const [isLoaded, setIsLoaded] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  // Load Google Maps script and initialize map
+  const initializeMap = useCallback(() => {
+    console.log('Attempting to initialize map...');
+    console.log('mapRef.current:', !!mapRef.current);
+    console.log('window.google:', !!window.google);
+    console.log('window.google.maps:', !!(window.google && window.google.maps));
+    
+    if (!mapRef.current) {
+      console.error('Map container ref is null');
+      return;
+    }
+    
+    if (!window.google || !window.google.maps) {
+      console.error('Google Maps API not available');
+      return;
+    }
+
+    try {
+      console.log('Creating Google Map instance...');
+      const map = new google.maps.Map(mapRef.current, {
+        center,
+        zoom,
+        ...mapOptions
+      });
+
+      mapInstanceRef.current = map;
+      console.log('Map instance created successfully');
+
+      // Add click listener if provided
+      if (onClick) {
+        console.log('Adding click listener to map...');
+        map.addListener('click', (event: google.maps.MapMouseEvent) => {
+          console.log('GoogleMap: Click event received', event);
+          onClick(event);
+        });
+        console.log('Click listener added successfully');
+      } else {
+        console.log('No onClick prop provided to GoogleMap');
+      }
+
+      // Call onMapReady callback if provided
+      if (onMapReady) {
+        onMapReady(map);
+        console.log('onMapReady callback called');
+      }
+
+      setIsLoaded(true);
+      setError(null);
+      console.log('Map initialization complete');
+    } catch (err) {
+      console.error('Error initializing Google Map:', err);
+      setError(`Failed to initialize map: ${err}`);
+    }
+  }, [center, zoom, onClick, onMapReady, mapOptions]);
+
+  // Load Google Maps API if not already loaded
   useEffect(() => {
-    console.log('GoogleMap useEffect - checking conditions:', {
-      hasRef: !!ref.current,
-      hasMap: !!map,
-      isInitializing: initializingRef.current,
-      hasApiKey: !!config.googleMapsApiKey,
-      apiKey: config.googleMapsApiKey?.substring(0, 10) + '...'
-    });
-
-    if (!ref.current) {
-      console.log('GoogleMap: No ref.current, skipping');
-      return;
-    }
-    if (map) {
-      console.log('GoogleMap: Map already exists, skipping');
-      return;
-    }
-    if (initializingRef.current) {
-      console.log('GoogleMap: Already initializing, skipping');
-      return;
-    }
-    if (!config.googleMapsApiKey) {
-      console.log('GoogleMap: No API key, skipping');
+    console.log('GoogleMap useEffect triggered');
+    
+    // Check if API key is configured first
+    const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+    console.log('API Key available:', !!apiKey);
+    
+    if (!apiKey) {
+      setError('Google Maps API key not configured. Please set REACT_APP_GOOGLE_MAPS_API_KEY in your .env file.');
       return;
     }
 
-    initializingRef.current = true;
-    console.log('GoogleMap: Starting script load...');
+    // Function to initialize map when both API and DOM are ready
+    const tryInitialize = () => {
+      console.log('Trying to initialize map...');
+      console.log('mapRef.current:', !!mapRef.current);
+      console.log('window.google:', !!window.google);
+      console.log('window.google.maps:', !!(window.google && window.google.maps));
+      
+      if (mapRef.current && window.google && window.google.maps) {
+        console.log('Both DOM and Google Maps ready, initializing...');
+        initializeMap();
+        return true;
+      }
+      return false;
+    };
 
-    // Check if Google Maps is already loaded
+    // If Google Maps is already loaded, try to initialize
     if (window.google && window.google.maps) {
-      console.log('Google Maps already loaded, creating map...');
-      createMap();
+      console.log('Google Maps already loaded');
+      if (!tryInitialize()) {
+        // DOM not ready yet, wait a bit
+        const timer = setTimeout(tryInitialize, 100);
+        return () => clearTimeout(timer);
+      }
       return;
     }
 
-    // Load Google Maps script
+    // Check if script is already loading
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existingScript) {
+      console.log('Google Maps script already exists, waiting for load...');
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds
+      
+      const checkGoogleMaps = () => {
+        attempts++;
+        console.log(`Checking Google Maps availability, attempt ${attempts}`);
+        
+        if (tryInitialize()) {
+          return; // Success
+        }
+        
+        if (attempts < maxAttempts) {
+          setTimeout(checkGoogleMaps, 100);
+        } else {
+          console.error('Timeout waiting for Google Maps to load');
+          setError('Timeout waiting for Google Maps to load');
+        }
+      };
+      checkGoogleMaps();
+      return;
+    }
+
+    // Load Google Maps API
+    console.log('Loading Google Maps script...');
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${config.googleMapsApiKey}&libraries=places,geometry`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
     script.async = true;
     script.defer = true;
     
     script.onload = () => {
       console.log('Google Maps script loaded successfully');
-      createMap();
+      // Try to initialize, with retries if DOM not ready
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      const retryInit = () => {
+        attempts++;
+        if (tryInitialize()) {
+          return; // Success
+        }
+        
+        if (attempts < maxAttempts) {
+          setTimeout(retryInit, 100);
+        } else {
+          console.error('DOM container not ready after Google Maps loaded');
+          setError('Failed to initialize map container');
+        }
+      };
+      
+      retryInit();
     };
     
-    script.onerror = () => {
-      console.error('Failed to load Google Maps script');
-      setError('Failed to load Google Maps script');
-      initializingRef.current = false;
+    script.onerror = (error) => {
+      console.error('Failed to load Google Maps script:', error);
+      setError('Failed to load Google Maps API');
     };
 
     document.head.appendChild(script);
 
-    function createMap() {
-      if (ref.current && !map && window.google) {
-        try {
-          const newMap = new window.google.maps.Map(ref.current, {
-            center,
-            zoom,
-            mapTypeControl: true,
-            streetViewControl: true,
-            fullscreenControl: true,
-            zoomControl: true,
-          });
-          
-          console.log('Google Map instance created successfully');
-          setMap(newMap);
-          initializingRef.current = false;
-        } catch (mapError) {
-          console.error('Error creating map instance:', mapError);
-          const errorMessage = mapError instanceof Error ? mapError.message : 'Unknown error';
-          setError('Failed to create map instance: ' + errorMessage);
-          initializingRef.current = false;
-        }
-      }
-    }
-
-    // Cleanup function
     return () => {
-      // Don't remove the script as it might be used by other components
-      initializingRef.current = false;
+      // Cleanup script if component unmounts during loading
+      if (script.parentNode) {
+        console.log('Cleaning up Google Maps script');
+        script.parentNode.removeChild(script);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array - only run once
+  }, []); // Remove initializeMap dependency to prevent re-runs
 
   // Update map center and zoom when props change
   useEffect(() => {
-    if (map) {
-      map.setCenter(center);
-      map.setZoom(zoom);
+    if (mapInstanceRef.current && isLoaded) {
+      mapInstanceRef.current.setCenter(center);
+      mapInstanceRef.current.setZoom(zoom);
     }
-  }, [map, center, zoom]);
-
-  // Add click listener
-  useEffect(() => {
-    if (map && onClick && window.google) {
-      const listener = map.addListener('click', onClick);
-      return () => {
-        window.google.maps.event.removeListener(listener);
-      };
-    }
-  }, [map, onClick]);
-
-  // Add idle listener
-  useEffect(() => {
-    if (map && onIdle && window.google) {
-      const listener = map.addListener('idle', () => onIdle(map));
-      return () => {
-        window.google.maps.event.removeListener(listener);
-      };
-    }
-  }, [map, onIdle]);
+  }, [center, zoom, isLoaded]);
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ m: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Google Maps Error
-        </Typography>
-        <Typography variant="body2">
-          {error}
-        </Typography>
-      </Alert>
+      <Box
+        sx={{
+          height,
+          width,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <Alert severity="error">{error}</Alert>
+      </Box>
     );
   }
 
   return (
-    <>
-      <div 
-        ref={ref} 
+    <Box sx={{ height, width, position: 'relative' }}>
+      <div
+        ref={mapRef}
         style={{
-          ...style,
-          minHeight: style?.height || '400px',
-          width: '100%',
-          position: 'relative'
-        }} 
+          height: '100%',
+          width: '100%'
+        }}
       />
-      {!map && !error && (
+      
+      {/* Loading overlay */}
+      {!isLoaded && (
         <Box
           sx={{
             position: 'absolute',
@@ -183,144 +236,18 @@ const Map: React.FC<MapProps> = ({
             right: 0,
             bottom: 0,
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            zIndex: 1000,
-            gap: 2,
+            backgroundColor: '#f5f5f5',
+            zIndex: 1000
           }}
         >
           <CircularProgress />
-          <Typography variant="body2" color="text.secondary">
-            Loading Google Maps...
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Ref status: {ref.current ? 'Ready' : 'Waiting...'}
-          </Typography>
         </Box>
       )}
-      {map && React.Children.map(children as React.ReactElement[], (child) => {
-        if (React.isValidElement(child)) {
-          // Clone child and pass map as prop
-          return React.cloneElement(child, { map } as any);
-        }
-        return child;
-      })}
-    </>
-  );
-};
-
-// Marker component
-export const Marker: React.FC<MarkerProps> = ({
-  position,
-  map,
-  title,
-  icon,
-  onClick,
-}) => {
-  const [marker, setMarker] = useState<google.maps.Marker | null>(null);
-
-  useEffect(() => {
-    if (!marker && map && window.google) {
-      try {
-        console.log('Creating marker at position:', position, 'with title:', title);
-        const newMarker = new window.google.maps.Marker({
-          position,
-          map,
-          title,
-          icon,
-        });
-        
-        console.log('Marker created successfully:', newMarker);
-        setMarker(newMarker);
-      } catch (error) {
-        console.error('Error creating marker:', error);
-      }
-    }
-
-    return () => {
-      if (marker) {
-        console.log('Cleaning up marker');
-        marker.setMap(null);
-      }
-    };
-  }, [map]); // Only depend on map, not on other props
-
-  useEffect(() => {
-    if (marker) {
-      marker.setPosition(position);
-      if (title) marker.setTitle(title);
-      if (icon) marker.setIcon(icon);
-    }
-  }, [marker, position, title, icon]);
-
-  useEffect(() => {
-    if (marker && onClick && window.google) {
-      console.log('Adding click listener to marker with onClick:', !!onClick);
-      const listener = marker.addListener('click', () => {
-        console.log('Marker clicked!');
-        onClick();
-      });
-      return () => {
-        window.google.maps.event.removeListener(listener);
-      };
-    } else {
-      console.log('Not adding click listener - marker:', !!marker, 'onClick:', !!onClick, 'google:', !!window.google);
-    }
-  }, [marker, onClick]);
-
-  return null;
-};
-
-
-
-// Main GoogleMap component
-interface GoogleMapProps extends Omit<MapProps, 'children'> {
-  height?: string | number;
-  width?: string | number;
-  children?: React.ReactNode;
-}
-
-const GoogleMap: React.FC<GoogleMapProps> = ({
-  center,
-  zoom,
-  height = 400,
-  width = '100%',
-  children,
-  onClick,
-  onIdle,
-}) => {
-  const mapStyle: React.CSSProperties = {
-    height,
-    width,
-  };
-
-  if (!config.googleMapsApiKey) {
-    return (
-      <Alert severity="warning" sx={{ m: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Google Maps API Key Required
-        </Typography>
-        <Typography variant="body2">
-          Please add your Google Maps API key to the environment variables:
-          <br />
-          <code>REACT_APP_GOOGLE_MAPS_API_KEY=your_api_key_here</code>
-        </Typography>
-      </Alert>
-    );
-  }
-
-  return (
-    <Map
-      center={center}
-      zoom={zoom}
-      style={mapStyle}
-      onClick={onClick}
-      onIdle={onIdle}
-    >
+      
       {children}
-    </Map>
+    </Box>
   );
 };
 

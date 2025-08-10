@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
-// Enhanced lazy loading with prefetch and chunk naming
+// Simple lazy loading for basic pages
 const DashboardPage = lazy(() => import(/* webpackChunkName: "dashboard" */ '../components/pages/DashboardPage'));
 const RoutesPage = lazy(() => import(/* webpackChunkName: "routes" */ '../components/pages/RoutesPage'));
 const RouteMapPage = lazy(() => import(/* webpackChunkName: "route-map" */ '../components/pages/RouteMapPage'));
@@ -11,7 +11,7 @@ const ActiveBusesPage = lazy(() => import(/* webpackChunkName: "active-buses" */
 
 const NotFoundPage = lazy(() => import(/* webpackChunkName: "not-found" */ '../components/pages/NotFoundPage'));
 
-// Prefetch function for route preloading
+// Simple prefetch function for basic routes
 const prefetchRoute = (routePath: string) => {
   switch (routePath) {
     case '/dashboard':
@@ -122,7 +122,7 @@ export interface RouteConfig {
   order?: number;
 }
 
-// Protected route configurations
+// Basic route configurations (removed complex route map)
 export const protectedRoutes: RouteConfig[] = [
   {
     path: '/dashboard',
@@ -151,17 +151,6 @@ export const protectedRoutes: RouteConfig[] = [
     order: 2,
   },
   {
-    path: '/routes/:id/map',
-    element: (
-      <LazyRoute>
-        <RouteMapPage />
-      </LazyRoute>
-    ),
-    title: 'Route Map',
-    requiresAuth: true,
-    showInNavigation: false,
-  },
-  {
     path: '/buses',
     element: (
       <LazyRoute>
@@ -186,6 +175,17 @@ export const protectedRoutes: RouteConfig[] = [
     showInNavigation: true,
     icon: 'gps_fixed',
     order: 4,
+  },
+  {
+    path: '/routes/:id/map',
+    element: (
+      <LazyRoute>
+        <RouteMapPage />
+      </LazyRoute>
+    ),
+    title: 'Route Map',
+    requiresAuth: true,
+    showInNavigation: false,
   },
 ];
 

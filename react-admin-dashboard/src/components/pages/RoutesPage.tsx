@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import {
   Box,
   Typography,
@@ -29,9 +30,9 @@ import { Route, RouteFilters, CreateRouteRequest, UpdateRouteRequest, ApiError }
 import { useNotification } from '../../contexts';
 
 const RoutesPage: React.FC = () => {
-  // Navigation and notification
-  const navigate = useNavigate();
+  // Notification
   const { showNotification } = useNotification();
+  const navigate = useNavigate();
   
   // State management
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -115,14 +116,16 @@ const RoutesPage: React.FC = () => {
     setFormOpen(true);
   };
 
-  const handleDeleteRoute = (routeId: string) => {
-    setRouteToDelete(routeId);
+  const handleDeleteRoute = (routeId: number) => {
+    setRouteToDelete(routeId.toString());
     setDeleteDialogOpen(true);
   };
 
-  const handleViewMap = (route: Route) => {
+  const handleMapView = (route: Route) => {
     navigate(`/routes/${route.id}/map`);
   };
+
+
 
 
 
@@ -268,7 +271,7 @@ const RoutesPage: React.FC = () => {
         onSortChange={handleSortChange}
         onEdit={handleEditRoute}
         onDelete={handleDeleteRoute}
-        onViewMap={handleViewMap}
+        onMapView={handleMapView}
       />
 
       {/* Route Form Dialog */}

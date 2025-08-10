@@ -1,4 +1,6 @@
 // UI component exports
+export { default as GoogleMap } from './GoogleMap';
+export { default as FallbackMap } from './FallbackMap';
 export { LoginForm } from './LoginForm';
 export { 
   ProtectedRoute, 
@@ -18,4 +20,3 @@ export {
   ListSkeleton,
   GenericSkeleton,
 } from './SkeletonLoader';
-export { default as GoogleMap, Marker } from './GoogleMap';

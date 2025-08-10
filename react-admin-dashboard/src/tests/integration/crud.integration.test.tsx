@@ -64,7 +64,7 @@ const mockBuses = [
 
 const mockRoutes = [
   {
-    id: 'route1',
+    id: 1,
     name: 'Downtown Express',
     startPoint: 'Central Station',
     endPoint: 'Business District',
@@ -75,7 +75,7 @@ const mockRoutes = [
     updatedAt: new Date('2023-01-01'),
   },
   {
-    id: 'route2',
+    id: 2,
     name: 'Airport Shuttle',
     startPoint: 'Central Station',
     endPoint: 'International Airport',

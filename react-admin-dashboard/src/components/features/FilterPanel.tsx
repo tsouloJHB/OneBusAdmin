@@ -97,7 +97,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   const getSelectedRouteName = () => {
     if (!filters.routeId) return '';
-    const route = routes.find(r => r.id === filters.routeId);
+    const route = routes.find(r => r.id.toString() === filters.routeId);
     return route?.name || '';
   };
 

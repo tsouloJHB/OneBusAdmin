@@ -31,8 +31,8 @@ export const routeService = {
       const routes: Route[] = backendRoutes.map((backendRoute: any) => ({
         id: backendRoute.id?.toString() || Math.random().toString(),
         name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
-        startPoint: 'Start Point', // Your backend doesn't have this field yet
-        endPoint: 'End Point', // Your backend doesn't have this field yet
+        startPoint: backendRoute.startPoint || 'Start Point',
+        endPoint: backendRoute.endPoint || 'End Point',
         stops: backendRoute.stops || [],
         schedule: [], // Your backend doesn't have this field yet
         isActive: backendRoute.active !== undefined ? backendRoute.active : true,
@@ -102,11 +102,30 @@ export const routeService = {
    */
   async createRoute(routeData: CreateRouteRequest): Promise<Route> {
     try {
-      // Use your backend endpoint
-      const response = await httpClient.post('/routes', routeData);
+      console.log('RouteService: Creating route with data:', routeData);
       
-      return response.data;
+      // Use the correct backend endpoint
+      const response = await httpClient.post(config.endpoints.routes, routeData);
+      
+      console.log('RouteService: Route created successfully:', response.data);
+      
+      // Transform backend response to frontend Route format
+      const backendRoute = response.data;
+      const route: Route = {
+        id: backendRoute.id?.toString() || Math.random().toString(),
+        name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
+        startPoint: backendRoute.startPoint || 'Start Point',
+        endPoint: backendRoute.endPoint || 'End Point',
+        stops: backendRoute.stops || [],
+        schedule: backendRoute.schedule || [],
+        isActive: backendRoute.active !== undefined ? backendRoute.active : true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      return route;
     } catch (error) {
+      console.error('RouteService: Failed to create route:', error);
       throw error;
     }
   },
@@ -114,7 +133,7 @@ export const routeService = {
   /**
    * Update an existing route
    */
-  async updateRoute(id: string, routeData: UpdateRouteRequest): Promise<Route> {
+  async updateRoute(id: number, routeData: UpdateRouteRequest): Promise<Route> {
     try {
       const response = await httpClient.put<ApiResponse<Route>>(
         `${config.endpoints.routes}/${id}`,
@@ -174,6 +193,10 @@ export const routeService = {
    */
   async addRouteStop(routeId: string, stopData: any): Promise<any> {
     try {
+      console.log('RouteService: Adding stop to route', routeId);
+      console.log('RouteService: Stop data:', stopData);
+      console.log('RouteService: Sending payload:', { stops: [stopData] });
+      
       const response = await httpClient.put(
         `${config.endpoints.routes}/${routeId}`,
         { stops: [stopData] }
@@ -194,6 +217,65 @@ export const routeService = {
         `${config.endpoints.routes}/${routeId}/stops/${stopId}`
       );
     } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Get a single route by ID (alias for compatibility)
+   */
+  async getRoute(id: number): Promise<Route> {
+    try {
+      const response = await httpClient.get(`${config.endpoints.routes}/${id}`);
+      const backendRoute = response.data;
+      
+      // Transform backend route format to frontend Route format
+      const route: Route = {
+        id: backendRoute.id || id,
+        name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
+        routeName: backendRoute.routeName || backendRoute.name || 'Unknown Route',
+        description: backendRoute.description || '',
+        company: backendRoute.company || '',
+        busNumber: backendRoute.busNumber || '',
+        direction: backendRoute.direction || '',
+        startPoint: backendRoute.startPoint || 'Start Point',
+        endPoint: backendRoute.endPoint || 'End Point',
+        active: backendRoute.active !== undefined ? backendRoute.active : true,
+        isActive: backendRoute.active !== undefined ? backendRoute.active : true,
+        stops: backendRoute.stops || [],
+        createdAt: backendRoute.createdAt ? new Date(backendRoute.createdAt) : new Date(),
+        updatedAt: backendRoute.updatedAt ? new Date(backendRoute.updatedAt) : new Date(),
+      };
+      
+      return route;
+    } catch (error) {
+      console.error('RouteService: Failed to get route:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a new bus stop
+   */
+  async createBusStop(stopData: {
+    name: string;
+    description: string;
+    latitude: number;
+    longitude: number;
+    order: number;
+    routeId: number;
+  }): Promise<any> {
+    try {
+      console.log('RouteService: Creating bus stop:', stopData);
+      
+      const response = await httpClient.post(
+        `${config.endpoints.routes}/${stopData.routeId}/stops`,
+        stopData
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('RouteService: Failed to create bus stop:', error);
       throw error;
     }
   },

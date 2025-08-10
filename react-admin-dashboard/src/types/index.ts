@@ -1,17 +1,20 @@
-// Google Maps Types
-/// <reference types="google.maps" />
-
 // Core Data Models
 export interface Route {
-  id: string;
-  name: string;
+  id: number;
+  name: string; // Keep name for compatibility
+  routeName?: string; // Optional for backend compatibility
+  description?: string;
+  company?: string;
+  busNumber?: string;
+  direction?: string;
   startPoint: string;
   endPoint: string;
-  stops: Stop[];
-  schedule: Schedule[];
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  active?: boolean;
+  isActive?: boolean; // For compatibility
+  stops?: BusStop[];
+  schedule?: Schedule[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Stop {
@@ -23,6 +26,26 @@ export interface Stop {
   };
   order: number;
 }
+
+export interface BusStop {
+  id: number;
+  name: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  order: number;
+  routeId: number;
+}
+
+export interface TemporaryStop {
+  id: string;
+  name: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
+}
+
+
 
 export interface Schedule {
   id: string;
@@ -99,16 +122,18 @@ export interface ApiError {
 
 // API Request Types
 export interface CreateRouteRequest {
-  name: string;
+  company: string;
+  busNumber: string;
+  routeName: string;
+  description: string;
+  direction: string;
   startPoint: string;
   endPoint: string;
-  stops: Omit<Stop, 'id'>[];
-  schedule: Omit<Schedule, 'id'>[];
-  isActive: boolean;
+  active: boolean;
 }
 
 export interface UpdateRouteRequest extends Partial<CreateRouteRequest> {
-  id: string;
+  id: number;
 }
 
 export interface CreateBusRequest {
@@ -235,3 +260,6 @@ export interface ActivityItem {
   userId: string;
   userName: string;
 }
+
+// Re-export marker types
+export * from './marker';

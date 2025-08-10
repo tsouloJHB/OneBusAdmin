@@ -54,7 +54,7 @@ const mockActiveBuses = [
       updatedAt: new Date('2023-01-01'),
     },
     route: {
-      id: 'route1',
+      id: 1,
       name: 'Downtown Express',
       startPoint: 'Central Station',
       endPoint: 'Business District',
@@ -92,7 +92,7 @@ const mockActiveBuses = [
       updatedAt: new Date('2023-01-02'),
     },
     route: {
-      id: 'route2',
+      id: 2,
       name: 'Airport Shuttle',
       startPoint: 'Central Station',
       endPoint: 'International Airport',
@@ -121,7 +121,7 @@ const mockActiveBuses = [
 
 const mockRoutes = [
   {
-    id: 'route1',
+    id: 1,
     name: 'Downtown Express',
     startPoint: 'Central Station',
     endPoint: 'Business District',
@@ -132,7 +132,7 @@ const mockRoutes = [
     updatedAt: new Date('2023-01-01'),
   },
   {
-    id: 'route2',
+    id: 2,
     name: 'Airport Shuttle',
     startPoint: 'Central Station',
     endPoint: 'International Airport',
@@ -151,7 +151,7 @@ describe('Active Buses Monitoring Integration', () => {
     // Mock API responses
     mockActiveBusService.getActiveBuses.mockResolvedValue(mockActiveBuses);
     mockRouteService.getRoutesForSelect.mockResolvedValue(mockRoutes.map(route => ({
-      id: route.id,
+      id: route.id.toString(),
       name: route.name,
     })));
   });

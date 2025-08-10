@@ -75,7 +75,7 @@ const ActiveBusesPage: React.FC = () => {
       }
       
       // Route filter
-      if (filters.routeId && bus.route.id !== filters.routeId) {
+      if (filters.routeId && bus.route.id.toString() !== filters.routeId) {
         return false;
       }
       

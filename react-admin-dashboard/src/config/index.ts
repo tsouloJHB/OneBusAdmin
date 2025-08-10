@@ -4,7 +4,7 @@ export const config = {
   appName: process.env.REACT_APP_APP_NAME || 'Bus Admin Dashboard',
   version: process.env.REACT_APP_VERSION || '1.0.0',
   environment: process.env.NODE_ENV || 'development',
-  googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '',
+
   
   // API endpoints
   endpoints: {
