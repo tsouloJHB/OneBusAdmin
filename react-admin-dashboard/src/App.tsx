@@ -210,36 +210,34 @@ function App() {
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     
                     {/* Protected Routes with Layout */}
+                    {createRouteObjects(protectedRoutes).map((route, index) => (
+                      <Route
+                        key={route.path || index}
+                        path={route.path}
+                        element={
+                          <ProtectedRoute>
+                            <ErrorBoundary level="page">
+                              <AppLayout>
+                                <ErrorBoundary level="component">
+                                  {route.element}
+                                </ErrorBoundary>
+                              </AppLayout>
+                            </ErrorBoundary>
+                          </ProtectedRoute>
+                        }
+                      />
+                    ))}
+                    
+                    {/* 404 Route - must be last */}
                     <Route
-                      path="/*"
+                      path={notFoundRoute.path}
                       element={
                         <ProtectedRoute>
                           <ErrorBoundary level="page">
                             <AppLayout>
-                              <Routes>
-                                {/* Generate routes from configuration */}
-                                {createRouteObjects(protectedRoutes).map((route, index) => (
-                                  <Route
-                                    key={route.path || index}
-                                    path={route.path}
-                                    element={
-                                      <ErrorBoundary level="component">
-                                        {route.element}
-                                      </ErrorBoundary>
-                                    }
-                                  />
-                                ))}
-                                
-                                {/* 404 Route - must be last */}
-                                <Route
-                                  path={notFoundRoute.path}
-                                  element={
-                                    <ErrorBoundary level="component">
-                                      {notFoundRoute.element}
-                                    </ErrorBoundary>
-                                  }
-                                />
-                              </Routes>
+                              <ErrorBoundary level="component">
+                                {notFoundRoute.element}
+                              </ErrorBoundary>
                             </AppLayout>
                           </ErrorBoundary>
                         </ProtectedRoute>

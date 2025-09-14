@@ -20,13 +20,17 @@ export interface BusCompany {
 // Bus Number Interface
 export interface BusNumber {
   id: string;
-  companyId: string;
+  busCompanyId: string;
   busNumber: string;
-  routeId?: string;
-  routeName?: string;
-  status: 'active' | 'inactive' | 'maintenance';
-  assignedDriver?: string;
-  capacity?: number;
+  routeName: string;
+  description?: string;
+  startDestination: string;
+  endDestination: string;
+  direction: string;
+  distanceKm: number;
+  estimatedDurationMinutes: number;
+  frequencyMinutes: number;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -117,30 +121,35 @@ export interface CompanyManagementActions {
 
 // API Response Types
 export interface BusCompanyResponse {
-  id: string;
+  id: number;
   name: string;
   registrationNumber: string;
   companyCode: string;
+  email: string;
+  phone: string;
+  address: string;
   city: string;
-  address?: string;
-  contactInfo?: {
-    phone?: string;
-    email?: string;
-  };
-  status: string;
+  postalCode: string;
+  country: string;
+  isActive: boolean;
+  busCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface BusNumberResponse {
-  id: string;
-  companyId: string;
+  id: number;
+  busCompanyId: number;
   busNumber: string;
-  routeId?: string;
-  routeName?: string;
-  status: string;
-  assignedDriver?: string;
-  capacity?: number;
+  routeName: string;
+  description?: string;
+  startDestination: string;
+  endDestination: string;
+  direction: string;
+  distanceKm: number;
+  estimatedDurationMinutes: number;
+  frequencyMinutes: number;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -196,10 +205,15 @@ export interface CompanyFormData {
 
 export interface BusNumberFormData {
   busNumber: string;
-  routeId?: string;
-  status: 'active' | 'inactive' | 'maintenance';
-  assignedDriver?: string;
-  capacity?: number;
+  routeName: string;
+  description?: string;
+  startDestination: string;
+  endDestination: string;
+  direction: string;
+  distanceKm: number;
+  estimatedDurationMinutes: number;
+  frequencyMinutes: number;
+  isActive: boolean;
 }
 
 export interface RegisteredBusFormData {

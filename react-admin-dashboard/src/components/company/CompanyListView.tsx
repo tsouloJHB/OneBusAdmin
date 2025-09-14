@@ -30,13 +30,15 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
   const { state, actions } = useCompanyManagement();
   const { goToCompanyManagement } = useCompanyNavigation();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<BusCompany | null>(null);
   const [filteredCompanies, setFilteredCompanies] = useState<BusCompany[]>([]);
 
   // Load companies on component mount
   useEffect(() => {
     console.log('CompanyListView: Loading companies on mount');
     actions.loadCompanies();
-  }, [actions]);
+  }, []); // Empty dependency array - only run on mount
 
   // Update filtered companies when companies or search changes
   useEffect(() => {
@@ -60,7 +62,7 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
 
     // Apply city filter
     if (state.filters.city) {
-      filtered = filtered.filter(company => 
+      filtered = filtered.filter(company =>
         company.city.toLowerCase().includes(state.filters.city!.toLowerCase())
       );
     }
@@ -71,7 +73,7 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
   // Handle company selection
   const handleCompanySelect = (company: BusCompany) => {
     console.log('CompanyListView: Company selected:', company.name);
-    
+
     if (onCompanySelect) {
       onCompanySelect(company);
     } else {
@@ -89,19 +91,77 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
 
   // Handle company form submit
   const handleCompanyFormSubmit = async (companyData: any) => {
+    console.log('CompanyListView: Form submitted with data:', companyData);
     try {
       await actions.createCompany(companyData);
       setShowAddForm(false);
       console.log('CompanyListView: Company created successfully');
     } catch (error) {
       console.error('CompanyListView: Error creating company:', error);
-      // Error is handled by the context
+      // Error is handled by the context - but let's also log it here
+      console.error('CompanyListView: Full error details:', error);
     }
   };
 
   // Handle company form cancel
   const handleCompanyFormCancel = () => {
     setShowAddForm(false);
+  };
+
+  // Handle edit company
+  const handleEditCompany = (company: BusCompany) => {
+    console.log('CompanyListView: Opening edit form for company:', company.name);
+    setEditingCompany(company);
+    setShowEditForm(true);
+  };
+
+  // Handle edit form submit
+  const handleEditFormSubmit = async (companyData: any) => {
+    if (!editingCompany) return;
+
+    console.log('=== COMPANY EDIT SUBMISSION ===');
+    console.log('CompanyListView: Editing company:', editingCompany);
+    console.log('CompanyListView: Form data received:', companyData);
+
+    try {
+      console.log('CompanyListView: Calling updateCompany...');
+      await actions.updateCompany(editingCompany.id, companyData);
+      setShowEditForm(false);
+      setEditingCompany(null);
+      console.log('CompanyListView: Company updated successfully');
+    } catch (error) {
+      console.error('CompanyListView: Error updating company:', error);
+      console.error('CompanyListView: Error details:', error);
+      // Error is handled by the context
+    }
+  };
+
+  // Handle edit form cancel
+  const handleEditFormCancel = () => {
+    setShowEditForm(false);
+    setEditingCompany(null);
+  };
+
+  // Handle delete company
+  const handleDeleteCompany = async (company: BusCompany) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${company.name}"?\n\n` +
+      `This will permanently remove:\n` +
+      `• Company information\n` +
+      `• All associated bus numbers\n` +
+      `• All registered buses\n\n` +
+      `This action cannot be undone.`
+    );
+
+    if (confirmed) {
+      try {
+        await actions.deleteCompany(company.id);
+        console.log('CompanyListView: Company deleted successfully');
+      } catch (error) {
+        console.error('CompanyListView: Error deleting company:', error);
+        // Error is handled by the context
+      }
+    }
   };
 
   // Render loading skeleton
@@ -126,9 +186,9 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
 
   // Render empty state
   const renderEmptyState = () => (
-    <Paper 
-      sx={{ 
-        p: 6, 
+    <Paper
+      sx={{
+        p: 6,
         textAlign: 'center',
         backgroundColor: 'grey.50',
         border: '2px dashed',
@@ -137,8 +197,8 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
     >
       <BusinessIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
       <Typography variant="h5" color="text.secondary" gutterBottom>
-        {state.searchQuery || Object.keys(state.filters).length > 0 
-          ? 'No companies found' 
+        {state.searchQuery || Object.keys(state.filters).length > 0
+          ? 'No companies found'
           : 'No companies yet'
         }
       </Typography>
@@ -170,6 +230,8 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
             <CompanyCard
               company={company}
               onSelect={handleCompanySelect}
+              onEdit={handleEditCompany}
+              onDelete={handleDeleteCompany}
             />
           </Box>
         ))}
@@ -210,8 +272,8 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
 
       {/* Error Alert */}
       {state.error && (
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           sx={{ mb: 3 }}
           action={
             <Button color="inherit" size="small" onClick={actions.loadCompanies}>
@@ -224,10 +286,10 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
       )}
 
       {/* Results Summary */}
-      {!state.loading && !state.error && (
+      {!state.loading && !state.error && state.companies.length > 0 && (
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            {filteredCompanies.length === 0 
+            {filteredCompanies.length === 0
               ? 'No companies found'
               : `${filteredCompanies.length} ${filteredCompanies.length === 1 ? 'company' : 'companies'} found`
             }
@@ -235,9 +297,6 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
               <span> (filtered from {state.companies.length} total)</span>
             )}
           </Typography>
-          {state.loading && (
-            <CircularProgress size={16} />
-          )}
         </Box>
       )}
 
@@ -245,7 +304,7 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
       <Box sx={{ minHeight: 400 }}>
         {state.loading && state.companies.length === 0 ? (
           renderLoadingSkeleton()
-        ) : filteredCompanies.length === 0 ? (
+        ) : !state.loading && filteredCompanies.length === 0 ? (
           renderEmptyState()
         ) : (
           renderCompanyGrid()
@@ -259,6 +318,25 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
           onSubmit={handleCompanyFormSubmit}
           onCancel={handleCompanyFormCancel}
           title="Add New Company"
+        />
+      )}
+
+      {/* Edit Company Form Dialog */}
+      {showEditForm && editingCompany && (
+        <CompanyForm
+          open={showEditForm}
+          onSubmit={handleEditFormSubmit}
+          onCancel={handleEditFormCancel}
+          title={`Edit ${editingCompany.name}`}
+          initialData={{
+            name: editingCompany.name,
+            registrationNumber: editingCompany.registrationNumber,
+            companyCode: editingCompany.companyCode,
+            city: editingCompany.city,
+            address: editingCompany.address,
+            contactInfo: editingCompany.contactInfo,
+            status: editingCompany.status
+          }}
         />
       )}
 

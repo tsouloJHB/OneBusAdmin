@@ -28,17 +28,29 @@ export const routeService = {
       console.log('RouteService: Backend routes:', backendRoutes);
       
       // Transform backend route format to frontend Route format
-      const routes: Route[] = backendRoutes.map((backendRoute: any) => ({
-        id: backendRoute.id?.toString() || Math.random().toString(),
-        name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
-        startPoint: backendRoute.startPoint || 'Start Point',
-        endPoint: backendRoute.endPoint || 'End Point',
-        stops: backendRoute.stops || [],
-        schedule: [], // Your backend doesn't have this field yet
-        isActive: backendRoute.active !== undefined ? backendRoute.active : true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
+      const routes: Route[] = backendRoutes.map((backendRoute: any) => {
+        // Ensure id is always a number
+        let routeId: number;
+        if (typeof backendRoute.id === 'number') {
+          routeId = backendRoute.id;
+        } else if (backendRoute.id) {
+          routeId = parseInt(backendRoute.id.toString());
+        } else {
+          routeId = parseInt(Math.random().toString());
+        }
+        
+        return {
+          id: routeId,
+          name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
+          startPoint: backendRoute.startPoint || 'Start Point',
+          endPoint: backendRoute.endPoint || 'End Point',
+          stops: backendRoute.stops || [],
+          schedule: [], // Your backend doesn't have this field yet
+          isActive: backendRoute.active !== undefined ? backendRoute.active : true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      });
       
       // Apply client-side filtering since your backend doesn't support it yet
       let filteredRoutes = routes;
@@ -111,8 +123,19 @@ export const routeService = {
       
       // Transform backend response to frontend Route format
       const backendRoute = response.data;
+      
+      // Ensure id is always a number
+      let routeId: number;
+      if (typeof backendRoute.id === 'number') {
+        routeId = backendRoute.id;
+      } else if (backendRoute.id) {
+        routeId = parseInt(backendRoute.id.toString());
+      } else {
+        routeId = parseInt(Math.random().toString());
+      }
+      
       const route: Route = {
-        id: backendRoute.id?.toString() || Math.random().toString(),
+        id: routeId,
         name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
         startPoint: backendRoute.startPoint || 'Start Point',
         endPoint: backendRoute.endPoint || 'End Point',
@@ -135,13 +158,50 @@ export const routeService = {
    */
   async updateRoute(id: number, routeData: UpdateRouteRequest): Promise<Route> {
     try {
+      console.log('RouteService: Updating route with ID:', id);
+      console.log('RouteService: Update data:', routeData);
+      
       const response = await httpClient.put<ApiResponse<Route>>(
         `${config.endpoints.routes}/${id}`,
         routeData
       );
       
-      return response.data.data;
+      console.log('RouteService: Route updated successfully:', response.data);
+      
+      // Transform backend response to frontend Route format
+      const backendRoute = response.data.data || response.data;
+      
+      // Ensure id is always a number
+      let routeId: number;
+      if (typeof backendRoute.id === 'number') {
+        routeId = backendRoute.id;
+      } else if (backendRoute.id) {
+  const backendRouteId = backendRoute.id as string | number;
+  routeId = parseInt(backendRouteId.toString());
+      } else {
+        routeId = parseInt(id.toString());
+      }
+      
+      const route: Route = {
+        id: routeId,
+        name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
+        routeName: backendRoute.routeName || backendRoute.name || 'Unknown Route',
+        description: backendRoute.description || '',
+        company: backendRoute.company || '',
+        busNumber: backendRoute.busNumber || '',
+        direction: backendRoute.direction || '',
+        startPoint: backendRoute.startPoint || 'Start Point',
+        endPoint: backendRoute.endPoint || 'End Point',
+        active: backendRoute.active !== undefined ? backendRoute.active : true,
+        isActive: backendRoute.active !== undefined ? backendRoute.active : true,
+        stops: backendRoute.stops || [],
+        createdAt: backendRoute.createdAt ? new Date(backendRoute.createdAt) : new Date(),
+        updatedAt: backendRoute.updatedAt ? new Date(backendRoute.updatedAt) : new Date(),
+      };
+      
+      return route;
     } catch (error) {
+      console.error('RouteService: Failed to update route:', error);
       throw error;
     }
   },
@@ -230,8 +290,19 @@ export const routeService = {
       const backendRoute = response.data;
       
       // Transform backend route format to frontend Route format
+      
+      // Ensure id is always a number
+      let routeId: number;
+      if (typeof backendRoute.id === 'number') {
+        routeId = backendRoute.id;
+      } else if (backendRoute.id) {
+        routeId = parseInt(backendRoute.id.toString());
+      } else {
+        routeId = id;
+      }
+      
       const route: Route = {
-        id: backendRoute.id || id,
+        id: routeId,
         name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
         routeName: backendRoute.routeName || backendRoute.name || 'Unknown Route',
         description: backendRoute.description || '',
@@ -258,11 +329,12 @@ export const routeService = {
    * Create a new bus stop
    */
   async createBusStop(stopData: {
-    name: string;
-    description: string;
+    address: string;
     latitude: number;
     longitude: number;
-    order: number;
+    busStopIndex?: number;
+    direction?: string;
+    type?: string;
     routeId: number;
   }): Promise<any> {
     try {
@@ -270,7 +342,14 @@ export const routeService = {
       
       const response = await httpClient.post(
         `${config.endpoints.routes}/${stopData.routeId}/stops`,
-        stopData
+        {
+          latitude: stopData.latitude,
+          longitude: stopData.longitude,
+          address: stopData.address,
+          busStopIndex: stopData.busStopIndex,
+          direction: stopData.direction,
+          type: stopData.type
+        }
       );
       
       return response.data;

@@ -164,6 +164,17 @@ export const protectedRoutes: RouteConfig[] = [
     order: 3,
   },
   {
+    path: '/buses/company/:companyId',
+    element: (
+      <LazyRoute>
+        <BusesPage />
+      </LazyRoute>
+    ),
+    title: 'Company Management',
+    requiresAuth: true,
+    showInNavigation: false,
+  },
+  {
     path: '/active-buses',
     element: (
       <LazyRoute>

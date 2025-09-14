@@ -12,7 +12,8 @@ import {
   TableRow,
   Chip,
   IconButton,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -73,7 +74,16 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
       </Box>
 
       {/* Content */}
-      {registeredBuses.length === 0 ? (
+      {loading && registeredBuses.length === 0 ? (
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <CircularProgress size={48} />
+            <Typography variant="body1" color="text.secondary">
+              Loading registered buses...
+            </Typography>
+          </Box>
+        </Paper>
+      ) : registeredBuses.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <TruckIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
@@ -167,14 +177,14 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
                           <WarningIcon color="warning" fontSize="small" />
                         )}
                         <Box>
-                          <Typography 
+                          <Typography
                             variant="body2"
                             color={
-                              isInspectionOverdue(bus.nextInspection) 
-                                ? 'error.main' 
-                                : isInspectionDue(bus.nextInspection) 
-                                ? 'warning.main' 
-                                : 'text.primary'
+                              isInspectionOverdue(bus.nextInspection)
+                                ? 'error.main'
+                                : isInspectionDue(bus.nextInspection)
+                                  ? 'warning.main'
+                                  : 'text.primary'
                             }
                           >
                             {formatDate(bus.nextInspection)}
@@ -224,7 +234,7 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
       {/* Development Notice */}
       <Alert severity="info" sx={{ mt: 3 }}>
         <Typography variant="body2">
-          <strong>Development Note:</strong> Registered Bus Management functionality is currently under development. 
+          <strong>Development Note:</strong> Registered Bus Management functionality is currently under development.
           Forms and CRUD operations will be implemented in the next phase.
         </Typography>
       </Alert>

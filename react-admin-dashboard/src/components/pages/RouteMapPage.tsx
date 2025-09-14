@@ -49,6 +49,7 @@ const RouteMapPage: React.FC = () => {
     temporaryStops: []
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   // Load route data
   useEffect(() => {
@@ -129,64 +130,45 @@ const RouteMapPage: React.FC = () => {
   const saveAllTemporaryStops = useCallback(async () => {
     if (!route || batchSession.temporaryStops.length === 0) return;
 
+    setSaveMessage(null);
     try {
       setIsSaving(true);
-      
       // Convert temporary stops to regular stops
       const stopsToSave = batchSession.temporaryStops.map((tempStop, index) => ({
-        name: tempStop.name,
-        description: tempStop.description || '',
+        address: tempStop.name, // Map name to address
         latitude: tempStop.latitude,
         longitude: tempStop.longitude,
-        order: (route.stops?.length || 0) + index + 1,
-        routeId: route.id
+        busStopIndex: (route.stops?.length || 0) + index + 1, // Map order to busStopIndex
+        direction: 'Bidirectional', // Default direction
+        type: 'Bus Stop' // Default type
       }));
 
-      // Try to save stops to backend
-      try {
-        for (const stopData of stopsToSave) {
-          await routeService.createBusStop(stopData);
-        }
-        
-        // Reload route data to get updated stops
-        const updatedRoute = await routeService.getRoute(route.id);
-        setRoute(updatedRoute);
-      } catch (apiError) {
-        console.warn('Backend API not available, simulating save:', apiError);
-        
-        // Simulate successful save by converting temporary stops to regular stops
-        const newStops = batchSession.temporaryStops.map((tempStop, index) => ({
-          id: Date.now() + index, // Generate temporary ID
-          name: tempStop.name,
-          description: tempStop.description || '',
-          latitude: tempStop.latitude,
-          longitude: tempStop.longitude,
-          order: (route.stops?.length || 0) + index + 1,
+      for (const stopData of stopsToSave) {
+        await routeService.createBusStop({
+          ...stopData,
           routeId: route.id
-        }));
-        
-        // Update route with new stops
-        setRoute(prev => prev ? {
-          ...prev,
-          stops: [...(prev.stops || []), ...newStops]
-        } : prev);
+        });
       }
-
+      // Reload route data to get updated stops
+      const updatedRoute = await routeService.getRoute(route.id);
+      setRoute(updatedRoute);
+      setSaveMessage('All stops saved successfully!');
       // Clear batch session
       setBatchSession({
         isActive: false,
         temporaryStops: []
       });
-
       setSelectedStop(null);
       setError(null); // Clear any previous errors
     } catch (err) {
       console.error('Error saving stops:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setSaveMessage('Failed to save stops: ' + errorMessage);
       setError('Failed to save stops');
     } finally {
       setIsSaving(false);
     }
-  }, [route, batchSession.temporaryStops]);
+  }, [route, batchSession.temporaryStops, routeService]);
 
   // Clear all temporary stops
   const clearAllTemporaryStops = useCallback(() => {
@@ -265,6 +247,11 @@ const RouteMapPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
+      {saveMessage && (
+        <Alert severity={saveMessage.startsWith('Failed') ? 'error' : 'success'} sx={{ mb: 2 }}>
+          {saveMessage}
+        </Alert>
+      )}
       {/* Breadcrumbs */}
       <Breadcrumbs
         separator={<NavigateNextIcon fontSize="small" />}

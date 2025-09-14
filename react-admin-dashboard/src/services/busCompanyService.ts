@@ -21,7 +21,7 @@ class BusCompanyService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+    this.baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
   }
 
   // Helper method for API calls
@@ -55,6 +55,12 @@ class BusCompanyService {
       if (error instanceof Error && error.name === 'CompanyManagementError') {
         throw error;
       }
+      
+      // Handle network errors (connection refused, etc.)
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw this.createError(404, 'API server not available', endpoint);
+      }
+      
       throw this.createError(500, error instanceof Error ? error.message : 'Unknown error', endpoint);
     }
   }
@@ -101,7 +107,7 @@ class BusCompanyService {
    */
   async getAllCompanies(): Promise<BusCompany[]> {
     try {
-      const response = await this.apiCall<BusCompanyResponse[]>('/api/bus-companies');
+      const response = await this.apiCall<BusCompanyResponse[]>('/bus-companies');
       return response.map(transformBusCompanyResponse);
     } catch (error) {
       console.error('BusCompanyService: Error getting all companies:', error);
@@ -114,7 +120,7 @@ class BusCompanyService {
    */
   async getCompanyById(id: string): Promise<BusCompany> {
     try {
-      const response = await this.apiCall<BusCompanyResponse>(`/api/bus-companies/${id}`);
+      const response = await this.apiCall<BusCompanyResponse>(`/bus-companies/${id}`);
       return transformBusCompanyResponse(response);
     } catch (error) {
       console.error(`BusCompanyService: Error getting company ${id}:`, error);
@@ -127,13 +133,32 @@ class BusCompanyService {
    */
   async createCompany(companyData: CompanyFormData): Promise<BusCompany> {
     try {
-      const response = await this.apiCall<BusCompanyResponse>('/api/bus-companies', {
+      // Transform the form data to match API expectations
+      const apiData = {
+        name: companyData.name,
+        registrationNumber: companyData.registrationNumber,
+        companyCode: companyData.companyCode,
+        email: companyData.contactInfo?.email || '',
+        phone: companyData.contactInfo?.phone || '',
+        address: companyData.address || '',
+        city: companyData.city,
+        postalCode: '', // Add default values for required fields
+        country: 'South Africa', // Default country
+        isActive: companyData.status === 'active'
+      };
+      
+      console.log('BusCompanyService: Creating company with data:', apiData);
+      
+      const response = await this.apiCall<BusCompanyResponse>('/bus-companies', {
         method: 'POST',
-        body: JSON.stringify(companyData),
+        body: JSON.stringify(apiData),
       });
+      
+      console.log('BusCompanyService: Company created successfully:', response);
       return transformBusCompanyResponse(response);
     } catch (error) {
       console.error('BusCompanyService: Error creating company:', error);
+      console.error('BusCompanyService: Form data was:', companyData);
       throw error;
     }
   }
@@ -143,11 +168,31 @@ class BusCompanyService {
    */
   async updateCompany(id: string, updates: Partial<CompanyFormData>): Promise<BusCompany> {
     try {
-      const response = await this.apiCall<BusCompanyResponse>(`/api/bus-companies/${id}`, {
+      console.log('BusCompanyService: Updating company with data:', updates);
+      
+      // Transform the form data to match API expectations
+      const apiData: any = {};
+      if (updates.name !== undefined) apiData.name = updates.name;
+      if (updates.registrationNumber !== undefined) apiData.registrationNumber = updates.registrationNumber;
+      if (updates.companyCode !== undefined) apiData.companyCode = updates.companyCode;
+      if (updates.contactInfo?.email !== undefined) apiData.email = updates.contactInfo.email;
+      if (updates.contactInfo?.phone !== undefined) apiData.phone = updates.contactInfo.phone;
+      if (updates.address !== undefined) apiData.address = updates.address;
+      if (updates.city !== undefined) apiData.city = updates.city;
+      if (updates.status !== undefined) apiData.isActive = updates.status === 'active';
+      
+      console.log('BusCompanyService: Transformed API data:', apiData);
+      console.log('BusCompanyService: API URL:', `${this.baseUrl}/bus-companies/${id}`);
+      
+      const response = await this.apiCall<BusCompanyResponse>(`/bus-companies/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(updates),
+        body: JSON.stringify(apiData),
       });
-      return transformBusCompanyResponse(response);
+      
+      console.log('BusCompanyService: Update response:', response);
+      const transformedResponse = transformBusCompanyResponse(response);
+      console.log('BusCompanyService: Transformed response:', transformedResponse);
+      return transformedResponse;
     } catch (error) {
       console.error(`BusCompanyService: Error updating company ${id}:`, error);
       throw error;
@@ -159,7 +204,7 @@ class BusCompanyService {
    */
   async deleteCompany(id: string): Promise<void> {
     try {
-      await this.apiCall<void>(`/api/bus-companies/${id}`, {
+      await this.apiCall<void>(`/bus-companies/${id}`, {
         method: 'DELETE',
       });
       console.log(`BusCompanyService: Successfully deleted company ${id}`);
@@ -177,7 +222,7 @@ class BusCompanyService {
   async searchCompanies(query: string): Promise<BusCompany[]> {
     try {
       const encodedQuery = encodeURIComponent(query);
-      const response = await this.apiCall<BusCompanyResponse[]>(`/api/bus-companies/search?q=${encodedQuery}`);
+      const response = await this.apiCall<BusCompanyResponse[]>(`/bus-companies/search?q=${encodedQuery}`);
       return response.map(transformBusCompanyResponse);
     } catch (error) {
       console.error('BusCompanyService: Error searching companies:', error);
@@ -191,7 +236,7 @@ class BusCompanyService {
   async getCompaniesByCity(city: string): Promise<BusCompany[]> {
     try {
       const encodedCity = encodeURIComponent(city);
-      const response = await this.apiCall<BusCompanyResponse[]>(`/api/bus-companies/city/${encodedCity}`);
+      const response = await this.apiCall<BusCompanyResponse[]>(`/bus-companies/city/${encodedCity}`);
       return response.map(transformBusCompanyResponse);
     } catch (error) {
       console.error(`BusCompanyService: Error getting companies by city ${city}:`, error);
@@ -205,7 +250,7 @@ class BusCompanyService {
   async getCompanyByRegistration(registrationNumber: string): Promise<BusCompany> {
     try {
       const encodedRegNumber = encodeURIComponent(registrationNumber);
-      const response = await this.apiCall<BusCompanyResponse>(`/api/bus-companies/registration/${encodedRegNumber}`);
+      const response = await this.apiCall<BusCompanyResponse>(`/bus-companies/registration/${encodedRegNumber}`);
       return transformBusCompanyResponse(response);
     } catch (error) {
       console.error(`BusCompanyService: Error getting company by registration ${registrationNumber}:`, error);
@@ -219,7 +264,7 @@ class BusCompanyService {
   async getCompanyByCode(companyCode: string): Promise<BusCompany> {
     try {
       const encodedCode = encodeURIComponent(companyCode);
-      const response = await this.apiCall<BusCompanyResponse>(`/api/bus-companies/code/${encodedCode}`);
+      const response = await this.apiCall<BusCompanyResponse>(`/bus-companies/code/${encodedCode}`);
       return transformBusCompanyResponse(response);
     } catch (error) {
       console.error(`BusCompanyService: Error getting company by code ${companyCode}:`, error);
@@ -230,14 +275,61 @@ class BusCompanyService {
   // Bus Number Operations
 
   /**
+   * Get all bus numbers
+   */
+  async getAllBusNumbers(): Promise<BusNumber[]> {
+    try {
+      const response = await this.apiCall<BusNumberResponse[]>('/bus-numbers');
+      return response.map(transformBusNumberResponse);
+    } catch (error) {
+      console.error('BusCompanyService: Error getting all bus numbers:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get bus numbers by company ID
    */
   async getBusNumbersByCompany(companyId: string): Promise<BusNumber[]> {
     try {
-      const response = await this.apiCall<BusNumberResponse[]>(`/api/bus-numbers/company/${companyId}`);
-      return response.map(transformBusNumberResponse);
+      // Get all bus numbers and filter by company ID
+      const allBusNumbers = await this.getAllBusNumbers();
+      return allBusNumbers.filter(busNumber => busNumber.busCompanyId === companyId);
     } catch (error) {
       console.error(`BusCompanyService: Error getting bus numbers for company ${companyId}:`, error);
+      
+      // If it's a 404 or connection error, return empty array for development
+      if (error instanceof Error && (error as CompanyManagementError).type === CompanyManagementErrorType.NOT_FOUND) {
+        console.log('BusCompanyService: API not available, returning empty bus numbers list for development');
+        return [];
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Get bus number by ID
+   */
+  async getBusNumberById(id: string): Promise<BusNumber> {
+    try {
+      const response = await this.apiCall<BusNumberResponse>(`/bus-numbers/${id}`);
+      return transformBusNumberResponse(response);
+    } catch (error) {
+      console.error(`BusCompanyService: Error getting bus number ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all active bus numbers
+   */
+  async getActiveBusNumbers(): Promise<BusNumber[]> {
+    try {
+      const response = await this.apiCall<BusNumberResponse[]>('/bus-numbers/active');
+      return response.map(transformBusNumberResponse);
+    } catch (error) {
+      console.error('BusCompanyService: Error getting active bus numbers:', error);
       throw error;
     }
   }
@@ -249,15 +341,28 @@ class BusCompanyService {
     try {
       const requestData = {
         ...busNumberData,
-        companyId
+        busCompanyId: parseInt(companyId)
       };
-      const response = await this.apiCall<BusNumberResponse>('/api/bus-numbers', {
+      
+      console.log('=== BUS COMPANY SERVICE CREATE ===');
+      console.log('BusCompanyService: Creating bus number with data:', requestData);
+      console.log('BusCompanyService: Company ID:', companyId);
+      console.log('BusCompanyService: Parsed Company ID:', parseInt(companyId));
+      console.log('BusCompanyService: API URL:', `${this.baseUrl}/bus-numbers`);
+      
+      const response = await this.apiCall<BusNumberResponse>('/bus-numbers', {
         method: 'POST',
         body: JSON.stringify(requestData),
       });
-      return transformBusNumberResponse(response);
+      
+      console.log('BusCompanyService: Bus number created successfully:', response);
+      const transformedResponse = transformBusNumberResponse(response);
+      console.log('BusCompanyService: Transformed response:', transformedResponse);
+      return transformedResponse;
     } catch (error) {
       console.error('BusCompanyService: Error creating bus number:', error);
+      console.error('BusCompanyService: Error type:', typeof error);
+      console.error('BusCompanyService: Error message:', error instanceof Error ? error.message : 'Unknown error');
       throw error;
     }
   }
@@ -267,10 +372,27 @@ class BusCompanyService {
    */
   async updateBusNumber(id: string, updates: Partial<BusNumberFormData>): Promise<BusNumber> {
     try {
-      const response = await this.apiCall<BusNumberResponse>(`/api/bus-numbers/${id}`, {
+      console.log('BusCompanyService: Updating bus number with data:', updates);
+      
+      // First get the existing bus number to retrieve the busCompanyId
+      const existingBusNumber = await this.getBusNumberById(id);
+      console.log('BusCompanyService: Existing bus number:', existingBusNumber);
+      
+      // Transform the data to match API expectations
+      const requestData = {
+        ...updates,
+        busCompanyId: parseInt(existingBusNumber.busCompanyId) // Include required busCompanyId
+      };
+      
+      console.log('BusCompanyService: Transformed request data:', requestData);
+      console.log('BusCompanyService: API URL:', `${this.baseUrl}/bus-numbers/${id}`);
+      
+      const response = await this.apiCall<BusNumberResponse>(`/bus-numbers/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(updates),
+        body: JSON.stringify(requestData),
       });
+      
+      console.log('BusCompanyService: Bus number updated successfully:', response);
       return transformBusNumberResponse(response);
     } catch (error) {
       console.error(`BusCompanyService: Error updating bus number ${id}:`, error);
@@ -283,12 +405,44 @@ class BusCompanyService {
    */
   async deleteBusNumber(id: string): Promise<void> {
     try {
-      await this.apiCall<void>(`/api/bus-numbers/${id}`, {
+      await this.apiCall<void>(`/bus-numbers/${id}`, {
         method: 'DELETE',
       });
       console.log(`BusCompanyService: Successfully deleted bus number ${id}`);
     } catch (error) {
       console.error(`BusCompanyService: Error deleting bus number ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Activate a bus number
+   */
+  async activateBusNumber(id: string): Promise<BusNumber> {
+    try {
+      const response = await this.apiCall<BusNumberResponse>(`/bus-numbers/${id}/activate`, {
+        method: 'PATCH',
+      });
+      console.log(`BusCompanyService: Successfully activated bus number ${id}`);
+      return transformBusNumberResponse(response);
+    } catch (error) {
+      console.error(`BusCompanyService: Error activating bus number ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Deactivate a bus number
+   */
+  async deactivateBusNumber(id: string): Promise<BusNumber> {
+    try {
+      const response = await this.apiCall<BusNumberResponse>(`/bus-numbers/${id}/deactivate`, {
+        method: 'PATCH',
+      });
+      console.log(`BusCompanyService: Successfully deactivated bus number ${id}`);
+      return transformBusNumberResponse(response);
+    } catch (error) {
+      console.error(`BusCompanyService: Error deactivating bus number ${id}:`, error);
       throw error;
     }
   }
@@ -300,10 +454,17 @@ class BusCompanyService {
    */
   async getRegisteredBusesByCompany(companyId: string): Promise<RegisteredBus[]> {
     try {
-      const response = await this.apiCall<RegisteredBusResponse[]>(`/api/registered-buses/company/${companyId}`);
+      const response = await this.apiCall<RegisteredBusResponse[]>(`/registered-buses/company/${companyId}`);
       return response.map(transformRegisteredBusResponse);
     } catch (error) {
       console.error(`BusCompanyService: Error getting registered buses for company ${companyId}:`, error);
+      
+      // If it's a 404 or connection error, return empty array for development
+      if (error instanceof Error && (error as CompanyManagementError).type === CompanyManagementErrorType.NOT_FOUND) {
+        console.log('BusCompanyService: API not available, returning empty registered buses list for development');
+        return [];
+      }
+      
       throw error;
     }
   }
@@ -320,7 +481,7 @@ class BusCompanyService {
         lastInspection: busData.lastInspection?.toISOString(),
         nextInspection: busData.nextInspection?.toISOString(),
       };
-      const response = await this.apiCall<RegisteredBusResponse>('/api/registered-buses', {
+      const response = await this.apiCall<RegisteredBusResponse>('/registered-buses', {
         method: 'POST',
         body: JSON.stringify(requestData),
       });
@@ -342,7 +503,7 @@ class BusCompanyService {
         lastInspection: updates.lastInspection?.toISOString(),
         nextInspection: updates.nextInspection?.toISOString(),
       };
-      const response = await this.apiCall<RegisteredBusResponse>(`/api/registered-buses/${id}`, {
+      const response = await this.apiCall<RegisteredBusResponse>(`/registered-buses/${id}`, {
         method: 'PUT',
         body: JSON.stringify(requestData),
       });
@@ -358,7 +519,7 @@ class BusCompanyService {
    */
   async deleteRegisteredBus(id: string): Promise<void> {
     try {
-      await this.apiCall<void>(`/api/registered-buses/${id}`, {
+      await this.apiCall<void>(`/registered-buses/${id}`, {
         method: 'DELETE',
       });
       console.log(`BusCompanyService: Successfully deleted registered bus ${id}`);

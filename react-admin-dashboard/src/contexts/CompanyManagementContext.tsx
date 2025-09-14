@@ -300,14 +300,17 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
 
   const updateCompany = useCallback(async (id: string, updates: Partial<CompanyFormData>) => {
     console.log('CompanyManagementContext: Updating company:', id);
+    console.log('CompanyManagementContext: Update data:', updates);
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
       const updatedCompany = await busCompanyService.updateCompany(id, updates);
+      console.log('CompanyManagementContext: Received updated company:', updatedCompany);
       dispatch({ type: 'UPDATE_COMPANY', payload: { id, company: updatedCompany } });
       console.log('CompanyManagementContext: Company updated successfully:', id);
     } catch (error) {
+      console.error('CompanyManagementContext: Update error:', error);
       handleError(error, 'updateCompany');
       throw error; // Re-throw so the UI can handle it
     }

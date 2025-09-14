@@ -55,7 +55,7 @@ const CompanyManagementView: React.FC<CompanyManagementViewProps> = ({ company }
   useEffect(() => {
     console.log('CompanyManagementView: Loading data for company:', company.id);
     actions.loadCompanyData(company.id);
-  }, [company.id, actions]);
+  }, [company.id]); // Remove actions from dependency array to prevent infinite loop
 
   // Sync tab value with navigation state
   useEffect(() => {

@@ -15,27 +15,34 @@ import {
 // Data Transformation Utilities
 
 export const transformBusCompanyResponse = (response: BusCompanyResponse): BusCompany => ({
-  id: response.id,
+  id: response.id.toString(),
   name: response.name,
   registrationNumber: response.registrationNumber,
   companyCode: response.companyCode,
   city: response.city,
   address: response.address,
-  contactInfo: response.contactInfo,
-  status: response.status as 'active' | 'inactive' | 'suspended',
+  contactInfo: {
+    phone: response.phone,
+    email: response.email
+  },
+  status: response.isActive ? 'active' : 'inactive',
   createdAt: new Date(response.createdAt),
   updatedAt: new Date(response.updatedAt)
 });
 
 export const transformBusNumberResponse = (response: BusNumberResponse): BusNumber => ({
-  id: response.id,
-  companyId: response.companyId,
+  id: response.id.toString(),
+  busCompanyId: response.busCompanyId.toString(),
   busNumber: response.busNumber,
-  routeId: response.routeId,
   routeName: response.routeName,
-  status: response.status as 'active' | 'inactive' | 'maintenance',
-  assignedDriver: response.assignedDriver,
-  capacity: response.capacity,
+  description: response.description,
+  startDestination: response.startDestination,
+  endDestination: response.endDestination,
+  direction: response.direction,
+  distanceKm: response.distanceKm,
+  estimatedDurationMinutes: response.estimatedDurationMinutes,
+  frequencyMinutes: response.frequencyMinutes,
+  isActive: response.isActive,
   createdAt: new Date(response.createdAt),
   updatedAt: new Date(response.updatedAt)
 });
@@ -70,22 +77,24 @@ export const companyValidationSchema: ValidationSchema = {
   },
   registrationNumber: {
     required: true,
-    pattern: /^[A-Z0-9]{6,20}$/,
+    minLength: 3,
+    maxLength: 20,
     custom: (value: string) => {
       if (!value) return null;
-      if (!/^[A-Z0-9]+$/.test(value)) {
-        return 'Registration number must contain only uppercase letters and numbers';
+      if (!/^[A-Z0-9\-\s]+$/.test(value)) {
+        return 'Registration number must contain only uppercase letters, numbers, hyphens, and spaces';
       }
       return null;
     }
   },
   companyCode: {
     required: true,
-    pattern: /^[A-Z]{2,10}$/,
+    minLength: 2,
+    maxLength: 10,
     custom: (value: string) => {
       if (!value) return null;
-      if (!/^[A-Z]+$/.test(value)) {
-        return 'Company code must contain only uppercase letters';
+      if (!/^[A-Z0-9]+$/.test(value)) {
+        return 'Company code must contain only uppercase letters and numbers';
       }
       return null;
     }
@@ -109,28 +118,65 @@ export const companyValidationSchema: ValidationSchema = {
 export const busNumberValidationSchema: ValidationSchema = {
   busNumber: {
     required: true,
-    pattern: /^[A-Z0-9\-]{3,20}$/,
+    minLength: 1,
+    maxLength: 20,
     custom: (value: string) => {
       if (!value) return null;
-      if (!/^[A-Z0-9\-]+$/.test(value)) {
-        return 'Bus number must contain only uppercase letters, numbers, and hyphens';
+      if (!/^[A-Z0-9\-\s]+$/.test(value)) {
+        return 'Bus number must contain only uppercase letters, numbers, hyphens, and spaces';
       }
       return null;
     }
   },
-  assignedDriver: {
+  routeName: {
+    required: true,
     minLength: 2,
     maxLength: 100
   },
-  capacity: {
+  startDestination: {
+    required: true,
+    minLength: 2,
+    maxLength: 100
+  },
+  endDestination: {
+    required: true,
+    minLength: 2,
+    maxLength: 100
+  },
+  direction: {
+    required: true,
+    minLength: 2,
+    maxLength: 50
+  },
+  distanceKm: {
+    required: true,
     custom: (value: number) => {
-      if (value !== undefined && value !== null) {
-        if (value < 1 || value > 200) {
-          return 'Capacity must be between 1 and 200';
-        }
+      if (value < 0.1 || value > 1000) {
+        return 'Distance must be between 0.1 and 1000 km';
       }
       return null;
     }
+  },
+  estimatedDurationMinutes: {
+    required: true,
+    custom: (value: number) => {
+      if (value < 1 || value > 1440) {
+        return 'Duration must be between 1 and 1440 minutes';
+      }
+      return null;
+    }
+  },
+  frequencyMinutes: {
+    required: true,
+    custom: (value: number) => {
+      if (value < 1 || value > 1440) {
+        return 'Frequency must be between 1 and 1440 minutes';
+      }
+      return null;
+    }
+  },
+  description: {
+    maxLength: 500
   }
 };
 
@@ -290,7 +336,9 @@ export const filterBusNumbers = (busNumbers: BusNumber[], query: string): BusNum
   return busNumbers.filter(busNumber =>
     busNumber.busNumber.toLowerCase().includes(searchTerm) ||
     (busNumber.routeName && busNumber.routeName.toLowerCase().includes(searchTerm)) ||
-    (busNumber.assignedDriver && busNumber.assignedDriver.toLowerCase().includes(searchTerm))
+    (busNumber.startDestination && busNumber.startDestination.toLowerCase().includes(searchTerm)) ||
+    (busNumber.endDestination && busNumber.endDestination.toLowerCase().includes(searchTerm)) ||
+    (busNumber.description && busNumber.description.toLowerCase().includes(searchTerm))
   );
 };
 
@@ -342,10 +390,15 @@ export const companyToFormData = (company: BusCompany): CompanyFormData => ({
 
 export const busNumberToFormData = (busNumber: BusNumber): BusNumberFormData => ({
   busNumber: busNumber.busNumber,
-  routeId: busNumber.routeId,
-  status: busNumber.status,
-  assignedDriver: busNumber.assignedDriver,
-  capacity: busNumber.capacity
+  routeName: busNumber.routeName,
+  description: busNumber.description,
+  startDestination: busNumber.startDestination,
+  endDestination: busNumber.endDestination,
+  direction: busNumber.direction,
+  distanceKm: busNumber.distanceKm,
+  estimatedDurationMinutes: busNumber.estimatedDurationMinutes,
+  frequencyMinutes: busNumber.frequencyMinutes,
+  isActive: busNumber.isActive
 });
 
 export const registeredBusToFormData = (bus: RegisteredBus): RegisteredBusFormData => ({

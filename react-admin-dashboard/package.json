@@ -6,7 +6,6 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-
     "@hookform/resolvers": "^5.1.1",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
@@ -71,6 +70,7 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^24.0.15",
     "source-map-explorer": "^2.5.3",
     "text-encoding": "^0.7.0",

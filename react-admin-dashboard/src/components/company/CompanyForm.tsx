@@ -97,7 +97,13 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
+    console.log('CompanyForm: Form submission started');
+    console.log('CompanyForm: Form data:', formData);
+    console.log('CompanyForm: Validation result:', validation);
+    
     if (!validation.isValid) {
+      console.log('CompanyForm: Form validation failed, not submitting');
+      console.log('CompanyForm: Validation errors:', validation.errors);
       return;
     }
 
@@ -105,7 +111,9 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     setSubmitError(null);
 
     try {
+      console.log('CompanyForm: Calling onSubmit with data:', formData);
       await onSubmit(formData);
+      console.log('CompanyForm: onSubmit completed successfully');
       // Form will be closed by parent component
     } catch (error) {
       console.error('CompanyForm: Submit error:', error);
@@ -273,6 +281,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           >
             Cancel
           </Button>
+
           <Button
             type="submit"
             variant="contained"
@@ -281,6 +290,20 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           >
             {isSubmitting ? 'Saving...' : 'Save Company'}
           </Button>
+          {!validation.isValid && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="caption" color="error">
+                Please fix validation errors before submitting
+              </Typography>
+              {Object.keys(validation.errors).length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="error" component="div">
+                    Errors: {Object.keys(validation.errors).join(', ')}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          )}
         </DialogActions>
       </form>
     </Dialog>
