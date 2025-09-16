@@ -150,6 +150,41 @@ const RouteMap: React.FC<RouteMapProps> = ({
     }
   }, [mapInstance, markerData, markerManager]);
 
+  // Auto-fit map bounds to include all markers when they change
+  useEffect(() => {
+    if (!mapInstance || !window.google || !window.google.maps) return;
+
+    try {
+      if (markerData && markerData.length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        markerData.forEach(m => {
+          // Ensure position exists and is valid
+          if (m.position && typeof m.position.lat === 'number' && typeof m.position.lng === 'number') {
+            bounds.extend(m.position);
+          }
+        });
+
+        // Only fit bounds if we actually extended it with at least one point
+        // Guard against calling fitBounds with an empty bounds
+        try {
+          mapInstance.fitBounds(bounds);
+        } catch (err) {
+          // In some edge cases fitBounds can throw if invalid; fallback to setCenter
+          const first = markerData[0];
+          if (first && first.position) {
+            mapInstance.setCenter(first.position);
+          }
+        }
+      } else {
+        // No markers: reset to default center and zoom
+        mapInstance.setCenter(mapCenter);
+        mapInstance.setZoom(zoom);
+      }
+    } catch (error) {
+      console.error('Error while fitting map bounds:', error);
+    }
+  }, [mapInstance, markerData, mapCenter, zoom]);
+
   return (
     <Box sx={{ height, width: '100%' }}>
       <GoogleMap
