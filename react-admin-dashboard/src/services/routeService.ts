@@ -314,6 +314,25 @@ export const routeService = {
   },
 
   /**
+   * Update a stop's arbitrary fields by sending a PUT with a single stop in the stops array.
+   * This is used for updating fields other than index (e.g. name/address).
+   */
+  async updateRouteStopFields(routeId: string, stopData: any): Promise<any> {
+    try {
+      console.log('RouteService: Updating stop fields for route', routeId, stopData);
+      const response = await httpClient.put(
+        `${config.endpoints.routes}/${routeId}`,
+        { stops: [stopData] }
+      );
+      try { invalidateRouteCache(); } catch (e) { /* ignore */ }
+      return response.data;
+    } catch (error) {
+      console.error('RouteService: Failed to update route stop fields:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Delete a stop from a route
    */
   async deleteRouteStop(routeId: string, stopId: string): Promise<void> {
