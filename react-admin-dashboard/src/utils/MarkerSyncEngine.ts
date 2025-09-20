@@ -72,6 +72,8 @@ export class MarkerSyncEngine {
       a.position.lat === b.position.lat &&
       a.position.lng === b.position.lng &&
       a.title === b.title &&
+      // Compare label values if present
+      ((a.label && b.label) ? (a.label.text === b.label.text && a.label.color === b.label.color && a.label.fontSize === b.label.fontSize && a.label.fontWeight === b.label.fontWeight) : a.label === b.label) &&
       a.icon === b.icon &&
       a.clickable === b.clickable &&
       a.draggable === b.draggable &&

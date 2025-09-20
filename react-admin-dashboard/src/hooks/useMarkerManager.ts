@@ -41,6 +41,7 @@ export function useMarkerManager(
       position: data.position,
       map: map,
       title: data.title,
+      label: data.label ? { text: data.label.text, color: data.label.color, fontSize: data.label.fontSize, fontWeight: data.label.fontWeight as any } : undefined,
       icon: data.icon,
       clickable: data.clickable ?? true,
       draggable: data.draggable ?? false,
@@ -123,6 +124,7 @@ export function useMarkerManager(
                 existingState.marker.setOptions({
                   position: operation.data.position,
                   title: operation.data.title,
+                  label: operation.data.label ? { text: operation.data.label.text, color: operation.data.label.color, fontSize: operation.data.label.fontSize, fontWeight: operation.data.label.fontWeight as any } : undefined,
                   icon: operation.data.icon,
                   clickable: operation.data.clickable,
                   draggable: operation.data.draggable,

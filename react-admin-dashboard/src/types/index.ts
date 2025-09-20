@@ -35,6 +35,10 @@ export interface BusStop {
   longitude: number;
   order: number;
   routeId: number;
+  // Optional index used by backend for ordering stops
+  busStopIndex?: number;
+  // Direction string (e.g., 'Northbound', 'Southbound', 'Bidirectional')
+  direction?: string;
 }
 
 export interface TemporaryStop {

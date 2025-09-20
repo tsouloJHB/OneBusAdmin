@@ -80,11 +80,21 @@ const RouteMap: React.FC<RouteMapProps> = ({
 
     // Add route stops
     if (route?.stops) {
-      route.stops.forEach((stop, index) => {
+      route.stops.forEach((stop) => {
+        // Use explicit busStopIndex when available so UI updates immediately after index change
+        const displayIndex = (stop as any).busStopIndex ?? undefined;
+        const titlePrefix = displayIndex !== undefined ? `${displayIndex}. ` : '';
         markers.push({
           id: `stop-${stop.id}`,
           position: { lat: stop.latitude, lng: stop.longitude },
-          title: `${index + 1}. ${stop.name}`,
+          title: `${titlePrefix}${stop.name}`,
+          // Add visible numeric label showing the bus stop index
+          label: {
+            text: displayIndex !== undefined ? String(displayIndex) : '',
+            color: '#ffffff',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          },
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 8,
@@ -104,6 +114,12 @@ const RouteMap: React.FC<RouteMapProps> = ({
         id: `temp-${stop.id}`,
         position: { lat: stop.latitude, lng: stop.longitude },
         title: `${(route?.stops?.length || 0) + index + 1}. ${stop.name} (Temporary)`,
+        label: {
+          text: String((route?.stops?.length || 0) + index + 1),
+          color: '#000000',
+          fontSize: '12px',
+          fontWeight: 'bold'
+        },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 10,
@@ -137,7 +153,20 @@ const RouteMap: React.FC<RouteMapProps> = ({
 
     
     return markers;
-  }, [route?.stops, temporaryStops, tempMarker]);
+    }, [route, temporaryStops, tempMarker]);
+
+  // Debug: log marker data when it changes to help detect stale props
+  useEffect(() => {
+    try {
+      if (markerData && markerData.length > 0) {
+        console.info('RouteMap markerData:', markerData.map(m => ({ id: m.id, title: m.title })));
+      } else {
+        console.info('RouteMap markerData: []');
+      }
+    } catch (err) {
+      console.warn('Error logging markerData', err);
+    }
+  }, [markerData]);
 
   // Update markers when data changes
   useEffect(() => {

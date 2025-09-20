@@ -4,6 +4,12 @@ export interface MarkerData {
   id: string;
   position: google.maps.LatLngLiteral;
   title?: string;
+  label?: {
+    text: string;
+    color?: string;
+    fontSize?: string;
+    fontWeight?: string | number;
+  };
   icon?: string | google.maps.Icon | google.maps.Symbol;
   clickable?: boolean;
   draggable?: boolean;

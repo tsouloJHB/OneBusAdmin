@@ -1,4 +1,4 @@
-import httpClient from './httpClient';
+import httpClient, { invalidateRouteCache } from './httpClient';
 import { config } from '../config';
 import { 
   Route, 
@@ -28,7 +28,7 @@ export const routeService = {
       console.log('RouteService: Backend routes:', backendRoutes);
       
       // Transform backend route format to frontend Route format
-      const routes: Route[] = backendRoutes.map((backendRoute: any) => {
+  const routes: Route[] = backendRoutes.map((backendRoute: any) => {
         // Ensure id is always a number
         let routeId: number;
         if (typeof backendRoute.id === 'number') {
@@ -39,12 +39,19 @@ export const routeService = {
           routeId = parseInt(Math.random().toString());
         }
         
+        // Ensure stops are ordered by busStopIndex so UI shows correct order immediately
+        const sortedStops = (backendRoute.stops || []).slice().sort((a: any, b: any) => {
+          const ai = a?.busStopIndex ?? 0;
+          const bi = b?.busStopIndex ?? 0;
+          return ai - bi;
+        });
+
         return {
           id: routeId,
           name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
           startPoint: backendRoute.startPoint || 'Start Point',
           endPoint: backendRoute.endPoint || 'End Point',
-          stops: backendRoute.stops || [],
+          stops: sortedStops,
           schedule: [], // Your backend doesn't have this field yet
           isActive: backendRoute.active !== undefined ? backendRoute.active : true,
           createdAt: new Date(),
@@ -194,7 +201,12 @@ export const routeService = {
         endPoint: backendRoute.endPoint || 'End Point',
         active: backendRoute.active !== undefined ? backendRoute.active : true,
         isActive: backendRoute.active !== undefined ? backendRoute.active : true,
-        stops: backendRoute.stops || [],
+        // Ensure stops are ordered by busStopIndex
+        stops: (backendRoute.stops || []).slice().sort((a: any, b: any) => {
+          const ai = a?.busStopIndex ?? 0;
+          const bi = b?.busStopIndex ?? 0;
+          return ai - bi;
+        }),
         createdAt: backendRoute.createdAt ? new Date(backendRoute.createdAt) : new Date(),
         updatedAt: backendRoute.updatedAt ? new Date(backendRoute.updatedAt) : new Date(),
       };
@@ -269,6 +281,39 @@ export const routeService = {
   },
 
   /**
+   * Update a stop's fields (including busStopIndex) by sending a PUT with a single stop in the stops array
+   */
+  async updateRouteStop(routeId: string, stopData: any): Promise<any> {
+    try {
+      console.log('RouteService: Updating stop for route', routeId, stopData);
+      const stopId = stopData.id;
+      if (!stopId) throw new Error('stopData.id is required');
+      // Call dedicated endpoint to update index
+      try {
+        const response = await httpClient.post(
+          `${config.endpoints.routes}/${routeId}/stops/${stopId}/index`,
+          { busStopIndex: stopData.busStopIndex }
+        );
+        // Invalidate cached routes so UI reload fetches fresh data
+        try { invalidateRouteCache(); } catch (e) { /* ignore cache invalidation failures */ }
+        return response.data;
+      } catch (innerErr) {
+        console.warn('RouteService: POST index endpoint failed, attempting fallback PUT update', innerErr);
+        // Fallback to PUT /routes/{routeId} with stops array (older behavior)
+        const fallbackResponse = await httpClient.put(
+          `${config.endpoints.routes}/${routeId}`,
+          { stops: [stopData] }
+        );
+        try { invalidateRouteCache(); } catch (e) { /* ignore */ }
+        return fallbackResponse.data;
+      }
+    } catch (error) {
+      console.error('RouteService: Failed to update route stop:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Delete a stop from a route
    */
   async deleteRouteStop(routeId: string, stopId: string): Promise<void> {
@@ -284,9 +329,15 @@ export const routeService = {
   /**
    * Get a single route by ID (alias for compatibility)
    */
-  async getRoute(id: number): Promise<Route> {
+  /**
+   * Get a single route by ID. If forceReload is true a cache-busting query param is appended
+   * so the http client will not return a cached response.
+   */
+  async getRoute(id: number, forceReload: boolean = false): Promise<Route> {
     try {
-      const response = await httpClient.get(`${config.endpoints.routes}/${id}`);
+      // Append cache-busting query parameter when a fresh fetch is required
+      const url = forceReload ? `${config.endpoints.routes}/${id}?cacheBust=${Date.now()}` : `${config.endpoints.routes}/${id}`;
+      const response = await httpClient.get(url);
       const backendRoute = response.data;
       
       // Transform backend route format to frontend Route format
@@ -313,7 +364,11 @@ export const routeService = {
         endPoint: backendRoute.endPoint || 'End Point',
         active: backendRoute.active !== undefined ? backendRoute.active : true,
         isActive: backendRoute.active !== undefined ? backendRoute.active : true,
-        stops: backendRoute.stops || [],
+        stops: (backendRoute.stops || []).slice().sort((a: any, b: any) => {
+          const ai = a?.busStopIndex ?? 0;
+          const bi = b?.busStopIndex ?? 0;
+          return ai - bi;
+        }),
         createdAt: backendRoute.createdAt ? new Date(backendRoute.createdAt) : new Date(),
         updatedAt: backendRoute.updatedAt ? new Date(backendRoute.updatedAt) : new Date(),
       };
