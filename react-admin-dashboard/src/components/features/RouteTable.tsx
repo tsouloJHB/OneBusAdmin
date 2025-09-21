@@ -182,13 +182,13 @@ const RouteTable: React.FC<RouteTableProps> = ({
       ),
     },
     {
-      field: 'schedule',
-      headerName: 'Schedule',
-      width: 120,
+      field: 'direction',
+      headerName: 'Direction',
+      width: 140,
       sortable: false,
       renderCell: (params) => (
         <Typography variant="body2" color="text.secondary">
-          {formatSchedule(params.value)}
+          {params.row?.direction || 'N/A'}
         </Typography>
       ),
     },

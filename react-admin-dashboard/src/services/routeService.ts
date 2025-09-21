@@ -51,6 +51,7 @@ export const routeService = {
           name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
           startPoint: backendRoute.startPoint || 'Start Point',
           endPoint: backendRoute.endPoint || 'End Point',
+          direction: backendRoute.direction || '',
           stops: sortedStops,
           schedule: [], // Your backend doesn't have this field yet
           isActive: backendRoute.active !== undefined ? backendRoute.active : true,
