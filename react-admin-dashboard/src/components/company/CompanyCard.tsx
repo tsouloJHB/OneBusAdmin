@@ -145,15 +145,16 @@ const CompanyCard: React.FC<CompanyCardProps> = ({
           {/* Header with avatar and menu */}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
             <Avatar
+              src={company.imageUrl}
               sx={{
-                bgcolor: getAvatarColor(company.name),
+                bgcolor: company.imageUrl ? 'transparent' : getAvatarColor(company.name),
                 width: 48,
                 height: 48,
                 fontSize: '1.2rem',
                 fontWeight: 'bold'
               }}
             >
-              {getCompanyInitials(company.name)}
+              {!company.imageUrl && getCompanyInitials(company.name)}
             </Avatar>
             
             <Box sx={{ flexGrow: 1, ml: 2, minWidth: 0 }}>

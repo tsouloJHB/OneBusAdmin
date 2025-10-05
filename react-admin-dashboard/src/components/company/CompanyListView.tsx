@@ -335,6 +335,7 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
             city: editingCompany.city,
             address: editingCompany.address,
             contactInfo: editingCompany.contactInfo,
+            imageUrl: editingCompany.imageUrl,
             status: editingCompany.status
           }}
         />

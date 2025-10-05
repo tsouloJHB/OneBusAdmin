@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -24,31 +24,44 @@ import {
 } from '@mui/icons-material';
 import { RegisteredBusesProps } from '../../types/busCompany';
 import { getStatusColor, getStatusLabel, isInspectionDue, isInspectionOverdue, formatDate } from '../../utils/busCompanyUtils';
+import RegisteredBusForm from './RegisteredBusForm';
+import { useCompanyManagement } from '../../contexts/CompanyManagementContext';
 
 const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
   companyId,
+  companyName,
   registeredBuses,
   loading,
+  availableRoutes = [],
   onAdd,
   onEdit,
   onDelete
 }) => {
+  const { state } = useCompanyManagement();
+
+  const [openForm, setOpenForm] = useState(false);
+  const [editingBusId, setEditingBusId] = useState<string | null>(null);
+
   // Handle add new registered bus
   const handleAdd = () => {
     console.log('RegisteredBuses: Add new registered bus for company:', companyId);
-    // TODO: Open form dialog
+    setEditingBusId(null);
+    setOpenForm(true);
   };
 
   // Handle edit registered bus
   const handleEdit = (id: string) => {
     console.log('RegisteredBuses: Edit registered bus:', id);
-    // TODO: Open form dialog with existing data
+    setEditingBusId(id);
+    setOpenForm(true);
   };
 
   // Handle delete registered bus
   const handleDelete = (id: string) => {
     console.log('RegisteredBuses: Delete registered bus:', id);
-    // TODO: Show confirmation dialog
+    const ok = window.confirm('Are you sure you want to delete this registered bus?');
+    if (!ok) return;
+    onDelete(id).catch(err => console.error('Failed to delete registered bus', err));
   };
 
   return (
@@ -107,11 +120,14 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
               <TableRow>
                 <TableCell>Registration Number</TableCell>
                 <TableCell>Bus Number</TableCell>
+                <TableCell>Bus ID</TableCell>
+                <TableCell>Driver ID</TableCell>
+                <TableCell>Driver Name</TableCell>
                 <TableCell>Model & Year</TableCell>
                 <TableCell>Capacity</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Route Assignment</TableCell>
-                <TableCell>Next Inspection</TableCell>
+                <TableCell>Tracker IMEI</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -135,6 +151,39 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
                     )}
                   </TableCell>
                   <TableCell>
+                    {bus.busId ? (
+                      <Typography variant="body2">
+                        {bus.busId}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Not set
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {bus.driverId ? (
+                      <Typography variant="body2">
+                        {bus.driverId}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Not set
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {bus.driverName ? (
+                      <Typography variant="body2">
+                        {bus.driverName}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Not set
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Typography variant="body2">
                       {bus.model} ({bus.year})
                     </Typography>
@@ -152,14 +201,16 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
                     />
                   </TableCell>
                   <TableCell>
-                    {bus.routeAssignment ? (
+                    {bus.routeName ? (
                       <Box>
                         <Typography variant="body2">
-                          {bus.routeAssignment.routeName}
+                          {bus.routeName}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Since {formatDate(bus.routeAssignment.assignedAt)}
-                        </Typography>
+                        {bus.routeAssignedAt && (
+                          <Typography variant="caption" color="text.secondary">
+                            Since {formatDate(bus.routeAssignedAt)}
+                          </Typography>
+                        )}
                       </Box>
                     ) : (
                       <Typography variant="body2" color="text.secondary">
@@ -168,42 +219,13 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
                     )}
                   </TableCell>
                   <TableCell>
-                    {bus.nextInspection ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {isInspectionOverdue(bus.nextInspection) && (
-                          <WarningIcon color="error" fontSize="small" />
-                        )}
-                        {isInspectionDue(bus.nextInspection) && !isInspectionOverdue(bus.nextInspection) && (
-                          <WarningIcon color="warning" fontSize="small" />
-                        )}
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            color={
-                              isInspectionOverdue(bus.nextInspection)
-                                ? 'error.main'
-                                : isInspectionDue(bus.nextInspection)
-                                  ? 'warning.main'
-                                  : 'text.primary'
-                            }
-                          >
-                            {formatDate(bus.nextInspection)}
-                          </Typography>
-                          {isInspectionOverdue(bus.nextInspection) && (
-                            <Typography variant="caption" color="error.main">
-                              Overdue
-                            </Typography>
-                          )}
-                          {isInspectionDue(bus.nextInspection) && !isInspectionOverdue(bus.nextInspection) && (
-                            <Typography variant="caption" color="warning.main">
-                              Due soon
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
+                    {bus.trackerImei ? (
+                      <Typography variant="body2">
+                        {bus.trackerImei}
+                      </Typography>
                     ) : (
                       <Typography variant="body2" color="text.secondary">
-                        Not scheduled
+                        Not set
                       </Typography>
                     )}
                   </TableCell>
@@ -238,6 +260,30 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
           Forms and CRUD operations will be implemented in the next phase.
         </Typography>
       </Alert>
+
+      {/* Registered Bus Form Dialog */}
+      <RegisteredBusForm
+        open={openForm}
+        companyId={companyId}
+        companyName={companyName}
+        companyBusNumbers={(state.busNumbers || []).map(b => b.busNumber)}
+        availableRoutes={availableRoutes}
+        initialData={editingBusId ? registeredBuses.find(b => b.id === editingBusId) as any : undefined}
+        onCancel={() => setOpenForm(false)}
+        onSubmit={async (data) => {
+          try {
+            if (editingBusId) {
+              await onEdit(editingBusId, data as any, companyId);
+            } else {
+              await onAdd(companyId, data as any);
+            }
+            setOpenForm(false);
+          } catch (err) {
+            console.error('Failed to save registered bus', err);
+            throw err;
+          }
+        }}
+      />
     </Box>
   );
 };

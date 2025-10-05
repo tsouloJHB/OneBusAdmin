@@ -50,17 +50,20 @@ export const transformBusNumberResponse = (response: BusNumberResponse): BusNumb
 export const transformRegisteredBusResponse = (response: RegisteredBusResponse): RegisteredBus => ({
   id: response.id,
   companyId: response.companyId,
+  companyName: response.companyName,
   registrationNumber: response.registrationNumber,
   busNumber: response.busNumber,
+  busId: response.busId,
+  trackerImei: response.trackerImei,
+  driverId: response.driverId,
+  driverName: response.driverName,
   model: response.model,
   year: response.year,
   capacity: response.capacity,
   status: response.status as 'active' | 'inactive' | 'maintenance' | 'retired',
-  routeAssignment: response.routeAssignment ? {
-    routeId: response.routeAssignment.routeId,
-    routeName: response.routeAssignment.routeName,
-    assignedAt: new Date(response.routeAssignment.assignedAt)
-  } : undefined,
+  routeId: response.routeId,
+  routeName: response.routeName,
+  routeAssignedAt: response.routeAssignedAt ? new Date(response.routeAssignedAt) : undefined,
   lastInspection: response.lastInspection ? new Date(response.lastInspection) : undefined,
   nextInspection: response.nextInspection ? new Date(response.nextInspection) : undefined,
   createdAt: new Date(response.createdAt),
@@ -79,11 +82,10 @@ export const companyValidationSchema: ValidationSchema = {
     required: true,
     minLength: 3,
     maxLength: 20,
+    // Allow any characters (letters, numbers, symbols). Keep length checks.
     custom: (value: string) => {
       if (!value) return null;
-      if (!/^[A-Z0-9\-\s]+$/.test(value)) {
-        return 'Registration number must contain only uppercase letters, numbers, hyphens, and spaces';
-      }
+      // No restrictive pattern - accept arbitrary strings within length limits
       return null;
     }
   },
@@ -91,11 +93,10 @@ export const companyValidationSchema: ValidationSchema = {
     required: true,
     minLength: 2,
     maxLength: 10,
+    // Allow any characters (letters, numbers, symbols). Keep length checks.
     custom: (value: string) => {
       if (!value) return null;
-      if (!/^[A-Z0-9]+$/.test(value)) {
-        return 'Company code must contain only uppercase letters and numbers';
-      }
+      // No restrictive pattern - accept arbitrary strings within length limits
       return null;
     }
   },
@@ -350,7 +351,7 @@ export const filterRegisteredBuses = (buses: RegisteredBus[], query: string): Re
     bus.registrationNumber.toLowerCase().includes(searchTerm) ||
     (bus.busNumber && bus.busNumber.toLowerCase().includes(searchTerm)) ||
     bus.model.toLowerCase().includes(searchTerm) ||
-    (bus.routeAssignment && bus.routeAssignment.routeName.toLowerCase().includes(searchTerm))
+    (bus.routeName && bus.routeName.toLowerCase().includes(searchTerm))
   );
 };
 
@@ -404,14 +405,16 @@ export const busNumberToFormData = (busNumber: BusNumber): BusNumberFormData => 
 export const registeredBusToFormData = (bus: RegisteredBus): RegisteredBusFormData => ({
   registrationNumber: bus.registrationNumber,
   busNumber: bus.busNumber,
+  busId: bus.busId,
+  trackerImei: bus.trackerImei,
+  driverId: bus.driverId,
+  driverName: bus.driverName,
   model: bus.model,
   year: bus.year,
   capacity: bus.capacity,
   status: bus.status,
-  routeAssignment: bus.routeAssignment ? {
-    routeId: bus.routeAssignment.routeId,
-    routeName: bus.routeAssignment.routeName
-  } : undefined,
+  route: bus.routeName,
+  routeId: bus.routeId,
   lastInspection: bus.lastInspection,
   nextInspection: bus.nextInspection
 });

@@ -289,7 +289,8 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const newCompany = await busCompanyService.createCompany(companyData);
+      // Use the new image-enabled method
+      const newCompany = await busCompanyService.createCompanyWithImage(companyData);
       dispatch({ type: 'ADD_COMPANY', payload: newCompany });
       console.log('CompanyManagementContext: Company created successfully:', newCompany.id);
     } catch (error) {
@@ -305,7 +306,8 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const updatedCompany = await busCompanyService.updateCompany(id, updates);
+      // Use the new image-enabled method
+      const updatedCompany = await busCompanyService.updateCompanyWithImage(id, updates);
       console.log('CompanyManagementContext: Received updated company:', updatedCompany);
       dispatch({ type: 'UPDATE_COMPANY', payload: { id, company: updatedCompany } });
       console.log('CompanyManagementContext: Company updated successfully:', id);
@@ -385,6 +387,13 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
 
     try {
       const newBus = await busCompanyService.createRegisteredBus(companyId, busData);
+      // Also create backend bus record if extra fields are present (non-fatal)
+      try {
+        const companyName = state.selectedCompany?.name;
+        await busCompanyService.createBackendBus(companyId, busData, companyName);
+      } catch (err) {
+        console.warn('CompanyManagementContext: createBackendBus failed (non-fatal)', err);
+      }
       dispatch({ type: 'ADD_REGISTERED_BUS', payload: newBus });
       console.log('CompanyManagementContext: Registered bus created successfully:', newBus.id);
     } catch (error) {
@@ -393,13 +402,13 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
     }
   }, [handleError]);
 
-  const updateRegisteredBus = useCallback(async (id: string, updates: Partial<RegisteredBusFormData>) => {
+  const updateRegisteredBus = useCallback(async (id: string, updates: Partial<RegisteredBusFormData>, companyId: string) => {
     console.log('CompanyManagementContext: Updating registered bus:', id);
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const updatedBus = await busCompanyService.updateRegisteredBus(id, updates);
+      const updatedBus = await busCompanyService.updateRegisteredBus(id, updates, companyId);
       dispatch({ type: 'UPDATE_REGISTERED_BUS', payload: { id, bus: updatedBus } });
       console.log('CompanyManagementContext: Registered bus updated successfully:', id);
     } catch (error) {

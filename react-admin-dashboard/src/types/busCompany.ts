@@ -12,6 +12,8 @@ export interface BusCompany {
     phone?: string;
     email?: string;
   };
+  imagePath?: string;
+  imageUrl?: string;
   status: 'active' | 'inactive' | 'suspended';
   createdAt: Date;
   updatedAt: Date;
@@ -39,17 +41,20 @@ export interface BusNumber {
 export interface RegisteredBus {
   id: string;
   companyId: string;
+  companyName: string;
   registrationNumber: string;
   busNumber?: string;
+  busId?: string;
+  trackerImei: string;
+  driverId?: string;
+  driverName?: string;
   model: string;
   year: number;
   capacity: number;
   status: 'active' | 'inactive' | 'maintenance' | 'retired';
-  routeAssignment?: {
-    routeId: string;
-    routeName: string;
-    assignedAt: Date;
-  };
+  routeId?: number;
+  routeName?: string;
+  routeAssignedAt?: Date;
   lastInspection?: Date;
   nextInspection?: Date;
   createdAt: Date;
@@ -115,7 +120,7 @@ export interface CompanyManagementActions {
   
   // Registered Bus CRUD operations
   createRegisteredBus: (companyId: string, bus: RegisteredBusFormData) => Promise<void>;
-  updateRegisteredBus: (id: string, updates: Partial<RegisteredBusFormData>) => Promise<void>;
+  updateRegisteredBus: (id: string, updates: Partial<RegisteredBusFormData>, companyId: string) => Promise<void>;
   deleteRegisteredBus: (id: string) => Promise<void>;
 }
 
@@ -157,17 +162,20 @@ export interface BusNumberResponse {
 export interface RegisteredBusResponse {
   id: string;
   companyId: string;
+  companyName: string;
   registrationNumber: string;
   busNumber?: string;
+  busId?: string;
+  trackerImei: string;
+  driverId?: string;
+  driverName?: string;
   model: string;
   year: number;
   capacity: number;
   status: string;
-  routeAssignment?: {
-    routeId: string;
-    routeName: string;
-    assignedAt: string;
-  };
+  routeId?: number;
+  routeName?: string;
+  routeAssignedAt?: string;
   lastInspection?: string;
   nextInspection?: string;
   createdAt: string;
@@ -200,6 +208,8 @@ export interface CompanyFormData {
     phone?: string;
     email?: string;
   };
+  image?: File | null;
+  imageUrl?: string;
   status: 'active' | 'inactive' | 'suspended';
 }
 
@@ -219,10 +229,16 @@ export interface BusNumberFormData {
 export interface RegisteredBusFormData {
   registrationNumber: string;
   busNumber?: string;
+  busId?: string;
+  trackerImei: string;
+  driverId?: string;
+  driverName?: string;
   model: string;
   year: number;
   capacity: number;
   status: 'active' | 'inactive' | 'maintenance' | 'retired';
+  route?: string; // Selected route name for backend bus creation
+  routeId?: number; // Selected route ID for registered bus creation
   routeAssignment?: {
     routeId: string;
     routeName: string;
@@ -298,9 +314,11 @@ export interface BusNumberManagementProps {
 
 export interface RegisteredBusesProps {
   companyId: string;
+  companyName: string;
   registeredBuses: RegisteredBus[];
   loading?: boolean;
+  availableRoutes?: string[];
   onAdd: (companyId: string, bus: RegisteredBusFormData) => Promise<void>;
-  onEdit: (id: string, updates: Partial<RegisteredBusFormData>) => Promise<void>;
+  onEdit: (id: string, updates: Partial<RegisteredBusFormData>, companyId: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }

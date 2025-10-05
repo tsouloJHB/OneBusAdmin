@@ -6,7 +6,9 @@ import {
   Tab,
   Paper,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Chip,
+  Stack
 } from '@mui/material';
 import {
   DirectionsBus as BusIcon,
@@ -17,6 +19,7 @@ import { useCompanyNavigation } from '../../hooks/useCompanyNavigation';
 import { BusCompany } from '../../types/busCompany';
 import BusNumberManagement from './BusNumberManagement';
 import RegisteredBuses from './RegisteredBuses';
+import { busCompanyService } from '../../services/busCompanyService';
 
 interface CompanyManagementViewProps {
   company: BusCompany;
@@ -55,7 +58,18 @@ const CompanyManagementView: React.FC<CompanyManagementViewProps> = ({ company }
   useEffect(() => {
     console.log('CompanyManagementView: Loading data for company:', company.id);
     actions.loadCompanyData(company.id);
+    // also load backend buses for quick list
+    (async () => {
+      try {
+        const backendBuses = await busCompanyService.getBackendBusesByCompany(company.name);
+        setBackendBuses(backendBuses || []);
+      } catch (err) {
+        console.warn('CompanyManagementView: failed to load backend buses', err);
+      }
+    })();
   }, [company.id]); // Remove actions from dependency array to prevent infinite loop
+
+  const [backendBuses, setBackendBuses] = useState<any[]>([]);
 
   // Sync tab value with navigation state
   useEffect(() => {
@@ -105,6 +119,57 @@ const CompanyManagementView: React.FC<CompanyManagementViewProps> = ({ company }
         </Box>
       </Paper>
 
+      {/* Quick Registered Buses Summary */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Registered Buses
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          Manage the physical bus fleet and their registration details
+        </Typography>
+        {state.registeredBuses && state.registeredBuses.length > 0 ? (
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+            {state.registeredBuses.map((rb) => (
+              <Chip
+                key={rb.id}
+                label={rb.busNumber ? `${rb.registrationNumber} — ${rb.busNumber}` : rb.registrationNumber}
+                color={rb.status === 'active' ? 'primary' : 'default'}
+                variant="outlined"
+                sx={{ mb: 1 }}
+              />
+            ))}
+          </Stack>
+        ) : (
+          <Box>
+            <Typography variant="h6" color="text.secondary" sx={{ mt: 1 }}>
+              No Registered Buses Yet
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Start by registering buses for this company's fleet
+            </Typography>
+          </Box>
+        )}
+
+        <Typography variant="subtitle2" sx={{ mt: 2 }}>Backend Buses</Typography>
+        {backendBuses.length > 0 ? (
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+            {backendBuses.map((b) => (
+              <Chip
+                key={b.busId || b.trackerImei}
+                label={b.busNumber ? `${b.busNumber} — ${b.driverName || ''}` : b.busId}
+                variant="filled"
+                color="secondary"
+                sx={{ mb: 1 }}
+              />
+            ))}
+          </Stack>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            No backend buses found for this company.
+          </Typography>
+        )}
+      </Paper>
+
       {/* Error Display */}
       {state.error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -149,6 +214,7 @@ const CompanyManagementView: React.FC<CompanyManagementViewProps> = ({ company }
         <TabPanel value={tabValue} index={1}>
           <RegisteredBuses
             companyId={company.id}
+            companyName={company.name}
             registeredBuses={state.registeredBuses}
             loading={state.loading}
             onAdd={actions.createRegisteredBus}

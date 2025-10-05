@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { CompanyFormData, ValidationResult } from '../../types/busCompany';
 import { validateForm, companyValidationSchema } from '../../utils/busCompanyUtils';
+import ImageUpload from '../common/ImageUpload';
 
 interface CompanyFormProps {
   open: boolean;
@@ -43,6 +44,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       phone: '',
       email: ''
     },
+    image: null,
+    imageUrl: '',
     status: 'active'
   });
 
@@ -123,6 +126,14 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     }
   };
 
+  // Handle image change
+  const handleImageChange = (file: File | null) => {
+    setFormData(prev => ({
+      ...prev,
+      image: file
+    }));
+  };
+
   // Handle cancel
   const handleCancel = () => {
     setFormData({
@@ -135,6 +146,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
         phone: '',
         email: ''
       },
+      image: null,
+      imageUrl: '',
       status: 'active'
     });
     setValidation({ isValid: true, errors: {} });
@@ -178,9 +191,9 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
                   fullWidth
                   label="Company Code"
                   value={formData.companyCode}
-                  onChange={(e) => handleInputChange('companyCode', e.target.value.toUpperCase())}
+                  onChange={(e) => handleInputChange('companyCode', e.target.value)}
                   error={!!validation.errors.companyCode}
-                  helperText={validation.errors.companyCode || 'Uppercase letters only'}
+                  helperText={validation.errors.companyCode || 'Any letters, numbers, or symbols allowed (within length limits)'}
                   required
                 />
               </Box>
@@ -193,9 +206,9 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
                   fullWidth
                   label="Registration Number"
                   value={formData.registrationNumber}
-                  onChange={(e) => handleInputChange('registrationNumber', e.target.value.toUpperCase())}
+                  onChange={(e) => handleInputChange('registrationNumber', e.target.value)}
                   error={!!validation.errors.registrationNumber}
-                  helperText={validation.errors.registrationNumber || 'Uppercase letters and numbers only'}
+                  helperText={validation.errors.registrationNumber || 'Any letters, numbers, or symbols allowed (within length limits)'}
                   required
                 />
               </Box>
@@ -270,6 +283,16 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
                   />
                 </Box>
               </Box>
+            </Box>
+
+            {/* Company Logo Section */}
+            <Box>
+              <ImageUpload
+                currentImageUrl={formData.imageUrl}
+                onImageChange={handleImageChange}
+                error={validation.errors.image}
+                disabled={isSubmitting}
+              />
             </Box>
           </Box>
         </DialogContent>

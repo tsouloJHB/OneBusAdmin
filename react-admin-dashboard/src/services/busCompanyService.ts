@@ -21,7 +21,9 @@ class BusCompanyService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
+    // If REACT_APP_API_BASE_URL is not provided, default to the local backend port used in dev (8081).
+    // You can override with an env var (REACT_APP_API_BASE_URL) when running the frontend.
+    this.baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8081/api';
   }
 
   // Helper method for API calls
@@ -73,7 +75,23 @@ class BusCompanyService {
     switch (status) {
       case 400:
         type = CompanyManagementErrorType.VALIDATION_ERROR;
-        userMessage = 'Invalid data provided. Please check your input.';
+        // Prefer server-provided validation details when available so the UI can show precise messages.
+        if (message) {
+          try {
+              const parsed = JSON.parse(message);
+              // Common backend shapes: { message: '...' } or { error: '...' }
+              if (parsed && typeof parsed === 'object') {
+                userMessage = parsed.message || parsed.error || JSON.stringify(parsed);
+              } else {
+                userMessage = String(parsed);
+              }
+          } catch (e) {
+            // Not JSON - use raw text
+            userMessage = message;
+          }
+        } else {
+          userMessage = 'Invalid data provided. Please check your input.';
+        }
         break;
       case 401:
       case 403:
@@ -164,6 +182,78 @@ class BusCompanyService {
   }
 
   /**
+   * Create a new bus company with image
+   */
+  async createCompanyWithImage(companyData: CompanyFormData): Promise<BusCompany> {
+    try {
+      // If there's an image, use multipart endpoint
+      if (companyData.image) {
+        return this.createCompanyMultipart(companyData);
+      }
+      
+      // Otherwise use regular JSON endpoint
+      return this.createCompany(companyData);
+    } catch (error) {
+      console.error('BusCompanyService: Error creating company with image:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create company using multipart form data
+   */
+  private async createCompanyMultipart(companyData: CompanyFormData): Promise<BusCompany> {
+    const formData = new FormData();
+    
+    // Add form fields
+    formData.append('name', companyData.name);
+    formData.append('registrationNumber', companyData.registrationNumber);
+    formData.append('companyCode', companyData.companyCode);
+    formData.append('city', companyData.city);
+    
+    if (companyData.contactInfo?.email) {
+      formData.append('email', companyData.contactInfo.email);
+    }
+    if (companyData.contactInfo?.phone) {
+      formData.append('phone', companyData.contactInfo.phone);
+    }
+    if (companyData.address) {
+      formData.append('address', companyData.address);
+    }
+    
+    formData.append('country', 'South Africa');
+    formData.append('isActive', (companyData.status === 'active').toString());
+    
+    // Add image file
+    if (companyData.image) {
+      formData.append('image', companyData.image);
+    }
+
+    try {
+      const url = `${this.baseUrl}/bus-companies`;
+      console.log(`BusCompanyService: Creating company with image at ${url}`);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type header - let browser set it with boundary
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw this.createError(response.status, errorData, '/bus-companies');
+      }
+
+      const data = await response.json();
+      console.log('BusCompanyService: Company created successfully with image:', data);
+      return transformBusCompanyResponse(data);
+    } catch (error) {
+      console.error('BusCompanyService: Error in multipart create:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Update an existing bus company
    */
   async updateCompany(id: string, updates: Partial<CompanyFormData>): Promise<BusCompany> {
@@ -195,6 +285,69 @@ class BusCompanyService {
       return transformedResponse;
     } catch (error) {
       console.error(`BusCompanyService: Error updating company ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing bus company with image
+   */
+  async updateCompanyWithImage(id: string, updates: Partial<CompanyFormData>): Promise<BusCompany> {
+    try {
+      // If there's an image, use multipart endpoint
+      if (updates.image) {
+        return this.updateCompanyMultipart(id, updates);
+      }
+      
+      // Otherwise use regular JSON endpoint
+      return this.updateCompany(id, updates);
+    } catch (error) {
+      console.error('BusCompanyService: Error updating company with image:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update company using multipart form data
+   */
+  private async updateCompanyMultipart(id: string, updates: Partial<CompanyFormData>): Promise<BusCompany> {
+    const formData = new FormData();
+    
+    // Add form fields (only if they're provided)
+    if (updates.name !== undefined) formData.append('name', updates.name);
+    if (updates.registrationNumber !== undefined) formData.append('registrationNumber', updates.registrationNumber);
+    if (updates.companyCode !== undefined) formData.append('companyCode', updates.companyCode);
+    if (updates.city !== undefined) formData.append('city', updates.city);
+    if (updates.contactInfo?.email !== undefined) formData.append('email', updates.contactInfo.email);
+    if (updates.contactInfo?.phone !== undefined) formData.append('phone', updates.contactInfo.phone);
+    if (updates.address !== undefined) formData.append('address', updates.address);
+    if (updates.status !== undefined) formData.append('isActive', (updates.status === 'active').toString());
+    
+    // Add image file
+    if (updates.image) {
+      formData.append('image', updates.image);
+    }
+
+    try {
+      const url = `${this.baseUrl}/bus-companies/${id}`;
+      console.log(`BusCompanyService: Updating company with image at ${url}`);
+      
+      const response = await fetch(url, {
+        method: 'PUT',
+        body: formData,
+        // Don't set Content-Type header - let browser set it with boundary
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw this.createError(response.status, errorData, `/bus-companies/${id}`);
+      }
+
+      const data = await response.json();
+      console.log('BusCompanyService: Company updated successfully with image:', data);
+      return transformBusCompanyResponse(data);
+    } catch (error) {
+      console.error('BusCompanyService: Error in multipart update:', error);
       throw error;
     }
   }
@@ -470,6 +623,21 @@ class BusCompanyService {
   }
 
   /**
+   * Get backend buses by company name (from /api/buses/company/{name})
+   */
+  async getBackendBusesByCompany(companyName: string): Promise<any[]> {
+    try {
+      const encoded = encodeURIComponent(companyName);
+      const response = await this.apiCall<any>(`/buses/company/${encoded}?searchType=ignoreCase`);
+      // response has shape: { message, company, count, buses, searchType }
+      return response.buses || [];
+    } catch (error) {
+      console.error(`BusCompanyService: Error getting backend buses for company ${companyName}:`, error);
+      return [];
+    }
+  }
+
+  /**
    * Create a new registered bus
    */
   async createRegisteredBus(companyId: string, busData: RegisteredBusFormData): Promise<RegisteredBus> {
@@ -480,6 +648,9 @@ class BusCompanyService {
         // Transform dates to ISO strings for API
         lastInspection: busData.lastInspection?.toISOString(),
         nextInspection: busData.nextInspection?.toISOString(),
+        // Map route fields for backend
+        routeId: busData.routeId,
+        routeName: busData.route,
       };
       const response = await this.apiCall<RegisteredBusResponse>('/registered-buses', {
         method: 'POST',
@@ -493,16 +664,76 @@ class BusCompanyService {
   }
 
   /**
+   * Create backend Bus record when registering a bus (optional)
+   */
+  async createBackendBus(companyId: string, busData: RegisteredBusFormData, companyName?: string): Promise<any> {
+    try {
+      // Build payload expected by backend /api/buses
+      const payload: any = {
+        busId: busData.busId || undefined,
+        trackerImei: busData.trackerImei || undefined,
+        busNumber: busData.busNumber || undefined,
+        route: busData.route || undefined,
+        busCompanyName: companyName || undefined,
+        driverId: (busData as any).driverId || undefined,
+        driverName: (busData as any).driverName || undefined
+      };
+
+      // Remove undefined keys
+      Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+      // POST to /buses
+      const response = await this.apiCall('/buses', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      console.log('BusCompanyService: Backend bus created:', response);
+      return response;
+    } catch (error) {
+      console.error('BusCompanyService: Error creating backend bus:', error);
+      // Non-fatal: don't throw to avoid blocking registered-bus creation
+      return null;
+    }
+  }
+
+  /**
    * Update an existing registered bus
    */
-  async updateRegisteredBus(id: string, updates: Partial<RegisteredBusFormData>): Promise<RegisteredBus> {
+  async updateRegisteredBus(id: string, updates: Partial<RegisteredBusFormData>, companyId?: string): Promise<RegisteredBus> {
     try {
+      // First get the existing bus data
+      let existingBus: RegisteredBus | undefined;
+
+      if (companyId) {
+        // Get all registered buses for the company and find the one with matching ID
+        const allBuses = await this.getRegisteredBusesByCompany(companyId);
+        existingBus = allBuses.find(bus => bus.id === id);
+      }
+
+      if (!existingBus) {
+        throw new Error(`Registered bus with ID ${id} not found`);
+      }
+
       const requestData = {
+        // Start with existing data
+        companyId: existingBus.companyId,
+        registrationNumber: existingBus.registrationNumber,
+        busNumber: existingBus.busNumber,
+        model: existingBus.model,
+        year: existingBus.year,
+        capacity: existingBus.capacity,
+        status: existingBus.status,
+        // Apply updates
         ...updates,
         // Transform dates to ISO strings for API
-        lastInspection: updates.lastInspection?.toISOString(),
-        nextInspection: updates.nextInspection?.toISOString(),
+        lastInspection: updates.lastInspection?.toISOString() || existingBus.lastInspection?.toISOString(),
+        nextInspection: updates.nextInspection?.toISOString() || existingBus.nextInspection?.toISOString(),
+        // Map route fields for backend (prefer updates over existing)
+        routeId: updates.routeId !== undefined ? updates.routeId : existingBus.routeId,
+        routeName: updates.route ? updates.route : existingBus.routeName,
       };
+
       const response = await this.apiCall<RegisteredBusResponse>(`/registered-buses/${id}`, {
         method: 'PUT',
         body: JSON.stringify(requestData),
@@ -563,6 +794,34 @@ class BusCompanyService {
         return true;
       }
       // For other errors, we can't determine availability
+      throw error;
+    }
+  }
+
+  /**
+   * Get all available routes
+   */
+  async getRoutes(): Promise<any[]> {
+    try {
+      const response = await this.apiCall<any[]>('/routes');
+      return response;
+    } catch (error) {
+      console.error('BusCompanyService: Error getting routes:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get routes for a specific bus number and company
+   */
+  async getRoutesByBusNumberAndCompany(busNumber: string, companyName: string): Promise<any[]> {
+    try {
+      const encodedCompanyName = encodeURIComponent(companyName);
+      const response = await this.apiCall<any>(`/routes/${busNumber}/${encodedCompanyName}`);
+      // The API returns an object with a 'routes' array
+      return response.routes || [];
+    } catch (error) {
+      console.error('BusCompanyService: Error getting routes by bus number and company:', error);
       throw error;
     }
   }
