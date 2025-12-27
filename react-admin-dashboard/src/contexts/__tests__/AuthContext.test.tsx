@@ -17,7 +17,7 @@ const TestComponent: React.FC = () => {
         {isLoading ? 'Loading' : isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
       </div>
       <div data-testid="user-info">
-        {user ? `${user.username} (${user.role})` : 'No user'}
+        {user ? `${user.fullName} (${user.role})` : 'No user'}
       </div>
       <button onClick={() => login('test@example.com', 'password')}>
         Login
@@ -61,9 +61,9 @@ describe('AuthContext', () => {
   it('should provide authenticated state when user is logged in', async () => {
     const mockUser = {
       id: '1',
-      username: 'testuser',
+      fullName: 'Test User',
       email: 'test@example.com',
-      role: 'admin' as const,
+      role: 'ADMIN' as const,
       isActive: true,
       lastLogin: new Date(),
     };
@@ -77,15 +77,15 @@ describe('AuthContext', () => {
       expect(screen.getByTestId('auth-status')).toHaveTextContent('Authenticated');
     });
 
-    expect(screen.getByTestId('user-info')).toHaveTextContent('testuser (admin)');
+    expect(screen.getByTestId('user-info')).toHaveTextContent('Test User (ADMIN)');
   });
 
   it('should handle login', async () => {
     const mockUser = {
       id: '1',
-      username: 'testuser',
+      fullName: 'Test User',
       email: 'test@example.com',
-      role: 'admin' as const,
+      role: 'ADMIN' as const,
       isActive: true,
       lastLogin: new Date(),
     };
@@ -122,9 +122,9 @@ describe('AuthContext', () => {
   it('should handle logout', async () => {
     const mockUser = {
       id: '1',
-      username: 'testuser',
+      fullName: 'Test User',
       email: 'test@example.com',
-      role: 'admin' as const,
+      role: 'ADMIN' as const,
       isActive: true,
       lastLogin: new Date(),
     };

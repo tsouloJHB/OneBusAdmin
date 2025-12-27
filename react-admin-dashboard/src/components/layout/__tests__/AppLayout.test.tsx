@@ -10,9 +10,9 @@ jest.mock('../../../services/authService', () => ({
   authService: {
     getCurrentUser: jest.fn().mockResolvedValue({
       id: '1',
-      username: 'testuser',
+      fullName: 'Test User',
       email: 'test@example.com',
-      role: 'admin',
+      role: 'ADMIN',
       isActive: true,
       lastLogin: new Date(),
     }),

@@ -54,25 +54,19 @@ describe('Authentication Flow Integration', () => {
   it('allows login and redirects to dashboard', async () => {
     // Mock successful login
     mockAuthService.login.mockResolvedValue({
-      user: {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        role: 'admin',
-        isActive: true,
-        lastLogin: new Date(),
-      },
+      email: 'test@example.com',
+      fullName: 'Test User',
+      role: 'ADMIN',
       token: 'mock-token',
-      refreshToken: 'mock-refresh-token',
-      expiresIn: 3600,
+      expiresAt: '2025-12-31T23:59:59Z',
     });
     
     // Mock getCurrentUser for after login
     mockAuthService.getCurrentUser.mockResolvedValue({
       id: '1',
-      username: 'testuser',
+      fullName: 'Test User',
       email: 'test@example.com',
-      role: 'admin',
+      role: 'ADMIN',
       isActive: true,
       lastLogin: new Date(),
     });
@@ -139,25 +133,19 @@ describe('Authentication Flow Integration', () => {
   it('logs out user and redirects to login page', async () => {
     // Mock successful login first
     mockAuthService.login.mockResolvedValue({
-      user: {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        role: 'admin',
-        isActive: true,
-        lastLogin: new Date(),
-      },
+      fullName: 'Test User',
+      email: 'test@example.com',
+      role: 'ADMIN',
       token: 'mock-token',
-      refreshToken: 'mock-refresh-token',
-      expiresIn: 3600,
+      expiresAt: new Date(new Date().getTime() + 3600000).toISOString(),
     });
     
     // Mock getCurrentUser for after login
     mockAuthService.getCurrentUser.mockResolvedValue({
       id: '1',
-      username: 'testuser',
+      fullName: 'Test User',
       email: 'test@example.com',
-      role: 'admin',
+      role: 'ADMIN',
       isActive: true,
       lastLogin: new Date(),
     });

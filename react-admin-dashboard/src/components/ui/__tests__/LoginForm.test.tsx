@@ -77,9 +77,9 @@ describe('LoginForm', () => {
   it('submits form with valid credentials', async () => {
     const mockUser = {
       id: '1',
-      username: 'testuser',
+      fullName: 'Test User',
       email: 'test@example.com',
-      role: 'admin' as const,
+      role: 'ADMIN' as const,
       isActive: true,
       lastLogin: new Date(),
     };

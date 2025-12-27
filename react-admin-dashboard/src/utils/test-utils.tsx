@@ -7,7 +7,7 @@ import NotificationContext from '../contexts/NotificationContext';
 // Mock auth context values
 const mockAuthContextValue = {
   isAuthenticated: true,
-  user: { id: '1', username: 'testuser', email: 'test@example.com', role: 'admin' as const, isActive: true, lastLogin: new Date() },
+  user: { id: '1', fullName: 'Test User', email: 'test@example.com', role: 'ADMIN' as const, isActive: true, lastLogin: new Date() },
   token: 'mock-token',
   isLoading: false,
   login: jest.fn(),

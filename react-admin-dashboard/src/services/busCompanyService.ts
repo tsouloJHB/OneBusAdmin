@@ -33,6 +33,9 @@ class BusCompanyService {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     
+    // Get JWT token from localStorage if available
+    const token = localStorage.getItem('authToken');
+    
     const defaultOptions: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -40,9 +43,28 @@ class BusCompanyService {
       },
     };
 
+    // Add Authorization header if token exists
+    if (token) {
+      (defaultOptions.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    }
+
     try {
       console.log(`BusCompanyService: Making API call to ${url}`);
       const response = await fetch(url, { ...defaultOptions, ...options });
+
+      // Handle 401 Unauthorized - token expired or invalid
+      if (response.status === 401) {
+        // Clear token and redirect to login
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        throw this.createError(401, 'Unauthorized. Please log in again.', endpoint);
+      }
+
+      // Handle 403 Forbidden
+      if (response.status === 403) {
+        throw this.createError(403, 'You do not have permission to access this resource.', endpoint);
+      }
 
       if (!response.ok) {
         const errorData = await response.text();

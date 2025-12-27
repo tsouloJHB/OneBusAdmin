@@ -1,99 +1,107 @@
-import { setAuthToken, removeAuthToken } from './httpClient';
-import { LoginRequest, LoginResponse, User } from '../types';
+import { LoginRequest, LoginResponse, User, RegisterRequest } from '../types';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 
 const authService = {
   /**
-   * Authenticate user with credentials (MOCKED for development)
+   * Login user with email and password
    */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    // Mock authentication since backend doesn't have auth yet
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Simple validation - accept any non-empty username/password
-        if (!credentials.username || !credentials.password) {
-          reject(new Error('Username and password are required'));
-          return;
-        }
-
-        const mockResponse: LoginResponse = {
-          user: {
-            id: '1',
-            username: credentials.username,
-            email: credentials.username.includes('@') ? credentials.username : `${credentials.username}@example.com`,
-            role: 'admin',
-            isActive: true,
-            lastLogin: new Date(),
-          },
-          token: 'mock-jwt-token-' + Date.now(),
-          refreshToken: 'mock-refresh-token-' + Date.now(),
-          expiresIn: 3600, // 1 hour in seconds
-        };
-        
-        setAuthToken(mockResponse.token);
-        resolve(mockResponse);
-      }, 500); // Simulate network delay
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
     });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error || 'Login failed');
+    }
+
+    return response.json();
   },
 
   /**
-   * Logout user and clear authentication (MOCKED)
+   * Register a new user
+   */
+  async register(data: RegisterRequest): Promise<LoginResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error || 'Registration failed');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Logout user (client-side only, backend doesn't require logout)
    */
   async logout(): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        removeAuthToken();
-        resolve();
-      }, 200);
-    });
+    return Promise.resolve();
   },
 
   /**
-   * Refresh authentication token (MOCKED)
-   */
-  async refreshToken(): Promise<LoginResponse> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockResponse: LoginResponse = {
-          user: {
-            id: '1',
-            username: 'admin',
-            email: 'admin@example.com',
-            role: 'admin',
-            isActive: true,
-            lastLogin: new Date(),
-          },
-          token: 'mock-jwt-token-refreshed-' + Date.now(),
-          refreshToken: 'mock-refresh-token-refreshed-' + Date.now(),
-          expiresIn: 3600, // 1 hour in seconds
-        };
-        
-        setAuthToken(mockResponse.token);
-        resolve(mockResponse);
-      }, 300);
-    });
-  },
-
-  /**
-   * Get current user (MOCKED)
+   * Get current user (requires valid token)
    */
   async getCurrentUser(): Promise<User> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockUser: User = {
-          id: '1',
-          username: 'admin',
-          email: 'admin@example.com',
-          role: 'admin',
-          isActive: true,
-          lastLogin: new Date(),
-        };
-        resolve(mockUser);
-      }, 200);
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('No token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to get current user');
+    }
+
+    const data = await response.json();
+    
+    // Convert flat backend response to User object
+    return {
+      id: data.email, // Using email as ID since backend doesn't return ID
+      email: data.email,
+      fullName: data.fullName,
+      role: data.role,
+      isActive: true,
+    };
   },
 
   /**
-   * Check if user is authenticated (MOCKED)
+   * Refresh token (not implemented in backend yet)
+   */
+  async refreshToken(): Promise<LoginResponse> {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('No token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Token refresh failed');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Check if user is authenticated
    */
   isAuthenticated(): boolean {
     const token = localStorage.getItem('authToken');

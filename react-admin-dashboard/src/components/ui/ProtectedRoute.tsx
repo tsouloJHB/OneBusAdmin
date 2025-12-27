@@ -2,15 +2,19 @@ import React, { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useAuthState } from '../../hooks/useAuthState';
-import { useAuthToken } from '../../hooks/useAuthToken';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: 'admin' | 'operator';
-  requiredRoles?: ('admin' | 'operator')[];
+  requiredRole?: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER' | 'admin' | 'operator';
+  requiredRoles?: ('ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER' | 'admin' | 'operator')[];
   fallbackPath?: string;
 }
 
+/**
+ * Protected Route Component
+ * Checks authentication and optionally enforces role-based access control
+ * Supports both new JWT roles (ADMIN, COMPANY_ADMIN, CUSTOMER) and legacy roles (admin, operator)
+ */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredRole,
@@ -18,8 +22,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallbackPath = '/login',
 }) => {
   const location = useLocation();
-  const { isFullyAuthenticated, isAuthenticating, user, userPermissions } = useAuthState();
-  const { hasRole, hasAnyRole } = useAuthToken();
+  const { isFullyAuthenticated, isAuthenticating, user } = useAuthState();
 
   // Show loading spinner while authentication is being checked
   if (isAuthenticating) {
@@ -54,7 +57,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check role-based access control
-  if (requiredRole && !hasRole(requiredRole)) {
+  if (requiredRole && user?.role !== requiredRole) {
     return (
       <Box
         sx={{
@@ -85,7 +88,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check multiple roles access control
-  if (requiredRoles && requiredRoles.length > 0 && !hasAnyRole(requiredRoles)) {
+  if (requiredRoles && requiredRoles.length > 0 && !requiredRoles.includes(user?.role as any)) {
     return (
       <Box
         sx={{
@@ -122,8 +125,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 // Higher-order component for protecting routes with specific roles
 export const withRoleProtection = (
   Component: React.ComponentType<any>,
-  requiredRole?: 'admin' | 'operator',
-  requiredRoles?: ('admin' | 'operator')[]
+  requiredRole?: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER' | 'admin' | 'operator',
+  requiredRoles?: ('ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER' | 'admin' | 'operator')[]
 ) => {
   return (props: any) => (
     <ProtectedRoute requiredRole={requiredRole} requiredRoles={requiredRoles}>
@@ -134,13 +137,19 @@ export const withRoleProtection = (
 
 // Specific protected route components for common use cases
 export const AdminProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <ProtectedRoute requiredRole="admin">
+  <ProtectedRoute requiredRoles={['ADMIN', 'admin']}>
+    {children}
+  </ProtectedRoute>
+);
+
+export const CompanyAdminProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => (
+  <ProtectedRoute requiredRole="COMPANY_ADMIN">
     {children}
   </ProtectedRoute>
 );
 
 export const OperatorProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <ProtectedRoute requiredRoles={['admin', 'operator']}>
+  <ProtectedRoute requiredRoles={['ADMIN', 'COMPANY_ADMIN', 'admin', 'operator']}>
     {children}
   </ProtectedRoute>
 );

@@ -143,12 +143,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 mr: 1,
               }}
             >
-              Welcome, {user?.username}
+              Welcome, {user?.fullName}
             </Typography>
             
             <IconButton
               size="large"
-              aria-label={`Account menu for ${user?.username || 'current user'}`}
+              aria-label={`Account menu for ${user?.fullName || 'current user'}`}
               aria-controls={isUserMenuOpen ? 'user-menu' : undefined}
               aria-haspopup="true"
               aria-expanded={isUserMenuOpen}
@@ -170,7 +170,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   fontWeight: 600,
                 }}
               >
-                {user?.username?.charAt(0).toUpperCase() || <AccountCircle />}
+                {user?.fullName?.charAt(0).toUpperCase() || <AccountCircle />}
               </Avatar>
             </IconButton>
           </Box>
@@ -239,11 +239,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
             }}
           >
-            {user?.username?.charAt(0).toUpperCase()}
-          </Avatar>
-          <Box>
-            <Typography variant="body2" fontWeight="600">
-              {user?.username}
+            {user?.fullName?.charAt(0).toUpperCase()}
+           </Avatar>
+           <Box>
+             <Typography variant="body2" fontWeight="600">
+              {user?.fullName}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {user?.email}

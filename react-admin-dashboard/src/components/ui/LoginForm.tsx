@@ -26,11 +26,10 @@ import { designTokens } from '../../theme';
 
 // Validation schema
 const loginSchema = yup.object({
-  username: yup
+  email: yup
     .string()
-    .required('Username is required')
-    .min(3, 'Username must be at least 3 characters')
-    .max(50, 'Username must not exceed 50 characters'),
+    .required('Email is required')
+    .email('Email must be valid'),
   password: yup
     .string()
     .required('Password is required')
@@ -60,7 +59,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   } = useForm<LoginRequest>({
     resolver: yupResolver(loginSchema),
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
     },
   });
@@ -217,25 +216,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             aria-labelledby="login-title"
           >
             <Controller
-              name="username"
+              name="email"
               control={control}
               render={({ field }) => (
                 <TextField
                   {...field}
-                  fullWidth
-                  label="Username"
+                  label="Email Address"
+                  type="email"
                   variant="outlined"
                   margin="normal"
-                  error={!!errors.username}
-                  helperText={errors.username?.message}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
                   disabled={isFormLoading}
                   required
-                  aria-describedby={errors.username ? 'username-error' : undefined}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
                         <Person 
-                          color={errors.username ? 'error' : 'action'} 
+                          color={errors.email ? 'error' : 'action'}
                           aria-hidden="true"
                         />
                       </InputAdornment>

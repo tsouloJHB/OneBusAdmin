@@ -69,9 +69,9 @@ describe('Protected Routes Integration', () => {
     // Mock successful authentication
     mockAuthService.getCurrentUser.mockResolvedValue({
       id: '1',
-      username: 'testuser',
       email: 'test@example.com',
-      role: 'admin',
+      fullName: 'Test User',
+      role: 'ADMIN',
       isActive: true,
       lastLogin: new Date(),
     });
@@ -94,17 +94,11 @@ describe('Protected Routes Integration', () => {
     
     // Mock successful login
     mockAuthService.login.mockResolvedValue({
-      user: {
-        id: '1',
-        username: 'testuser',
-        email: 'test@example.com',
-        role: 'admin',
-        isActive: true,
-        lastLogin: new Date(),
-      },
+      email: 'test@example.com',
+      fullName: 'Test User',
+      role: 'ADMIN',
       token: 'mock-token',
-      refreshToken: 'mock-refresh-token',
-      expiresIn: 3600,
+      expiresAt: '2025-12-31T23:59:59Z',
     });
     
     // After login, mock successful authentication
@@ -112,9 +106,9 @@ describe('Protected Routes Integration', () => {
       if (mockLocalStorage.getItem('authToken')) {
         return Promise.resolve({
           id: '1',
-          username: 'testuser',
           email: 'test@example.com',
-          role: 'admin',
+          fullName: 'Test User',
+          role: 'ADMIN',
           isActive: true,
           lastLogin: new Date(),
         });
@@ -159,9 +153,9 @@ describe('Protected Routes Integration', () => {
     // Mock successful authentication initially
     mockAuthService.getCurrentUser.mockResolvedValueOnce({
       id: '1',
-      username: 'testuser',
+      fullName: 'Test User',
       email: 'test@example.com',
-      role: 'admin',
+      role: 'ADMIN',
       isActive: true,
       lastLogin: new Date(),
     });
@@ -201,9 +195,9 @@ describe('Protected Routes Integration', () => {
     // Mock successful authentication as non-admin user
     mockAuthService.getCurrentUser.mockResolvedValue({
       id: '2',
-      username: 'operator',
+      fullName: 'Operator User',
       email: 'operator@example.com',
-      role: 'operator', // Non-admin role
+      role: 'CUSTOMER', // Non-admin role
       isActive: true,
       lastLogin: new Date(),
     });
@@ -226,9 +220,9 @@ describe('Protected Routes Integration', () => {
     // Mock successful authentication initially
     mockAuthService.getCurrentUser.mockResolvedValue({
       id: '1',
-      username: 'testuser',
+      fullName: 'Test User',
       email: 'test@example.com',
-      role: 'admin',
+      role: 'ADMIN',
       isActive: true,
       lastLogin: new Date(),
     });

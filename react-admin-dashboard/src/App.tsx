@@ -4,85 +4,78 @@ import { CssBaseline } from '@mui/material';
 import { AuthProvider, NotificationProvider } from './contexts';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AppLayout } from './components/layout';
-import { LoginForm, ProtectedRoute, RouteGuard, NotificationContainer, ErrorBoundary } from './components/ui';
-import { protectedRoutes, notFoundRoute, createRouteObjects } from './config/routes';
+import { ProtectedRoute, NotificationContainer, ErrorBoundary } from './components/ui';
+import { protectedRoutes, notFoundRoute } from './config/routes';
+import LoginPage from './components/pages/LoginPage';
 import './App.css';
 import './styles/accessibility.css';
 
 function App() {
   console.log('App: Component rendering...');
-  return (
-    <ErrorBoundary level="critical" showReload={true}>
-      <ThemeProvider>
-        <CssBaseline />
-        {/* Skip link for screen readers */}
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
-        <NotificationProvider>
-          <AuthProvider>
-            <ErrorBoundary level="page" showReload={true}>
+  console.log('App: Starting ErrorBoundary render');
+  
+  try {
+    console.log('App: About to return JSX');
+    return (
+      <ErrorBoundary level="critical" showReload={true}>
+        <ThemeProvider>
+          <CssBaseline />
+          {/* Skip link for screen readers */}
+          <a href="#main-content" className="skip-link">
+            Skip to main content
+          </a>
+          <NotificationProvider>
+            <AuthProvider>
               <Router>
-                <RouteGuard>
-                  <Routes>
-                    {/* Login Route */}
-                    <Route 
-                      path="/login" 
-                      element={
-                        <ErrorBoundary level="component">
-                          <LoginForm />
-                        </ErrorBoundary>
-                      } 
-                    />
-                    
-                    {/* Root redirect */}
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    
-                    {/* Protected Routes with Layout */}
-                    {createRouteObjects(protectedRoutes).map((route, index) => (
-                      <Route
-                        key={route.path || index}
-                        path={route.path}
-                        element={
-                          <ProtectedRoute>
-                            <ErrorBoundary level="page">
-                              <AppLayout>
-                                <ErrorBoundary level="component">
-                                  {route.element}
-                                </ErrorBoundary>
-                              </AppLayout>
-                            </ErrorBoundary>
-                          </ProtectedRoute>
-                        }
-                      />
-                    ))}
-                    
-                    {/* 404 Route - must be last */}
+                <Routes>
+                  {/* Login Route - No authentication required */}
+                  <Route 
+                    path="/login" 
+                    element={<LoginPage />}
+                  />
+                  
+                  {/* Protected Routes with Layout */}
+                  {protectedRoutes.map((route, index) => (
                     <Route
-                      path={notFoundRoute.path}
+                      key={route.path || index}
+                      path={route.path}
                       element={
-                        <ProtectedRoute>
-                          <ErrorBoundary level="page">
-                            <AppLayout>
-                              <ErrorBoundary level="component">
-                                {notFoundRoute.element}
-                              </ErrorBoundary>
-                            </AppLayout>
-                          </ErrorBoundary>
+                        <ProtectedRoute requiredRoles={undefined}>
+                          <AppLayout>
+                            {route.element}
+                          </AppLayout>
                         </ProtectedRoute>
                       }
                     />
-                  </Routes>
-                </RouteGuard>
+                  ))}
+                  
+                  {/* Root redirect - must come after other routes */}
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  
+                  {/* 404 Route - must be last */}
+                  <Route
+                    path={notFoundRoute.path}
+                    element={
+                      <ProtectedRoute>
+                        <AppLayout>
+                          {notFoundRoute.element}
+                        </AppLayout>
+                      </ProtectedRoute>
+                    }
+                  />
+                </Routes>
               </Router>
-            </ErrorBoundary>
-          </AuthProvider>
-          {/* Global notification container */}
-          <NotificationContainer />
-        </NotificationProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
-  );
+              {/* Global notification container */}
+              <NotificationContainer />
+            </AuthProvider>
+          </NotificationProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  } catch (error) {
+    console.error('App: Error during render:', error);
+    return <div style={{color: 'red', padding: '20px'}}>Error: {String(error)}</div>;
+  }
 }
 
 export default App;

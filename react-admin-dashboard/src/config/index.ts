@@ -28,5 +28,5 @@ export const config = {
   },
 };
 
-// Re-export route configurations
-export * from './routes';
+// Note: Route configurations are imported directly from './routes' where needed
+// to avoid circular dependency issues

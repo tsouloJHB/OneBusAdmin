@@ -84,12 +84,15 @@ const setStoredToken = (token: string): void => {
   localStorage.setItem(TOKEN_KEY, token);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getStoredRefreshToken = (): string | null => {
   return localStorage.getItem(REFRESH_TOKEN_KEY);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const setStoredRefreshToken = (refreshToken: string): void => {
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  // JWT tokens don't need refresh tokens stored separately
+  // The backend will issue a new token when needed
 };
 
 const removeStoredTokens = (): void => {
@@ -103,64 +106,41 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  console.log('AuthProvider: Component mounting...');
   const [state, dispatch] = useReducer(authReducer, initialState);
+  console.log('AuthProvider: Initial state:', state);
 
   // Initialize authentication state on mount
   useEffect(() => {
     const initializeAuth = async () => {
       console.log('AuthProvider: Initializing authentication...');
       
-      // For development, use mock authentication
-      if (process.env.NODE_ENV === 'development') {
-        console.log('AuthProvider: Using mock authentication for development');
+      try {
+        const storedToken = getStoredToken();
+        console.log('AuthProvider: Stored token:', storedToken ? 'exists' : 'none');
         
-        // Create a mock user
-        const mockUser = {
-          id: '1',
-          username: 'admin',
-          email: 'admin@example.com',
-          role: 'admin' as const,
-          isActive: true,
-          lastLogin: new Date(),
-        };
-        
-        const mockToken = 'mock-dev-token';
-        
-        // Store mock token
-        setStoredToken(mockToken);
-        
-        // Set authenticated state
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: { user: mockUser, token: mockToken },
-        });
-        
-        console.log('AuthProvider: Mock authentication complete');
-        return;
-      }
-      
-      // Production authentication logic
-      const storedToken = getStoredToken();
-      console.log('AuthProvider: Stored token:', storedToken ? 'exists' : 'none');
-      
-      if (storedToken) {
-        console.log('AuthProvider: Found stored token, attempting verification...');
-        try {
-          // Verify token by getting current user
-          const user = await authService.getCurrentUser();
-          console.log('AuthProvider: Token valid, user:', user);
-          dispatch({
-            type: 'LOGIN_SUCCESS',
-            payload: { user, token: storedToken },
-          });
-        } catch (error) {
-          console.log('AuthProvider: Token verification failed, clearing token:', error);
-          // Token is invalid, clear it and show login
-          removeStoredTokens();
-          dispatch({ type: 'LOGIN_FAILURE' });
+        if (storedToken) {
+          console.log('AuthProvider: Found stored token, attempting verification...');
+          try {
+            // Verify token by getting current user
+            const user = await authService.getCurrentUser();
+            console.log('AuthProvider: Token valid, user:', user);
+            dispatch({
+              type: 'LOGIN_SUCCESS',
+              payload: { user, token: storedToken },
+            });
+          } catch (error) {
+            console.log('AuthProvider: Token verification failed, clearing token:', error);
+            // Token is invalid, clear it and show login
+            removeStoredTokens();
+            dispatch({ type: 'LOGIN_FAILURE' });
+          }
+        } else {
+          console.log('AuthProvider: No stored token, user needs to login');
+          dispatch({ type: 'SET_LOADING', payload: false });
         }
-      } else {
-        console.log('AuthProvider: No stored token, user needs to login');
+      } catch (error) {
+        console.error('AuthProvider: Initialization error:', error);
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
@@ -173,48 +153,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'LOGIN_START' });
     
     try {
-      // For development, use mock authentication
-      if (process.env.NODE_ENV === 'development') {
-        console.log('AuthProvider: Mock login for user:', credentials.username);
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const mockUser = {
-          id: '1',
-          username: credentials.username,
-          email: `${credentials.username}@example.com`,
-          role: 'admin' as const,
-          isActive: true,
-          lastLogin: new Date(),
-        };
-        
-        const mockToken = 'mock-dev-token';
-        const mockRefreshToken = 'mock-refresh-token';
-        
-        // Store tokens
-        setStoredToken(mockToken);
-        setStoredRefreshToken(mockRefreshToken);
-        
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: { user: mockUser, token: mockToken },
-        });
-        
-        console.log('AuthProvider: Mock login successful');
-        return;
-      }
-      
-      // Production login logic
       const response = await authService.login(credentials);
       
-      // Store tokens
+      // Store token
       setStoredToken(response.token);
-      setStoredRefreshToken(response.refreshToken);
+      
+      // Convert flat response to User object
+      const user: User = {
+        id: response.email, // Using email as ID since backend doesn't return ID
+        email: response.email,
+        fullName: response.fullName,
+        role: response.role,
+        isActive: true,
+      };
       
       dispatch({
         type: 'LOGIN_SUCCESS',
-        payload: { user: response.user, token: response.token },
+        payload: { user, token: response.token },
       });
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
@@ -241,11 +196,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Update stored tokens
       setStoredToken(response.token);
-      setStoredRefreshToken(response.refreshToken);
+      
+      // Convert flat response to User object
+      const user: User = {
+        id: response.email,
+        email: response.email,
+        fullName: response.fullName,
+        role: response.role,
+        isActive: true,
+      };
       
       dispatch({
         type: 'REFRESH_TOKEN_SUCCESS',
-        payload: { user: response.user, token: response.token },
+        payload: { user, token: response.token },
       });
     } catch (error) {
       // Refresh failed, logout user

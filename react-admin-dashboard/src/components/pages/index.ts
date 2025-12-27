@@ -6,3 +6,4 @@ export { default as BusesPage } from './BusesPage';
 export { default as ActiveBusesPage } from './ActiveBusesPage';
 export { default as NotFoundPage } from './NotFoundPage';
 export { default as NotificationTestPage } from './NotificationTestPage';
+export { default as LoginPage } from './LoginPage';

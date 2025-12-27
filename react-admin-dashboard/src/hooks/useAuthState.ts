@@ -4,6 +4,7 @@ import { useAuthToken } from './useAuthToken';
 
 /**
  * Custom hook for managing authentication state and side effects
+ * Supports both JWT roles (ADMIN, COMPANY_ADMIN, CUSTOMER) and legacy roles (admin, operator)
  */
 export const useAuthState = () => {
   const auth = useAuth();
@@ -46,13 +47,17 @@ export const useAuthState = () => {
   // Check if authentication is in progress
   const isAuthenticating = auth.isLoading;
 
-  // Get user permissions/roles
+  // Get user permissions/roles - JWT roles
   const userPermissions = {
-    isAdmin: auth.user?.role === 'admin',
-    isOperator: auth.user?.role === 'operator',
-    canManageRoutes: auth.user?.role === 'admin',
-    canManageBuses: auth.user?.role === 'admin',
-    canViewActiveBuses: auth.user?.role === 'admin' || auth.user?.role === 'operator',
+    isAdmin: auth.user?.role === 'ADMIN',
+    isCompanyAdmin: auth.user?.role === 'COMPANY_ADMIN',
+    isOperator: false,
+    isCustomer: auth.user?.role === 'CUSTOMER',
+    canManageRoutes: auth.user?.role === 'ADMIN' || auth.user?.role === 'COMPANY_ADMIN',
+    canManageBuses: auth.user?.role === 'ADMIN' || auth.user?.role === 'COMPANY_ADMIN',
+    canViewActiveBuses: auth.user?.role !== 'CUSTOMER',
+    canManageUsers: auth.user?.role === 'ADMIN',
+    canManageCompanyAdmins: auth.user?.role === 'ADMIN',
   };
 
   return {

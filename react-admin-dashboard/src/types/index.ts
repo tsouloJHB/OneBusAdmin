@@ -94,11 +94,11 @@ export interface ActiveBus {
 
 export interface User {
   id: string;
-  username: string;
   email: string;
-  role: 'admin' | 'operator';
+  fullName: string;
+  role: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER';
   isActive: boolean;
-  lastLogin: Date;
+  lastLogin?: Date;
 }
 
 // API Response Types
@@ -156,15 +156,22 @@ export interface UpdateBusRequest extends Partial<CreateBusRequest> {
 }
 
 export interface LoginRequest {
-  username: string;
+  email: string;
   password: string;
 }
 
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  fullName: string;
+}
+
 export interface LoginResponse {
-  user: User;
   token: string;
-  refreshToken: string;
-  expiresIn: number;
+  expiresAt: string; // ISO timestamp
+  email: string;
+  fullName: string;
+  role: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER';
 }
 
 // Filter and Search Types
