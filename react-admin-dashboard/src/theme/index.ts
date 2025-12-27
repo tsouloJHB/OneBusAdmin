@@ -12,10 +12,10 @@ export const designTokens = {
     xxl: 48,
   },
   borderRadius: {
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 20,
+    sm: 4,
+    md: 6,
+    lg: 8,
+    xl: 12,
     round: 50,
   },
   shadows: {
@@ -182,6 +182,18 @@ const lightThemeOptions: ThemeOptions = {
       disabled: colorPalette.neutral[400],
     },
     divider: colorPalette.neutral[200],
+    grey: {
+      50: colorPalette.neutral[50],
+      100: colorPalette.neutral[100],
+      200: colorPalette.neutral[200],
+      300: colorPalette.neutral[300],
+      400: colorPalette.neutral[400],
+      500: colorPalette.neutral[500],
+      600: colorPalette.neutral[600],
+      700: colorPalette.neutral[700],
+      800: colorPalette.neutral[800],
+      900: colorPalette.neutral[900],
+    },
   },
   typography,
   shape: {
@@ -225,11 +237,23 @@ const darkThemeOptions: ThemeOptions = {
       paper: '#1a1a1a',
     },
     text: {
-      primary: colorPalette.neutral[50],
-      secondary: colorPalette.neutral[300],
-      disabled: colorPalette.neutral[500],
+      primary: colorPalette.neutral[50],    // #fafafa - very light
+      secondary: colorPalette.neutral[200], // #e5e5e5 - lighter than before
+      disabled: colorPalette.neutral[400],  // #a3a3a3 - medium gray
     },
     divider: colorPalette.neutral[700],
+    grey: {
+      50: colorPalette.neutral[800],   // Dark equivalent of grey.50
+      100: colorPalette.neutral[700],  // Dark equivalent of grey.100
+      200: colorPalette.neutral[600],  // Dark equivalent of grey.200
+      300: colorPalette.neutral[500],  // Dark equivalent of grey.300
+      400: colorPalette.neutral[400],  // Keep as is
+      500: colorPalette.neutral[300],  // Lighter for dark mode
+      600: colorPalette.neutral[200],  // Much lighter for dark mode
+      700: colorPalette.neutral[100],  // Very light for dark mode
+      800: colorPalette.neutral[50],   // Almost white for dark mode
+      900: colorPalette.neutral[50],   // White for dark mode
+    },
   },
   typography,
   shape: {
@@ -301,7 +325,7 @@ const getComponentOverrides = (mode: PaletteMode) => ({
   MuiCard: {
     styleOverrides: {
       root: {
-        borderRadius: designTokens.borderRadius.lg,
+        borderRadius: designTokens.borderRadius.md,
         boxShadow: mode === 'dark' ? 
           '0 4px 16px rgba(0, 0, 0, 0.3)' : 
           '0 2px 12px rgba(0, 0, 0, 0.08)',
@@ -344,7 +368,7 @@ const getComponentOverrides = (mode: PaletteMode) => ({
   MuiPaper: {
     styleOverrides: {
       root: {
-        borderRadius: designTokens.borderRadius.lg,
+        borderRadius: designTokens.borderRadius.md,
         backgroundImage: 'none',
       },
       elevation1: {

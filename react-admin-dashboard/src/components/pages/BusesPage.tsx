@@ -103,7 +103,7 @@ const BusesPageContent: React.FC = () => {
       alignItems: 'center',
       mb: 3 
     }}>
-      <Box>
+      <Box sx={{ px: 2, py: 1 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           {navigationState.currentView === 'company-list' 
             ? 'Bus Fleet Management' 

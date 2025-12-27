@@ -39,7 +39,7 @@ export const ModernCard: React.FC<ModernCardProps> = ({
 
   const getCardStyles = () => {
     const baseStyles = {
-      borderRadius: designTokens.borderRadius.lg,
+      borderRadius: designTokens.borderRadius.md,
       transition: designTokens.transitions.medium,
       cursor: onClick ? 'pointer' : 'default',
     };

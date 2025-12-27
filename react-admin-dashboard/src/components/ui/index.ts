@@ -26,3 +26,4 @@ export { ThemeToggle } from './ThemeToggle';
 export { ModernCard } from './ModernCard';
 export { ModernButton } from './ModernButton';
 export { StatsCard } from './StatsCard';
+export { OneBusLogo } from './OneBusLogo';

@@ -22,6 +22,7 @@ import {
   Settings,
 } from '@mui/icons-material';
 import { designTokens } from '../../theme';
+import { OneBusLogo } from '../ui';
 
 interface NavigationItem {
   id: string;
@@ -205,28 +206,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         borderColor: 'divider',
         background: alpha(theme.palette.primary.main, 0.02),
       }}>
-        <Typography 
-          variant="h6" 
-          component="div" 
-          sx={{ 
-            fontSize: isTablet ? '1.125rem' : '1.25rem',
-            fontWeight: 700,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          OneBus
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <OneBusLogo size={40} />
+        </Box>
         <Typography 
           variant="body2" 
           color="text.secondary"
           sx={{ 
             fontSize: isTablet ? '0.75rem' : '0.875rem',
             fontWeight: 500,
-            mt: 0.5,
+            textAlign: 'center',
           }}
         >
           Admin Dashboard

@@ -21,7 +21,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginRequest } from '../../types';
-import { ModernCard, ModernButton, ThemeToggle } from './';
+import { ModernCard, ModernButton, ThemeToggle, OneBusLogo } from './';
 import { designTokens } from '../../theme';
 
 // Validation schema
@@ -152,21 +152,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <Box sx={{ p: { xs: 3, sm: 4 } }}>
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Box
+            <OneBusLogo 
+              size={72} 
+              variant="gradient-bg"
               sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 80,
-                height: 80,
-                borderRadius: designTokens.borderRadius.xl,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
                 mb: 3,
-                boxShadow: designTokens.shadows.medium,
               }}
-            >
-              <DirectionsBus sx={{ fontSize: 40, color: 'white' }} />
-            </Box>
+            />
             
             <Typography 
               variant="h3" 
@@ -176,10 +168,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 fontSize: { xs: '2rem', sm: '2.5rem' },
                 fontWeight: 700,
                 mb: 1,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                // Use gradient text only in light mode, solid color in dark mode
+                ...(theme.palette.mode === 'light' ? {
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                } : {
+                  color: theme.palette.primary.main,
+                }),
               }}
             >
               OneBus Admin

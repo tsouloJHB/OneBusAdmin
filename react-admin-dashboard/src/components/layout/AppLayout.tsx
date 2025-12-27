@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { OneBusLogo } from '../ui';
 import { Sidebar } from './Sidebar';
 import { designTokens } from '../../theme';
 
@@ -124,23 +125,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <MenuIcon />
           </IconButton>
           
-          <Typography 
-            variant="h5" 
-            noWrap 
-            component="h1" 
-            sx={{ 
-              flexGrow: 1,
-              fontSize: { xs: '1.25rem', sm: '1.5rem' },
-              fontWeight: 700,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            OneBus Admin
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+            <OneBusLogo size={36} />
+          </Box>
 
           {/* User Menu */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

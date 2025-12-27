@@ -12,7 +12,8 @@ import {
   Add as AddIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { StatsCard, ModernCard, ModernButton } from '../ui';
+import { StatsCard, ModernCard, ModernButton, OneBusLogo } from '../ui';
+import { designTokens } from '../../theme';
 
 const SimpleDashboard: React.FC = () => {
   const theme = useTheme();
@@ -21,28 +22,41 @@ const SimpleDashboard: React.FC = () => {
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography 
-          variant="h3" 
-          component="h1" 
-          sx={{ 
-            fontSize: { xs: '2rem', sm: '2.5rem' },
-            fontWeight: 700,
-            mb: 1,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          Dashboard
-        </Typography>
-        <Typography 
-          variant="h6" 
-          color="text.secondary"
-          sx={{ fontSize: { xs: '1rem', sm: '1.125rem' } }}
-        >
-          Monitor your bus fleet operations in real-time
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <OneBusLogo 
+            size={64} 
+            sx={{ boxShadow: designTokens.shadows.soft }}
+          />
+        </Box>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography 
+            variant="h3" 
+            component="h1" 
+            sx={{ 
+              fontSize: { xs: '2rem', sm: '2.5rem' },
+              fontWeight: 700,
+              mb: 1,
+              // Use gradient text only in light mode, solid color in dark mode
+              ...(theme.palette.mode === 'light' ? {
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              } : {
+                color: theme.palette.primary.main,
+              }),
+            }}
+          >
+            Dashboard
+          </Typography>
+          <Typography 
+            variant="h6" 
+            color="text.secondary"
+            sx={{ fontSize: { xs: '1rem', sm: '1.125rem' } }}
+          >
+            Monitor your bus fleet operations in real-time
+          </Typography>
+        </Box>
         
         <Box sx={{ mt: 2 }}>
           <ModernButton
@@ -169,6 +183,7 @@ const SimpleDashboard: React.FC = () => {
               variant="ghost"
               icon={<AddIcon />}
               fullWidth
+              sx={{ px: 3, py: 1.5 }}
             >
               Manage Fleet
             </ModernButton>

@@ -136,7 +136,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
                 justifyContent: 'center',
                 width: 40,
                 height: 40,
-                borderRadius: '12px',
+                borderRadius: '8px',
                 backgroundColor: alpha(getColorValue(), 0.1),
                 color: getColorValue(),
               }}

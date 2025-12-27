@@ -24,10 +24,10 @@
   --spacing-xxl: 48px;
 
   /* Border radius tokens */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
   --radius-round: 50px;
 
   /* Shadows */
@@ -41,12 +41,22 @@
   --transition-slow: 0.35s ease-in-out;
 }
 
+/* Light theme colors */
+:root {
+  --color-bg-primary: #fafafa;
+  --color-bg-secondary: #ffffff;
+  --color-text-primary: #171717;
+  --color-text-secondary: #525252;
+  --color-text-disabled: #a3a3a3;
+}
+
 /* Dark theme colors */
 [data-theme="dark"] {
   --color-bg-primary: #0f0f0f;
   --color-bg-secondary: #1a1a1a;
   --color-text-primary: #fafafa;
-  --color-text-secondary: #d4d4d4;
+  --color-text-secondary: #e5e5e5;
+  --color-text-disabled: #a3a3a3;
 }
 
 /* Base styles */
@@ -65,6 +75,91 @@ body {
   background-color: var(--color-bg-primary, #fafafa);
   color: var(--color-text-primary, #171717);
   transition: background-color var(--transition-medium), color var(--transition-medium);
+}
+
+/* Ensure all text elements respect theme colors */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-text-primary);
+}
+
+p, span, div {
+  color: inherit;
+}
+
+/* Force Material-UI components to respect dark mode */
+[data-theme="dark"] .MuiTypography-root {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .MuiTypography-colorTextSecondary {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .MuiListItemText-secondary {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .MuiTypography-body2 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .MuiTypography-caption {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Specific overrides for common text elements */
+[data-theme="dark"] .MuiListItemText-primary {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .MuiBreadcrumbs-root .MuiTypography-root {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .MuiAlert-root .MuiTypography-root {
+  color: inherit !important;
+}
+
+/* Ensure all text in dark mode is visible */
+[data-theme="dark"] * {
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .MuiTypography-colorTextSecondary,
+[data-theme="dark"] [color="text.secondary"] {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Additional specific overrides for stubborn elements */
+[data-theme="dark"] .MuiDrawer-paper .MuiTypography-root {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .MuiDrawer-paper .MuiListItemText-secondary {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="dark"] .MuiAppBar-root .MuiTypography-root {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .MuiPaper-root .MuiTypography-root {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .MuiPaper-root .MuiTypography-colorTextSecondary {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Ensure form elements respect dark mode */
+input, textarea, select {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-text-disabled);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--color-text-disabled);
 }
 
 code {
@@ -155,7 +250,6 @@ html {
 @media print {
   * {
     background: transparent !important;
-    color: black !important;
     box-shadow: none !important;
     text-shadow: none !important;
   }
@@ -163,9 +257,11 @@ html {
   body {
     font-size: 12pt;
     line-height: 1.4;
+    color: #000 !important; /* Only force black in print mode */
   }
   
   h1, h2, h3, h4, h5, h6 {
     page-break-after: avoid;
+    color: #000 !important; /* Only force black in print mode */
   }
 }

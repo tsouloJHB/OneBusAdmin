@@ -117,10 +117,10 @@ The OneBus Admin Dashboard features a modern, clean design system built with war
 
 ### Radius Scale
 ```css
---radius-sm: 8px    /* Small elements */
---radius-md: 12px   /* Default buttons, inputs */
---radius-lg: 16px   /* Cards, containers */
---radius-xl: 20px   /* Large containers */
+--radius-sm: 4px    /* Small elements */
+--radius-md: 6px    /* Default buttons, inputs */
+--radius-lg: 8px    /* Cards, containers */
+--radius-xl: 12px   /* Large containers */
 --radius-round: 50px /* Pills, avatars */
 ```
 
