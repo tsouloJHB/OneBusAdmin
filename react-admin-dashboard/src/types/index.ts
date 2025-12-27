@@ -85,6 +85,7 @@ export interface ActiveBus {
     lng: number;
   };
   nextStop: Stop;
+  lastStop?: Stop;
   estimatedArrival: Date;
   passengerCount: number;
   status: 'on_route' | 'at_stop' | 'delayed';
@@ -186,6 +187,7 @@ export interface ActiveBusFilters {
   search?: string;
   routeId?: string;
   status?: ActiveBus['status'];
+  companyId?: string;
 }
 
 // Form Validation Types

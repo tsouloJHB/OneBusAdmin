@@ -7,3 +7,4 @@ export { default as BusTable } from './BusTable';
 export { default as BusForm } from './BusForm';
 export { default as ActiveBusList } from './ActiveBusList';
 export { default as FilterPanel } from './FilterPanel';
+export { default as BusTrackingMap } from './BusTrackingMap';

@@ -4,24 +4,25 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import {
   Box,
-  Card,
-  CardContent,
   TextField,
-  Button,
   Typography,
   Alert,
-  CircularProgress,
   InputAdornment,
   IconButton,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
   Person,
   Lock,
+  DirectionsBus,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoginRequest } from '../../types';
+import { ModernCard, ModernButton, ThemeToggle } from './';
+import { designTokens } from '../../theme';
 
 // Validation schema
 const loginSchema = yup.object({
@@ -46,6 +47,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess,
   redirectTo = '/dashboard' 
 }) => {
+  const theme = useTheme();
   const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -113,46 +115,97 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        backgroundColor: 'grey.100',
-        padding: { xs: 1, sm: 2 },
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
+        padding: { xs: 2, sm: 3 },
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `radial-gradient(circle at 20% 80%, ${alpha(theme.palette.primary.main, 0.15)} 0%, transparent 50%),
+                      radial-gradient(circle at 80% 20%, ${alpha(theme.palette.secondary.main, 0.15)} 0%, transparent 50%)`,
+          zIndex: 0,
+        },
       }}
       role="main"
       aria-label="Login page"
     >
-      <Card
+      {/* Theme Toggle */}
+      <Box sx={{ position: 'absolute', top: 24, right: 24, zIndex: 2 }}>
+        <ThemeToggle variant="icon" size="medium" />
+      </Box>
+
+      <ModernCard
+        variant="glass"
         sx={{
           width: '100%',
-          maxWidth: { xs: '100%', sm: 400 },
-          boxShadow: 3,
-          mx: { xs: 1, sm: 0 },
+          maxWidth: { xs: '100%', sm: 420 },
+          zIndex: 1,
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
         }}
-        role="form"
-        aria-labelledby="login-title"
       >
-        <CardContent sx={{ padding: { xs: 3, sm: 4 } }}>
-          <Box sx={{ textAlign: 'center', marginBottom: 3 }}>
+        <Box sx={{ p: { xs: 3, sm: 4 } }}>
+          {/* Header */}
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 80,
+                height: 80,
+                borderRadius: designTokens.borderRadius.xl,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                mb: 3,
+                boxShadow: designTokens.shadows.medium,
+              }}
+            >
+              <DirectionsBus sx={{ fontSize: 40, color: 'white' }} />
+            </Box>
+            
             <Typography 
-              variant="h4" 
+              variant="h3" 
               component="h1" 
               id="login-title"
-              gutterBottom
-              sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}
+              sx={{ 
+                fontSize: { xs: '2rem', sm: '2.5rem' },
+                fontWeight: 700,
+                mb: 1,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
             >
-              Admin Dashboard
+              OneBus Admin
             </Typography>
             <Typography 
-              variant="body2" 
+              variant="h6" 
               color="text.secondary"
-              sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+              sx={{ 
+                fontSize: { xs: '1rem', sm: '1.125rem' },
+                fontWeight: 400,
+              }}
             >
-              Sign in to access the bus management system
+              Sign in to manage your fleet
             </Typography>
           </Box>
 
           {loginError && (
             <Alert 
               severity="error" 
-              sx={{ marginBottom: 2 }}
+              sx={{ 
+                mb: 3,
+                borderRadius: designTokens.borderRadius.md,
+                '& .MuiAlert-message': {
+                  fontSize: '0.875rem',
+                },
+              }}
               onClose={() => setLoginError(null)}
             >
               {loginError}
@@ -195,7 +248,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   autoFocus
                   sx={{
                     '& .MuiInputBase-root': {
-                      minHeight: 56, // Ensure minimum touch target
+                      minHeight: 56,
+                      borderRadius: designTokens.borderRadius.md,
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      transition: designTokens.transitions.medium,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.primary.main,
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderWidth: '2px',
+                        borderColor: theme.palette.primary.main,
+                      },
                     },
                   }}
                 />
@@ -237,6 +301,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                           sx={{
                             minWidth: 44,
                             minHeight: 44,
+                            borderRadius: designTokens.borderRadius.md,
                           }}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -247,43 +312,48 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                   autoComplete="current-password"
                   sx={{
                     '& .MuiInputBase-root': {
-                      minHeight: 56, // Ensure minimum touch target
+                      minHeight: 56,
+                      borderRadius: designTokens.borderRadius.md,
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      transition: designTokens.transitions.medium,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.primary.main,
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderWidth: '2px',
+                        borderColor: theme.palette.primary.main,
+                      },
                     },
                   }}
                 />
               )}
             />
 
-            <Button
+            <ModernButton
               type="submit"
+              variant="gradient"
               fullWidth
-              variant="contained"
-              size="large"
-              disabled={isFormLoading}
+              loading={isFormLoading}
               sx={{
-                marginTop: 3,
-                marginBottom: 2,
-                height: 48,
+                mt: 4,
+                mb: 2,
+                height: 56,
+                fontSize: '1rem',
+                fontWeight: 600,
               }}
             >
-              {isFormLoading ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={20} color="inherit" />
-                  <span>Signing in...</span>
-                </Box>
-              ) : (
-                'Sign In'
-              )}
-            </Button>
+              {isFormLoading ? 'Signing in...' : 'Sign In'}
+            </ModernButton>
           </Box>
 
-          <Box sx={{ textAlign: 'center', marginTop: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
               Need help? Contact your system administrator
             </Typography>
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </ModernCard>
     </Box>
   );
 };

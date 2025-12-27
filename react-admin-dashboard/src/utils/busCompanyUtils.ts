@@ -14,21 +14,35 @@ import {
 
 // Data Transformation Utilities
 
-export const transformBusCompanyResponse = (response: BusCompanyResponse): BusCompany => ({
-  id: response.id.toString(),
-  name: response.name,
-  registrationNumber: response.registrationNumber,
-  companyCode: response.companyCode,
-  city: response.city,
-  address: response.address,
-  contactInfo: {
-    phone: response.phone,
-    email: response.email
-  },
-  status: response.isActive ? 'active' : 'inactive',
-  createdAt: new Date(response.createdAt),
-  updatedAt: new Date(response.updatedAt)
-});
+export const transformBusCompanyResponse = (response: BusCompanyResponse): BusCompany => {
+  const transformed: BusCompany = {
+    id: response.id.toString(),
+    name: response.name,
+    registrationNumber: response.registrationNumber,
+    companyCode: response.companyCode,
+    city: response.city,
+    address: response.address,
+    contactInfo: {
+      phone: response.phone,
+      email: response.email
+    },
+    imagePath: response.imagePath,
+    imageUrl: response.imageUrl,
+    status: response.isActive ? 'active' : 'inactive',
+    createdAt: new Date(response.createdAt),
+    updatedAt: new Date(response.updatedAt)
+  };
+  
+  // Debug logging for image transformation
+  if (response.imageUrl || response.imagePath) {
+    console.log(`Transforming company ${response.name}:`, {
+      imagePath: response.imagePath,
+      imageUrl: response.imageUrl
+    });
+  }
+  
+  return transformed;
+};
 
 export const transformBusNumberResponse = (response: BusNumberResponse): BusNumber => ({
   id: response.id.toString(),

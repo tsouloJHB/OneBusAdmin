@@ -24,7 +24,7 @@ import {
 import RouteMap from '../features/RouteMap';
 import BatchModeHeader from '../features/BatchModeHeader';
 import { Route, BusStop, TemporaryStop } from '../../types';
-import { routeService } from '../../services/routeService';
+import routeService from '../../services/routeService';
 
 interface BatchSession {
   isActive: boolean;
@@ -302,10 +302,10 @@ const RouteMapPage: React.FC = () => {
         setSelectedStop(null);
         
         // Still fetch authoritative route to reconcile with server
-        routeService.getRoute(route.id, true).then((fresh) => {
+        routeService.getRoute(route.id, true).then((fresh: any) => {
           console.info('Authoritative route fetched after deletion:', fresh?.stops?.map((s:any)=>({id:s.id,busStopIndex:s.busStopIndex})));
           setRoute(fresh);
-        }).catch((bgErr) => {
+        }).catch((bgErr: any) => {
           console.warn('Background authoritative refresh failed:', bgErr);
         });
         
@@ -653,7 +653,7 @@ const RouteMapPage: React.FC = () => {
                               }
 
                               // Still fetch authoritative route to reconcile
-                              routeService.getRoute(route.id, true).then((fresh) => {
+                              routeService.getRoute(route.id, true).then((fresh: any) => {
                                 console.info('Authoritative route fetched after update:', fresh?.stops?.map((s:any)=>({id:s.id,busStopIndex:s.busStopIndex})));
                                 setRoute(fresh);
                                 // Update selectedStop and editedIndex to the authoritative stop after successful update
@@ -666,7 +666,7 @@ const RouteMapPage: React.FC = () => {
                                 } catch (e) {
                                   console.warn('Failed to update selectedStop from authoritative fetch', e);
                                 }
-                              }).catch((bgErr) => {
+                              }).catch((bgErr: any) => {
                                 console.warn('Background authoritative refresh failed:', bgErr);
                               });
                             } catch (clientErr) {

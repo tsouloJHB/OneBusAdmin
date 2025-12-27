@@ -12,6 +12,7 @@ import {
   useTheme,
   useMediaQuery,
   CssBaseline,
+  alpha,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -20,7 +21,9 @@ import {
   Settings,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { ThemeToggle } from '../ui/ThemeToggle';
 import { Sidebar } from './Sidebar';
+import { designTokens } from '../../theme';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -88,10 +91,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             lg: `${DRAWER_WIDTH}px` 
           },
           zIndex: theme.zIndex.drawer + 1,
+          backgroundColor: 'background.paper',
+          color: 'text.primary',
+          boxShadow: 'none',
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          backdropFilter: 'blur(10px)',
+          background: alpha(theme.palette.background.paper, 0.95),
         }}
         role="banner"
       >
-        <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }}>
+        <Toolbar sx={{ 
+          minHeight: { xs: 64, sm: 72 },
+          px: { xs: 2, sm: 3 },
+        }}>
           <IconButton
             color="inherit"
             aria-label="Open navigation menu"
@@ -103,30 +115,45 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               display: { md: 'none' },
               minWidth: 44,
               minHeight: 44,
+              borderRadius: designTokens.borderRadius.md,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              },
             }}
           >
             <MenuIcon />
           </IconButton>
           
           <Typography 
-            variant="h6" 
+            variant="h5" 
             noWrap 
             component="h1" 
             sx={{ 
               flexGrow: 1,
-              fontSize: { xs: '1rem', sm: '1.25rem' },
+              fontSize: { xs: '1.25rem', sm: '1.5rem' },
+              fontWeight: 700,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.01em',
             }}
           >
-            Bus Admin Dashboard
+            OneBus Admin
           </Typography>
 
           {/* User Menu */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ThemeToggle variant="icon" size="medium" />
+            
             <Typography 
               variant="body2" 
               sx={{ 
                 display: { xs: 'none', sm: 'block' },
-                fontSize: { sm: '0.75rem', md: '0.875rem' },
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: 'text.secondary',
+                mr: 1,
               }}
             >
               Welcome, {user?.username}
@@ -139,13 +166,23 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               aria-haspopup="true"
               aria-expanded={isUserMenuOpen}
               onClick={handleUserMenuOpen}
-              color="inherit"
               sx={{
                 minWidth: 44,
                 minHeight: 44,
+                borderRadius: designTokens.borderRadius.md,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                },
               }}
             >
-              <Avatar sx={{ width: { xs: 28, sm: 32 }, height: { xs: 28, sm: 32 } }}>
+              <Avatar 
+                sx={{ 
+                  width: { xs: 32, sm: 36 }, 
+                  height: { xs: 32, sm: 36 },
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                  fontWeight: 600,
+                }}
+              >
                 {user?.username?.charAt(0).toUpperCase() || <AccountCircle />}
               </Avatar>
             </IconButton>
@@ -168,9 +205,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           elevation: 0,
           sx: {
             overflow: 'visible',
-            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+            filter: 'drop-shadow(0px 4px 16px rgba(0,0,0,0.1))',
             mt: 1.5,
-            minWidth: 200,
+            minWidth: 220,
+            borderRadius: designTokens.borderRadius.lg,
+            border: `1px solid ${theme.palette.divider}`,
             '& .MuiAvatar-root': {
               width: 32,
               height: 32,
@@ -188,6 +227,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               bgcolor: 'background.paper',
               transform: 'translateY(-50%) rotate(45deg)',
               zIndex: 0,
+              border: `1px solid ${theme.palette.divider}`,
+              borderBottom: 'none',
+              borderRight: 'none',
             },
           },
         }}
@@ -197,13 +239,23 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <MenuItem 
           onClick={handleUserMenuClose}
           role="menuitem"
-          sx={{ minHeight: 48 }}
+          sx={{ 
+            minHeight: 56,
+            borderRadius: designTokens.borderRadius.md,
+            mx: 1,
+            my: 0.5,
+          }}
         >
-          <Avatar sx={{ mr: 2 }}>
+          <Avatar 
+            sx={{ 
+              mr: 2,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            }}
+          >
             {user?.username?.charAt(0).toUpperCase()}
           </Avatar>
           <Box>
-            <Typography variant="body2" fontWeight="medium">
+            <Typography variant="body2" fontWeight="600">
               {user?.username}
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -212,21 +264,35 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </Box>
         </MenuItem>
         
-        <Divider />
+        <Divider sx={{ mx: 1 }} />
         
         <MenuItem 
           onClick={handleUserMenuClose}
           role="menuitem"
-          sx={{ minHeight: 48 }}
+          sx={{ 
+            minHeight: 48,
+            borderRadius: designTokens.borderRadius.md,
+            mx: 1,
+            my: 0.5,
+          }}
         >
-          <Settings fontSize="small" sx={{ mr: 2 }} />
+          <Settings fontSize="small" sx={{ mr: 2, color: 'text.secondary' }} />
           Settings
         </MenuItem>
         
         <MenuItem 
           onClick={handleLogout}
           role="menuitem"
-          sx={{ minHeight: 48 }}
+          sx={{ 
+            minHeight: 48,
+            borderRadius: designTokens.borderRadius.md,
+            mx: 1,
+            my: 0.5,
+            color: 'error.main',
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.error.main, 0.08),
+            },
+          }}
         >
           <Logout fontSize="small" sx={{ mr: 2 }} />
           Logout
@@ -254,13 +320,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             lg: `calc(100% - ${DRAWER_WIDTH}px)` 
           },
           minHeight: '100vh',
-          backgroundColor: 'grey.50',
+          backgroundColor: 'background.default',
+          transition: theme.transitions.create(['background-color'], {
+            duration: theme.transitions.duration.standard,
+          }),
         }}
         role="main"
         aria-label="Main content"
       >
-        <Toolbar /> {/* Spacer for fixed AppBar */}
-        {children}
+        <Toolbar sx={{ minHeight: { xs: 64, sm: 72 } }} /> {/* Spacer for fixed AppBar */}
+        <Box sx={{ mt: 2 }}>
+          {children}
+        </Box>
       </Box>
     </Box>
   );

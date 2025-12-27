@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import App from '../../App';
-import { authService } from '../../services/authService';
+import authService from '../../services/authService';
 import { AuthProvider, NotificationProvider } from '../../contexts';
 
 // Mock the auth service

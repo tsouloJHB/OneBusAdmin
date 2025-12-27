@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AuthProvider, NotificationProvider } from '../../contexts';
 import { RoutesPage } from '../../components/pages';
-import { routeService } from '../../services/routeService';
+import routeService from '../../services/routeService';
 
 // Mock the services
 jest.mock('../../services/routeService');
@@ -404,7 +404,7 @@ describe('Routes Management Integration', () => {
   it('filters routes by search term', async () => {
     // Mock filtered routes response
     const filteredRoutes = [mockRoutes[0]]; // Only Downtown Express
-    mockRouteService.getRoutes.mockImplementation((params) => {
+    mockRouteService.getRoutes.mockImplementation((params: any) => {
       if (params?.search === 'Downtown') {
         return Promise.resolve({
           data: filteredRoutes,

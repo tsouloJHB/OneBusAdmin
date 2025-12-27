@@ -3,11 +3,11 @@ import { render, screen, fireEvent, waitFor } from '../../../utils/test-utils';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import BusForm from '../BusForm';
 import { Bus } from '../../../types';
-import { routeService } from '../../../services';
+import routeService from '../../../services/routeService';
 
 // Mock the route service
-jest.mock('../../../services', () => ({
-  routeService: {
+jest.mock('../../../services/routeService', () => ({
+  default: {
     getRoutesForSelect: jest.fn()
   }
 }));

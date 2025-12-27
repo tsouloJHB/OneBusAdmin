@@ -1,0 +1,293 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Box, 
+  Typography, 
+  CircularProgress, 
+  Alert,
+  Grid,
+  IconButton,
+  useTheme,
+} from '@mui/material';
+import { 
+  DirectionsBus as BusIcon,
+  Route as RouteIcon,
+  PlayArrow as ActiveIcon,
+  People as UsersIcon,
+  Refresh as RefreshIcon,
+  TrendingUp,
+  Schedule,
+  LocationOn,
+  DirectionsBus,
+} from '@mui/icons-material';
+import { dashboardService } from '../../services/dashboardService';
+import { DashboardStats } from '../../types';
+import { StatsCard, ModernCard, ModernButton } from '../ui';
+
+const DashboardPage: React.FC = () => {
+  const theme = useTheme();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await dashboardService.getDashboardStats();
+      setStats(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load dashboard statistics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const handleRefresh = () => {
+    fetchDashboardStats();
+  };
+
+  return (
+    <Box role="main" aria-labelledby="dashboard-title">
+      {/* Header Section */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        flexDirection: { xs: 'column', sm: 'row' },
+        gap: { xs: 2, sm: 0 },
+        mb: 4 
+      }}>
+        <Box>
+          <Typography 
+            variant="h3" 
+            component="h1" 
+            id="dashboard-title"
+            sx={{ 
+              fontSize: { xs: '2rem', sm: '2.5rem' },
+              fontWeight: 700,
+              mb: 1,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            Dashboard
+          </Typography>
+          <Typography 
+            variant="h6" 
+            color="text.secondary"
+            sx={{ 
+              fontSize: { xs: '1rem', sm: '1.125rem' },
+              fontWeight: 400,
+            }}
+          >
+            Monitor your bus fleet operations in real-time
+          </Typography>
+        </Box>
+        
+        <ModernButton
+          variant="outline"
+          onClick={handleRefresh}
+          loading={loading}
+          icon={<RefreshIcon />}
+          sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
+        >
+          Refresh
+        </ModernButton>
+      </Box>
+
+      {error && (
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 3,
+            borderRadius: 2,
+            '& .MuiAlert-message': {
+              fontSize: '0.875rem',
+            },
+          }}
+          action={
+            <IconButton size="small" onClick={handleRefresh}>
+              <RefreshIcon />
+            </IconButton>
+          }
+        >
+          {error}
+        </Alert>
+      )}
+
+      {/* Stats Cards Grid */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} lg={3}>
+          <StatsCard
+            title="Total Routes"
+            value={stats?.totalRoutes ?? '--'}
+            icon={<RouteIcon />}
+            loading={loading}
+            color="primary"
+            change={12}
+            changeLabel="vs last month"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3}>
+          <StatsCard
+            title="Total Buses"
+            value={stats?.totalBuses ?? '--'}
+            icon={<BusIcon />}
+            loading={loading}
+            color="secondary"
+            change={8}
+            changeLabel="vs last month"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3}>
+          <StatsCard
+            title="Active Buses"
+            value={stats?.activeBuses ?? '--'}
+            icon={<ActiveIcon />}
+            loading={loading}
+            color="success"
+            change={-3}
+            changeLabel="vs yesterday"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} lg={3}>
+          <StatsCard
+            title="Total Users"
+            value={stats?.totalUsers ?? '--'}
+            icon={<UsersIcon />}
+            loading={loading}
+            color="warning"
+            change={25}
+            changeLabel="vs last month"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Additional Cards Grid */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={8}>
+          <ModernCard
+            title="Recent Activity"
+            subtitle="Latest system activities and updates"
+            variant="default"
+            headerAction={
+              <IconButton size="small">
+                <TrendingUp />
+              </IconButton>
+            }
+          >
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : stats?.recentActivity && stats.recentActivity.length > 0 ? (
+              <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                {stats.recentActivity.map((activity, index) => (
+                  <Box
+                    key={activity.id || index}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      py: 2,
+                      borderBottom: index < stats.recentActivity.length - 1 ? 1 : 0,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                        {activity.description}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        by {activity.userName}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+                      {new Date(activity.timestamp).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            ) : (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body2" color="text.secondary">
+                  No recent activity to display
+                </Typography>
+              </Box>
+            )}
+          </ModernCard>
+        </Grid>
+        
+        <Grid item xs={12} md={4}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <ModernCard
+                title="System Status"
+                variant="gradient"
+                headerAction={
+                  <Box sx={{ 
+                    width: 8, 
+                    height: 8, 
+                    borderRadius: '50%', 
+                    bgcolor: 'success.main' 
+                  }} />
+                }
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Schedule color="primary" />
+                  <Box>
+                    <Typography variant="body2" fontWeight="600">
+                      All Systems Operational
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Last updated: {new Date().toLocaleTimeString()}
+                    </Typography>
+                  </Box>
+                </Box>
+              </ModernCard>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <ModernCard
+                title="Quick Actions"
+                variant="elevated"
+              >
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <ModernButton
+                    variant="primary"
+                    icon={<DirectionsBus />}
+                    fullWidth
+                  >
+                    Add New Bus
+                  </ModernButton>
+                  <ModernButton
+                    variant="outline"
+                    icon={<RouteIcon />}
+                    fullWidth
+                  >
+                    Create Route
+                  </ModernButton>
+                  <ModernButton
+                    variant="ghost"
+                    icon={<LocationOn />}
+                    fullWidth
+                  >
+                    View Map
+                  </ModernButton>
+                </Box>
+              </ModernCard>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
+export default DashboardPage;

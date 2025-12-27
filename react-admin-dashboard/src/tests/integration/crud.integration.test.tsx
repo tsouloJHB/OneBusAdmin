@@ -4,8 +4,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AuthProvider, NotificationProvider } from '../../contexts';
 import { BusesPage } from '../../components/pages';
-import { busService } from '../../services/busService';
-import { routeService } from '../../services/routeService';
+import busService from '../../services/busService';
+import routeService from '../../services/routeService';
 
 // Mock the services
 jest.mock('../../services/busService');

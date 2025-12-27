@@ -9,7 +9,7 @@ import {
   ApiResponse 
 } from '../types';
 
-export const busService = {
+const busService = {
   /**
    * Get all buses with optional filtering and pagination
    */
@@ -299,3 +299,5 @@ export const busService = {
     }
   },
 };
+
+export default busService;

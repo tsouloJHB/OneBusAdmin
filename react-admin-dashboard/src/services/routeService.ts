@@ -9,7 +9,7 @@ import {
   ApiResponse 
 } from '../types';
 
-export const routeService = {
+const routeService = {
   /**
    * Get all routes with optional filtering and pagination
    */
@@ -434,3 +434,5 @@ export const routeService = {
     }
   },
 };
+
+export default routeService;

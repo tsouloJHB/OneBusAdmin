@@ -44,7 +44,7 @@ const mockDashboardStats: DashboardStats = {
   ],
 };
 
-export const dashboardService = {
+const dashboardService = {
   /**
    * Get dashboard statistics
    */
@@ -125,3 +125,5 @@ export const dashboardService = {
     }
   },
 };
+
+export default dashboardService;

@@ -36,15 +36,25 @@ import {
 } from '@mui/icons-material';
 import { BusNumberManagementProps, BusNumber, BusNumberFormData } from '../../types/busCompany';
 import BusNumberForm from './BusNumberForm';
+import { useCompanyManagement } from '../../contexts/CompanyManagementContext';
 
 const BusNumberManagement: React.FC<BusNumberManagementProps> = ({
   companyId,
-  busNumbers,
-  loading,
+  busNumbers: _busNumbers, // Rename prop to avoid confusion
+  loading: _loading,
   onAdd,
   onEdit,
   onDelete
 }) => {
+  const { state } = useCompanyManagement();
+  
+  // Use state from context instead of props for real-time updates
+  const busNumbers = state.busNumbers;
+  const loading = state.loading;
+
+  // Debug logging
+  console.log('BusNumberManagement render:', { loading, busNumbersCount: busNumbers.length });
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingBusNumber, setEditingBusNumber] = useState<BusNumber | null>(null);
@@ -178,7 +188,7 @@ const BusNumberManagement: React.FC<BusNumberManagementProps> = ({
       </Box>
 
       {/* Content */}
-      {loading && busNumbers.length === 0 ? (
+      {loading ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
             <CircularProgress size={48} />

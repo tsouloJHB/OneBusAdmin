@@ -12,6 +12,7 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
+  alpha,
 } from '@mui/material';
 import {
   Dashboard,
@@ -20,6 +21,7 @@ import {
   TrackChanges,
   Settings,
 } from '@mui/icons-material';
+import { designTokens } from '../../theme';
 
 interface NavigationItem {
   id: string;
@@ -119,36 +121,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 aria-label={`Navigate to ${item.label}. ${item.description}`}
                 sx={{
                   mx: 1,
-                  borderRadius: 1,
+                  borderRadius: designTokens.borderRadius.md,
                   minHeight: 48, // Minimum touch target size
+                  transition: designTokens.transitions.medium,
                   '&.Mui-selected': {
-                    backgroundColor: theme.palette.primary.main,
-                    color: theme.palette.primary.contrastText,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                    color: theme.palette.primary.main,
                     '&:hover': {
-                      backgroundColor: theme.palette.primary.dark,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.16),
                     },
                     '& .MuiListItemIcon-root': {
-                      color: theme.palette.primary.contrastText,
+                      color: theme.palette.primary.main,
+                    },
+                    '&:before': {
+                      content: '""',
+                      position: 'absolute',
+                      left: 0,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: 3,
+                      height: '60%',
+                      backgroundColor: theme.palette.primary.main,
+                      borderRadius: '0 2px 2px 0',
                     },
                   },
                   '&:hover': {
                     backgroundColor: isActive 
-                      ? theme.palette.primary.dark 
-                      : theme.palette.action.hover,
+                      ? alpha(theme.palette.primary.main, 0.16)
+                      : alpha(theme.palette.text.primary, 0.04),
+                    transform: 'translateX(2px)',
                   },
                   '&:focus-visible': {
                     outline: '2px solid',
                     outlineColor: theme.palette.primary.main,
                     outlineOffset: '2px',
                   },
+                  position: 'relative',
                 }}
               >
                 <ListItemIcon
                   sx={{
                     color: isActive 
-                      ? theme.palette.primary.contrastText 
+                      ? theme.palette.primary.main
                       : theme.palette.text.secondary,
                     minWidth: isTablet ? 36 : 40,
+                    transition: designTokens.transitions.medium,
                   }}
                   aria-hidden="true"
                 >
@@ -158,14 +175,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   primary={item.label}
                   secondary={!isTablet ? item.description : undefined}
                   primaryTypographyProps={{
-                    fontWeight: isActive ? 600 : 400,
+                    fontWeight: isActive ? 600 : 500,
                     fontSize: isTablet ? '0.8125rem' : '0.875rem',
                   }}
                   secondaryTypographyProps={{
                     fontSize: '0.75rem',
-                    color: isActive 
-                      ? theme.palette.primary.contrastText 
-                      : theme.palette.text.secondary,
+                    color: theme.palette.text.secondary,
                     sx: { opacity: 0.8 },
                   }}
                 />
@@ -184,19 +199,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
       aria-label="Main navigation"
     >
       {/* Header */}
-      <Box sx={{ p: { xs: 1.5, md: 2 }, borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{ 
+        p: { xs: 2, md: 3 }, 
+        borderBottom: 1, 
+        borderColor: 'divider',
+        background: alpha(theme.palette.primary.main, 0.02),
+      }}>
         <Typography 
           variant="h6" 
           component="div" 
-          fontWeight="bold"
-          sx={{ fontSize: isTablet ? '1rem' : '1.25rem' }}
+          sx={{ 
+            fontSize: isTablet ? '1.125rem' : '1.25rem',
+            fontWeight: 700,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-0.01em',
+          }}
         >
-          Bus Management
+          OneBus
         </Typography>
         <Typography 
           variant="body2" 
           color="text.secondary"
-          sx={{ fontSize: isTablet ? '0.75rem' : '0.875rem' }}
+          sx={{ 
+            fontSize: isTablet ? '0.75rem' : '0.875rem',
+            fontWeight: 500,
+            mt: 0.5,
+          }}
         >
           Admin Dashboard
         </Typography>
@@ -219,13 +250,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </Box>
 
       {/* Footer */}
-      <Box sx={{ p: { xs: 1.5, md: 2 }, borderTop: 1, borderColor: 'divider' }}>
+      <Box sx={{ 
+        p: { xs: 2, md: 3 }, 
+        borderTop: 1, 
+        borderColor: 'divider',
+        background: alpha(theme.palette.background.paper, 0.5),
+      }}>
         <Typography 
           variant="caption" 
           color="text.secondary" 
           align="center" 
           display="block"
-          sx={{ fontSize: isTablet ? '0.6875rem' : '0.75rem' }}
+          sx={{ 
+            fontSize: isTablet ? '0.6875rem' : '0.75rem',
+            fontWeight: 500,
+          }}
         >
           Version 1.0.0
         </Typography>

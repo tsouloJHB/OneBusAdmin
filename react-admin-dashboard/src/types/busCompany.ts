@@ -39,8 +39,8 @@ export interface BusNumber {
 
 // Registered Bus Interface
 export interface RegisteredBus {
-  id: string;
-  companyId: string;
+  id: number;
+  companyId: number;
   companyName: string;
   registrationNumber: string;
   busNumber?: string;
@@ -120,8 +120,8 @@ export interface CompanyManagementActions {
   
   // Registered Bus CRUD operations
   createRegisteredBus: (companyId: string, bus: RegisteredBusFormData) => Promise<void>;
-  updateRegisteredBus: (id: string, updates: Partial<RegisteredBusFormData>, companyId: string) => Promise<void>;
-  deleteRegisteredBus: (id: string) => Promise<void>;
+  updateRegisteredBus: (id: number, updates: Partial<RegisteredBusFormData>, companyId: string) => Promise<void>;
+  deleteRegisteredBus: (id: number) => Promise<void>;
 }
 
 // API Response Types
@@ -136,6 +136,8 @@ export interface BusCompanyResponse {
   city: string;
   postalCode: string;
   country: string;
+  imagePath?: string;
+  imageUrl?: string;
   isActive: boolean;
   busCount: number;
   createdAt: string;
@@ -160,8 +162,8 @@ export interface BusNumberResponse {
 }
 
 export interface RegisteredBusResponse {
-  id: string;
-  companyId: string;
+  id: number;
+  companyId: number;
   companyName: string;
   registrationNumber: string;
   busNumber?: string;
@@ -319,6 +321,6 @@ export interface RegisteredBusesProps {
   loading?: boolean;
   availableRoutes?: string[];
   onAdd: (companyId: string, bus: RegisteredBusFormData) => Promise<void>;
-  onEdit: (id: string, updates: Partial<RegisteredBusFormData>, companyId: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onEdit: (id: number, updates: Partial<RegisteredBusFormData>, companyId: string) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
 }

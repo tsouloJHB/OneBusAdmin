@@ -38,7 +38,7 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
   useEffect(() => {
     console.log('CompanyListView: Loading companies on mount');
     actions.loadCompanies();
-  }, []); // Empty dependency array - only run on mount
+  }, [actions.loadCompanies]); // Include loadCompanies in dependencies
 
   // Update filtered companies when companies or search changes
   useEffect(() => {
@@ -116,14 +116,23 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
   };
 
   // Handle edit form submit
-  const handleEditFormSubmit = async (companyData: any) => {
+  const handleEditFormSubmit = async (companyData: any, imageDeleted?: boolean) => {
     if (!editingCompany) return;
 
     console.log('=== COMPANY EDIT SUBMISSION ===');
     console.log('CompanyListView: Editing company:', editingCompany);
     console.log('CompanyListView: Form data received:', companyData);
+    console.log('CompanyListView: Image deleted:', imageDeleted);
 
     try {
+      // If image was deleted, call the delete endpoint first
+      if (imageDeleted && editingCompany.id) {
+        console.log('CompanyListView: Deleting company image...');
+        const busCompanyService = require('../../services/busCompanyService').default;
+        await busCompanyService.deleteCompanyImage(editingCompany.id);
+        console.log('CompanyListView: Company image deleted successfully');
+      }
+
       console.log('CompanyListView: Calling updateCompany...');
       await actions.updateCompany(editingCompany.id, companyData);
       setShowEditForm(false);
@@ -302,9 +311,9 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
 
       {/* Content */}
       <Box sx={{ minHeight: 400 }}>
-        {state.loading && state.companies.length === 0 ? (
+        {state.loading ? (
           renderLoadingSkeleton()
-        ) : !state.loading && filteredCompanies.length === 0 ? (
+        ) : filteredCompanies.length === 0 ? (
           renderEmptyState()
         ) : (
           renderCompanyGrid()
@@ -339,29 +348,6 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
             status: editingCompany.status
           }}
         />
-      )}
-
-      {/* Loading Overlay for Actions */}
-      {state.loading && state.companies.length > 0 && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1300
-          }}
-        >
-          <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <CircularProgress size={24} />
-            <Typography>Loading...</Typography>
-          </Paper>
-        </Box>
       )}
     </Container>
   );

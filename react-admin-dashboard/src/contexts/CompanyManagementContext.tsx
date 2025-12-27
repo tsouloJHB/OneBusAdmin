@@ -32,8 +32,8 @@ type CompanyManagementAction =
   | { type: 'UPDATE_BUS_NUMBER'; payload: { id: string; busNumber: BusNumber } }
   | { type: 'REMOVE_BUS_NUMBER'; payload: string }
   | { type: 'ADD_REGISTERED_BUS'; payload: RegisteredBus }
-  | { type: 'UPDATE_REGISTERED_BUS'; payload: { id: string; bus: RegisteredBus } }
-  | { type: 'REMOVE_REGISTERED_BUS'; payload: string };
+  | { type: 'UPDATE_REGISTERED_BUS'; payload: { id: number; bus: RegisteredBus } }
+  | { type: 'REMOVE_REGISTERED_BUS'; payload: number };
 
 // Initial State
 const initialState: CompanyManagementState = {
@@ -41,7 +41,7 @@ const initialState: CompanyManagementState = {
   selectedCompany: null,
   busNumbers: [],
   registeredBuses: [],
-  loading: false,
+  loading: true, // Start with loading true so initial fetch shows skeleton
   error: null,
   currentView: 'company-list',
   activeTab: 'bus-numbers',
@@ -56,6 +56,7 @@ const companyManagementReducer = (
 ): CompanyManagementState => {
   switch (action.type) {
     case 'SET_LOADING':
+      console.log('Reducer: SET_LOADING ->', action.payload, 'current:', state.loading);
       return { ...state, loading: action.payload };
 
     case 'SET_ERROR':
@@ -159,13 +160,18 @@ const companyManagementReducer = (
         error: null
       };
 
-    case 'REMOVE_REGISTERED_BUS':
+    case 'REMOVE_REGISTERED_BUS': {
+      console.log('Reducer: Removing registered bus with ID:', action.payload);
+      console.log('Current buses:', state.registeredBuses.map(b => ({ id: b.id, reg: b.registrationNumber })));
+      const filteredBuses = state.registeredBuses.filter(bus => String(bus.id) !== String(action.payload));
+      console.log('Buses after filter:', filteredBuses.map(b => ({ id: b.id, reg: b.registrationNumber })));
       return {
         ...state,
-        registeredBuses: state.registeredBuses.filter(bus => bus.id !== action.payload),
+        registeredBuses: filteredBuses,
         loading: false,
         error: null
       };
+    }
 
     default:
       return state;
@@ -234,6 +240,9 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
 
+    // Use a small delay to ensure the loading state renders before fetch
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     try {
       const companies = await busCompanyService.getAllCompanies();
       dispatch({ type: 'SET_COMPANIES', payload: companies });
@@ -245,8 +254,14 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
 
   const loadCompanyData = useCallback(async (companyId: string) => {
     console.log('CompanyManagementContext: Loading company data for:', companyId);
+    
+    // Force a synchronous state update before async operations
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
+    
+    // Use a small delay to ensure the loading state renders before fetch
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    console.log('CompanyManagementContext: Starting fetch...');
 
     try {
       const [busNumbers, registeredBuses] = await Promise.all([
@@ -254,11 +269,13 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
         busCompanyService.getRegisteredBusesByCompany(companyId)
       ]);
 
+      console.log('CompanyManagementContext: Fetch complete, setting data...');
       dispatch({ type: 'SET_BUS_NUMBERS', payload: busNumbers });
       dispatch({ type: 'SET_REGISTERED_BUSES', payload: registeredBuses });
-      dispatch({ type: 'SET_LOADING', payload: false });
       
       console.log(`CompanyManagementContext: Loaded ${busNumbers.length} bus numbers and ${registeredBuses.length} registered buses`);
+      
+      dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error) {
       handleError(error, 'loadCompanyData');
     }
@@ -402,7 +419,7 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
     }
   }, [handleError]);
 
-  const updateRegisteredBus = useCallback(async (id: string, updates: Partial<RegisteredBusFormData>, companyId: string) => {
+  const updateRegisteredBus = useCallback(async (id: number, updates: Partial<RegisteredBusFormData>, companyId: string) => {
     console.log('CompanyManagementContext: Updating registered bus:', id);
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
@@ -417,7 +434,7 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
     }
   }, [handleError]);
 
-  const deleteRegisteredBus = useCallback(async (id: string) => {
+  const deleteRegisteredBus = useCallback(async (id: number) => {
     console.log('CompanyManagementContext: Deleting registered bus:', id);
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });

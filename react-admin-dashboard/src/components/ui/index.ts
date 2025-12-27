@@ -20,3 +20,9 @@ export {
   ListSkeleton,
   GenericSkeleton,
 } from './SkeletonLoader';
+
+// Modern UI components
+export { ThemeToggle } from './ThemeToggle';
+export { ModernCard } from './ModernCard';
+export { ModernButton } from './ModernButton';
+export { StatsCard } from './StatsCard';

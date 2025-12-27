@@ -49,6 +49,12 @@ class BusCompanyService {
         throw this.createError(response.status, errorData, endpoint);
       }
 
+      // Some endpoints (e.g., DELETE) return 204 No Content; avoid parsing JSON in that case
+      if (response.status === 204 || response.headers.get('content-length') === '0') {
+        console.log(`BusCompanyService: API call successful (no content) for ${endpoint}`);
+        return null as unknown as T;
+      }
+
       const data = await response.json();
       console.log(`BusCompanyService: API call successful for ${endpoint}`);
       return data;
@@ -353,6 +359,21 @@ class BusCompanyService {
   }
 
   /**
+   * Delete company image
+   */
+  async deleteCompanyImage(id: string): Promise<void> {
+    try {
+      await this.apiCall<void>(`/bus-companies/${id}/image`, {
+        method: 'DELETE',
+      });
+      console.log(`BusCompanyService: Successfully deleted company image for ${id}`);
+    } catch (error) {
+      console.error(`BusCompanyService: Error deleting company image ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Delete a bus company
    */
   async deleteCompany(id: string): Promise<void> {
@@ -607,7 +628,10 @@ class BusCompanyService {
    */
   async getRegisteredBusesByCompany(companyId: string): Promise<RegisteredBus[]> {
     try {
+      // Use the registered-buses endpoint which directly queries the registered_buses table
       const response = await this.apiCall<RegisteredBusResponse[]>(`/registered-buses/company/${companyId}`);
+      
+      // Transform response to RegisteredBus format
       return response.map(transformRegisteredBusResponse);
     } catch (error) {
       console.error(`BusCompanyService: Error getting registered buses for company ${companyId}:`, error);
@@ -619,21 +643,6 @@ class BusCompanyService {
       }
       
       throw error;
-    }
-  }
-
-  /**
-   * Get backend buses by company name (from /api/buses/company/{name})
-   */
-  async getBackendBusesByCompany(companyName: string): Promise<any[]> {
-    try {
-      const encoded = encodeURIComponent(companyName);
-      const response = await this.apiCall<any>(`/buses/company/${encoded}?searchType=ignoreCase`);
-      // response has shape: { message, company, count, buses, searchType }
-      return response.buses || [];
-    } catch (error) {
-      console.error(`BusCompanyService: Error getting backend buses for company ${companyName}:`, error);
-      return [];
     }
   }
 
@@ -656,6 +665,16 @@ class BusCompanyService {
         method: 'POST',
         body: JSON.stringify(requestData),
       });
+      console.log('BusCompanyService: Registered bus created successfully:', response); 
+
+      // Also create/update the consolidated Bus record so the Active Buses view sees it
+      try {
+        await this.createBackendBus(companyId, busData, response.companyName);
+      } catch (e) {
+        // Non-fatal: log and continue
+        console.error('BusCompanyService: createBackendBus fallback failed:', e);
+      }
+
       return transformRegisteredBusResponse(response);
     } catch (error) {
       console.error('BusCompanyService: Error creating registered bus:', error);
@@ -700,7 +719,7 @@ class BusCompanyService {
   /**
    * Update an existing registered bus
    */
-  async updateRegisteredBus(id: string, updates: Partial<RegisteredBusFormData>, companyId?: string): Promise<RegisteredBus> {
+  async updateRegisteredBus(id: number, updates: Partial<RegisteredBusFormData>, companyId?: string): Promise<RegisteredBus> {
     try {
       // First get the existing bus data
       let existingBus: RegisteredBus | undefined;
@@ -748,7 +767,7 @@ class BusCompanyService {
   /**
    * Delete a registered bus
    */
-  async deleteRegisteredBus(id: string): Promise<void> {
+  async deleteRegisteredBus(id: number): Promise<void> {
     try {
       await this.apiCall<void>(`/registered-buses/${id}`, {
         method: 'DELETE',

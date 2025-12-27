@@ -4,8 +4,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AuthProvider, NotificationProvider } from '../../contexts';
 import { ActiveBusesPage } from '../../components/pages';
-import { activeBusService } from '../../services/activeBusService';
-import { routeService } from '../../services/routeService';
+import activeBusService from '../../services/activeBusService';
+import routeService from '../../services/routeService';
 
 // Mock the services
 jest.mock('../../services/activeBusService');
@@ -256,7 +256,7 @@ describe('Active Buses Monitoring Integration', () => {
 
   it('filters active buses by route', async () => {
     // Mock filtered response
-    mockActiveBusService.getActiveBuses.mockImplementation((filters) => {
+    mockActiveBusService.getActiveBuses.mockImplementation((filters: any) => {
       if (filters?.routeId === 'route1') {
         return Promise.resolve([mockActiveBuses[0]]);
       }
@@ -295,7 +295,7 @@ describe('Active Buses Monitoring Integration', () => {
 
   it('filters active buses by status', async () => {
     // Mock filtered response
-    mockActiveBusService.getActiveBuses.mockImplementation((filters) => {
+    mockActiveBusService.getActiveBuses.mockImplementation((filters: any) => {
       if (filters?.status === 'delayed') {
         return Promise.resolve([mockActiveBuses[1]]);
       }
@@ -333,7 +333,7 @@ describe('Active Buses Monitoring Integration', () => {
 
   it('filters active buses by search term', async () => {
     // Mock filtered response
-    mockActiveBusService.getActiveBuses.mockImplementation((filters) => {
+    mockActiveBusService.getActiveBuses.mockImplementation((filters: any) => {
       if (filters?.search === 'B001') {
         return Promise.resolve([mockActiveBuses[0]]);
       }

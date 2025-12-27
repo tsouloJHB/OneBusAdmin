@@ -21,7 +21,7 @@ import ImageUpload from '../common/ImageUpload';
 
 interface CompanyFormProps {
   open: boolean;
-  onSubmit: (data: CompanyFormData) => Promise<void>;
+  onSubmit: (data: CompanyFormData, imageDeleted?: boolean) => Promise<void>;
   onCancel: () => void;
   title: string;
   initialData?: Partial<CompanyFormData>;
@@ -48,6 +48,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     imageUrl: '',
     status: 'active'
   });
+
+  const [imageDeleted, setImageDeleted] = useState(false);
 
   const [validation, setValidation] = useState<ValidationResult>({
     isValid: true,
@@ -115,7 +117,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
 
     try {
       console.log('CompanyForm: Calling onSubmit with data:', formData);
-      await onSubmit(formData);
+      await onSubmit(formData, imageDeleted);
       console.log('CompanyForm: onSubmit completed successfully');
       // Form will be closed by parent component
     } catch (error) {
@@ -128,6 +130,13 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
 
   // Handle image change
   const handleImageChange = (file: File | null) => {
+    if (file === null && formData.imageUrl) {
+      // Image was deleted - mark it for deletion on the backend
+      setImageDeleted(true);
+    } else if (file !== null) {
+      // New image selected - clear deletion flag
+      setImageDeleted(false);
+    }
     setFormData(prev => ({
       ...prev,
       image: file
@@ -150,6 +159,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       imageUrl: '',
       status: 'active'
     });
+    setImageDeleted(false);
     setValidation({ isValid: true, errors: {} });
     setSubmitError(null);
     onCancel();

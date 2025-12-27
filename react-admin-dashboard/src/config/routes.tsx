@@ -1,37 +1,19 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { RouteObject } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
-// Simple lazy loading for basic pages
-const DashboardPage = lazy(() => import(/* webpackChunkName: "dashboard" */ '../components/pages/DashboardPage'));
-const RoutesPage = lazy(() => import(/* webpackChunkName: "routes" */ '../components/pages/RoutesPage'));
-const RouteMapPage = lazy(() => import(/* webpackChunkName: "route-map" */ '../components/pages/RouteMapPage'));
-const BusesPage = lazy(() => import(/* webpackChunkName: "buses" */ '../components/pages/BusesPage'));
-const ActiveBusesPage = lazy(() => import(/* webpackChunkName: "active-buses" */ '../components/pages/ActiveBusesPage'));
-
-const NotFoundPage = lazy(() => import(/* webpackChunkName: "not-found" */ '../components/pages/NotFoundPage'));
+// Direct imports to avoid chunk loading issues temporarily
+import SimpleDashboard from '../components/pages/SimpleDashboard';
+import RoutesPage from '../components/pages/RoutesPage';
+import RouteMapPage from '../components/pages/RouteMapPage';
+import BusesPage from '../components/pages/BusesPage';
+import ActiveBusesPage from '../components/pages/ActiveBusesPage';
+import NotFoundPage from '../components/pages/NotFoundPage';
 
 // Simple prefetch function for basic routes
 const prefetchRoute = (routePath: string) => {
-  switch (routePath) {
-    case '/dashboard':
-      import(/* webpackChunkName: "dashboard" */ '../components/pages/DashboardPage');
-      break;
-    case '/routes':
-      import(/* webpackChunkName: "routes" */ '../components/pages/RoutesPage');
-      break;
-    case '/routes/:id/map':
-      import(/* webpackChunkName: "route-map" */ '../components/pages/RouteMapPage');
-      break;
-    case '/buses':
-      import(/* webpackChunkName: "buses" */ '../components/pages/BusesPage');
-      break;
-    case '/active-buses':
-      import(/* webpackChunkName: "active-buses" */ '../components/pages/ActiveBusesPage');
-      break;
-    default:
-      break;
-  }
+  // Prefetching disabled for direct imports
+  console.log('Prefetch requested for:', routePath);
 };
 
 // Loading component for lazy-loaded routes with improved UX
@@ -55,58 +37,11 @@ const RouteLoader: React.FC = () => (
   </Box>
 );
 
-// Wrapper component for lazy-loaded routes with suspense and error handling
+// Wrapper component for routes with suspense and error handling
 const LazyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [hasError, setHasError] = React.useState(false);
-
-  React.useEffect(() => {
-    // Reset error state when component mounts
-    setHasError(false);
-  }, [children]);
-
-  if (hasError) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '300px',
-          gap: 2,
-          p: 3,
-          textAlign: 'center',
-        }}
-      >
-        <Typography variant="h6" color="error">
-          Failed to load page
-        </Typography>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          There was a problem loading this page.
-        </Typography>
-        <button
-          onClick={() => setHasError(false)}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          Try Again
-        </button>
-      </Box>
-    );
-  }
-
   return (
     <Suspense fallback={<RouteLoader />}>
-      {/* Use try-catch for error handling */}
-      <React.Fragment>
-        {children}
-      </React.Fragment>
+      {children}
     </Suspense>
   );
 };
@@ -122,15 +57,11 @@ export interface RouteConfig {
   order?: number;
 }
 
-// Basic route configurations (removed complex route map)
+// Basic route configurations with direct imports
 export const protectedRoutes: RouteConfig[] = [
   {
     path: '/dashboard',
-    element: (
-      <LazyRoute>
-        <DashboardPage />
-      </LazyRoute>
-    ),
+    element: <SimpleDashboard />,
     title: 'Dashboard',
     requiresAuth: true,
     showInNavigation: true,
@@ -139,11 +70,7 @@ export const protectedRoutes: RouteConfig[] = [
   },
   {
     path: '/routes',
-    element: (
-      <LazyRoute>
-        <RoutesPage />
-      </LazyRoute>
-    ),
+    element: <RoutesPage />,
     title: 'Routes',
     requiresAuth: true,
     showInNavigation: true,
@@ -152,11 +79,7 @@ export const protectedRoutes: RouteConfig[] = [
   },
   {
     path: '/buses',
-    element: (
-      <LazyRoute>
-        <BusesPage />
-      </LazyRoute>
-    ),
+    element: <BusesPage />,
     title: 'Buses',
     requiresAuth: true,
     showInNavigation: true,
@@ -165,22 +88,14 @@ export const protectedRoutes: RouteConfig[] = [
   },
   {
     path: '/buses/company/:companyId',
-    element: (
-      <LazyRoute>
-        <BusesPage />
-      </LazyRoute>
-    ),
+    element: <BusesPage />,
     title: 'Company Management',
     requiresAuth: true,
     showInNavigation: false,
   },
   {
     path: '/active-buses',
-    element: (
-      <LazyRoute>
-        <ActiveBusesPage />
-      </LazyRoute>
-    ),
+    element: <ActiveBusesPage />,
     title: 'Active Buses',
     requiresAuth: true,
     showInNavigation: true,
@@ -189,11 +104,7 @@ export const protectedRoutes: RouteConfig[] = [
   },
   {
     path: '/routes/:id/map',
-    element: (
-      <LazyRoute>
-        <RouteMapPage />
-      </LazyRoute>
-    ),
+    element: <RouteMapPage />,
     title: 'Route Map',
     requiresAuth: true,
     showInNavigation: false,
@@ -211,11 +122,7 @@ export const createRouteObjects = (routes: RouteConfig[]): RouteObject[] => {
 // 404 route configuration
 export const notFoundRoute: RouteConfig = {
   path: '*',
-  element: (
-    <LazyRoute>
-      <NotFoundPage />
-    </LazyRoute>
-  ),
+  element: <NotFoundPage />,
   title: 'Not Found',
   requiresAuth: false,
   showInNavigation: false,

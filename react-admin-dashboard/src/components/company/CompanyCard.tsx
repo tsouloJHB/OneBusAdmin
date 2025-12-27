@@ -103,6 +103,16 @@ const CompanyCard: React.FC<CompanyCardProps> = ({
     return colors[Math.abs(hash) % colors.length];
   };
 
+  // Debug logging for image URLs
+  React.useEffect(() => {
+    if (company.imageUrl) {
+      console.log(`CompanyCard: ${company.name} has imageUrl:`, company.imageUrl);
+    }
+    if (company.imagePath) {
+      console.log(`CompanyCard: ${company.name} has imagePath:`, company.imagePath);
+    }
+  }, [company.imageUrl, company.imagePath, company.name]);
+
   return (
     <Fade in timeout={300}>
       <Card
@@ -145,38 +155,62 @@ const CompanyCard: React.FC<CompanyCardProps> = ({
           {/* Header with avatar and menu */}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
             <Avatar
-              src={company.imageUrl}
+              src={company.imageUrl || undefined}
               sx={{
                 bgcolor: company.imageUrl ? 'transparent' : getAvatarColor(company.name),
                 width: 48,
                 height: 48,
                 fontSize: '1.2rem',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                border: company.imageUrl ? `2px solid ${theme.palette.grey[200]}` : 'none',
+              }}
+              imgProps={{
+                onError: (e) => {
+                  // Handle broken image by hiding src to show initials fallback
+                  (e.target as HTMLImageElement).style.display = 'none';
+                },
+                style: { objectFit: 'cover' }
               }}
             >
               {!company.imageUrl && getCompanyInitials(company.name)}
             </Avatar>
             
             <Box sx={{ flexGrow: 1, ml: 2, minWidth: 0 }}>
-              <Typography 
-                variant="h6" 
-                component="h3"
-                sx={{ 
-                  fontWeight: 600,
-                  lineHeight: 1.2,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {company.name}
-              </Typography>
-              <Chip
-                label={getStatusLabel(company.status)}
-                color={getStatusColor(company.status)}
-                size="small"
-                sx={{ mt: 0.5 }}
-              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography 
+                  variant="h6" 
+                  component="h3"
+                  sx={{ 
+                    fontWeight: 600,
+                    lineHeight: 1.2,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {company.name}
+                </Typography>
+                {company.imageUrl && (
+                  <Tooltip title="Company logo available">
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: theme.palette.success.main,
+                        flexShrink: 0
+                      }}
+                    />
+                  </Tooltip>
+                )}
+              </Box>
+              <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Chip
+                  label={getStatusLabel(company.status)}
+                  color={getStatusColor(company.status)}
+                  size="small"
+                />
+              </Box>
             </Box>
 
             <IconButton

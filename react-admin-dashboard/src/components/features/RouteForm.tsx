@@ -31,7 +31,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Route, CreateRouteRequest, UpdateRouteRequest, ApiError } from '../../types';
 import { RetryComponent } from '../ui';
-import { busCompanyService } from '../../services';
+import busCompanyService from '../../services/busCompanyService';
 import { BusCompany, BusNumber } from '../../types/busCompany';
 
 interface RouteFormProps {

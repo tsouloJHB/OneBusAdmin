@@ -1,7 +1,7 @@
 import { setAuthToken, removeAuthToken } from './httpClient';
 import { LoginRequest, LoginResponse, User } from '../types';
 
-export const authService = {
+const authService = {
   /**
    * Authenticate user with credentials (MOCKED for development)
    */
@@ -100,3 +100,5 @@ export const authService = {
     return !!token;
   },
 };
+
+export default authService;

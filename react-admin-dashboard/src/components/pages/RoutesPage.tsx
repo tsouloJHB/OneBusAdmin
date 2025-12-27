@@ -25,7 +25,7 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { RouteTable, RouteForm } from '../features';
-import { routeService } from '../../services/routeService';
+import routeService from '../../services/routeService';
 import { Route, RouteFilters, CreateRouteRequest, UpdateRouteRequest, ApiError } from '../../types';
 import { useNotification } from '../../contexts';
 

@@ -262,6 +262,20 @@ const ActiveBusList: React.FC<ActiveBusListProps> = ({
                   </Typography>
                 </Box>
 
+                {/* Last Stop Coordinates */}
+                {activeBus.lastStop && (
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                      Last Stop: {activeBus.lastStop.name || `Stop ${activeBus.lastStop.order}`}
+                    </Typography>
+                    {activeBus.lastStop.coordinates && (
+                      <Typography variant="caption" color="text.secondary">
+                        {activeBus.lastStop.coordinates.lat.toFixed(4)}, {activeBus.lastStop.coordinates.lng.toFixed(4)}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+
                 {/* Status Information Grid */}
                 <Grid container spacing={1} sx={{ mb: 2 }}>
                   {/* Current Location */}

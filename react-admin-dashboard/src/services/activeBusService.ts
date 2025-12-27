@@ -6,151 +6,106 @@ import {
   ApiResponse 
 } from '../types';
 
-// Mock data for development
-const mockActiveBuses: ActiveBus[] = [
-  {
-    id: 'active1',
-    bus: {
-      id: 'bus1',
-      busNumber: 'C5',
-      capacity: 40,
-      model: 'Mercedes Sprinter',
-      year: 2022,
-      status: 'active' as const,
-      createdAt: new Date('2023-01-01'),
-      updatedAt: new Date('2023-01-01'),
-    },
-    route: {
-      id: 1,
-      name: 'Johannesburg CBD to Soweto',
-      startPoint: 'Johannesburg CBD',
-      endPoint: 'Soweto',
-      stops: [],
-      schedule: [],
-      isActive: true,
-      createdAt: new Date('2023-01-01'),
-      updatedAt: new Date('2023-01-01'),
-    },
-    currentLocation: {
-      lat: -26.2041,
-      lng: 28.0473,
-    },
-    nextStop: {
-      id: 'stop1',
-      name: 'Park Station',
-      coordinates: { lat: -26.2041, lng: 28.0473 },
-      order: 1,
-    },
-    estimatedArrival: new Date(Date.now() + 10 * 60 * 1000),
-    passengerCount: 25,
-    status: 'on_route' as const,
-    lastUpdated: new Date(),
-  },
-  {
-    id: 'active2',
-    bus: {
-      id: 'bus2',
-      busNumber: 'A1',
-      capacity: 30,
-      model: 'Ford Transit',
-      year: 2021,
-      status: 'active' as const,
-      createdAt: new Date('2023-01-02'),
-      updatedAt: new Date('2023-01-02'),
-    },
-    route: {
-      id: 2,
-      name: 'Airport Shuttle',
-      startPoint: 'Johannesburg CBD',
-      endPoint: 'OR Tambo Airport',
-      stops: [],
-      schedule: [],
-      isActive: true,
-      createdAt: new Date('2023-01-02'),
-      updatedAt: new Date('2023-01-02'),
-    },
-    currentLocation: {
-      lat: -26.1367,
-      lng: 28.2411,
-    },
-    nextStop: {
-      id: 'stop2',
-      name: 'Airport Terminal',
-      coordinates: { lat: -26.1367, lng: 28.2411 },
-      order: 2,
-    },
-    estimatedArrival: new Date(Date.now() + 15 * 60 * 1000),
-    passengerCount: 20,
-    status: 'delayed' as const,
-    lastUpdated: new Date(),
-  },
-];
-
-export const activeBusService = {
+const activeBusService = {
   /**
    * Get all active buses with optional filtering
    */
   async getActiveBuses(filters?: ActiveBusFilters): Promise<ActiveBus[]> {
     try {
-      console.log('ActiveBusService: Attempting to fetch from backend API...');
+      console.log('ActiveBusService: Fetching from backend API...');
       
-      // Try to get active bus IDs from your backend
-      const response = await httpClient.get<string[]>(config.endpoints.activeBuses);
-      const activeBusIds = response.data || [];
-      
-      console.log('ActiveBusService: Active bus IDs from backend:', activeBusIds);
-      
-      // For now, return mock data filtered by the active bus IDs from your backend
-      // In the future, you can enhance your backend to return full ActiveBus objects
-      let filteredBuses = mockActiveBuses.filter(bus => 
-        activeBusIds.includes(bus.bus.busNumber) || activeBusIds.includes(`BUS-${bus.bus.busNumber}-001`)
-      );
-      
-      // If no buses match the backend IDs, return all mock buses for demo purposes
-      if (filteredBuses.length === 0) {
-        filteredBuses = [...mockActiveBuses];
+      // Build query parameters for backend filtering
+      const params = new URLSearchParams();
+      if (filters?.companyId) {
+        params.append('companyId', filters.companyId);
       }
+      
+      const url = `${config.endpoints.activeBuses}${params.toString() ? `?${params.toString()}` : ''}`;
+      
+      // Fetch active buses from backend
+      const response = await httpClient.get<any[]>(url);
+      let buses = response.data || [];
+      
+      console.log('ActiveBusService: Received buses from backend:', buses.length);
+      
+      // Transform backend response to ActiveBus format
+      buses = buses.map(busData => ({
+        id: busData.bus?.id || `bus-${busData.bus?.busNumber || 'unknown'}`,
+        bus: {
+          id: busData.bus?.id || `bus-${busData.bus?.busNumber || 'unknown'}`,
+          busNumber: busData.bus?.busNumber || 'Unknown',
+          capacity: 40, // Default capacity
+          model: 'Unknown',
+          year: new Date().getFullYear(),
+          status: busData.status || 'active',
+          busCompany: busData.busCompany || 'Unknown',
+          driverId: busData.bus?.driverId,
+          driverName: busData.bus?.driverName,
+          trackerImei: busData.bus?.trackerImei,
+          createdAt: new Date(),
+          updatedAt: new Date(busData.lastUpdated || Date.now()),
+        },
+        route: {
+          id: busData.route?.id || 1,
+          name: busData.route?.routeName || `${busData.bus?.busNumber || 'Unknown'} ${busData.tripDirection || 'Route'}`,
+          company: busData.route?.company || busData.busCompany || 'Unknown',
+          busNumber: busData.route?.busNumber || busData.bus?.busNumber,
+          startPoint: busData.route?.startPoint || 'Unknown',
+          endPoint: busData.route?.endPoint || 'Unknown',
+          direction: busData.route?.direction || busData.tripDirection,
+          isActive: busData.route?.active !== undefined ? busData.route.active : true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        currentLocation: {
+          lat: busData.currentLocation?.lat || 0,
+          lng: busData.currentLocation?.lng || 0,
+        },
+        nextStop: {
+          id: busData.nextStop?.id || `stop-${busData.nextStop?.order || 0}`,
+          name: busData.nextStop?.name || `Stop ${busData.nextStop?.order || 0}`,
+          coordinates: { 
+            lat: busData.nextStop?.lat || busData.currentLocation?.lat || 0, 
+            lng: busData.nextStop?.lng || busData.currentLocation?.lng || 0 
+          },
+          order: busData.nextStop?.order || 0,
+        },
+        lastStop: busData.lastStop ? {
+          id: busData.lastStop.id || `stop-${busData.lastStop.order || 0}`,
+          name: busData.lastStop.name || `Stop ${busData.lastStop.order || 0}`,
+          coordinates: { 
+            lat: busData.lastStop.lat || 0, 
+            lng: busData.lastStop.lng || 0 
+          },
+          order: busData.lastStop.order || 0,
+        } : undefined,
+        estimatedArrival: new Date(Date.now() + 10 * 60 * 1000), // Default 10 minutes
+        passengerCount: 0, // Not available from tracker
+        status: busData.status || 'on_route',
+        lastUpdated: new Date(busData.lastUpdated || Date.now()),
+      }));
       
       // Apply frontend filters
       if (filters?.search) {
-        filteredBuses = filteredBuses.filter(bus => 
+        buses = buses.filter(bus => 
           bus.bus.busNumber.toLowerCase().includes(filters.search!.toLowerCase()) ||
           bus.route.name.toLowerCase().includes(filters.search!.toLowerCase())
         );
       }
       
       if (filters?.routeId) {
-        filteredBuses = filteredBuses.filter(bus => bus.route.id.toString() === filters.routeId);
+        buses = buses.filter(bus => bus.route.id.toString() === filters.routeId);
       }
       
       if (filters?.status) {
-        filteredBuses = filteredBuses.filter(bus => bus.status === filters.status);
+        buses = buses.filter(bus => bus.status === filters.status);
       }
       
-      return filteredBuses;
+      return buses;
       
     } catch (error) {
-      console.log('ActiveBusService: Backend API failed, using mock data:', error);
-      
-      // Fallback to mock data if API fails
-      let filteredBuses = [...mockActiveBuses];
-      
-      if (filters?.search) {
-        filteredBuses = filteredBuses.filter(bus => 
-          bus.bus.busNumber.toLowerCase().includes(filters.search!.toLowerCase()) ||
-          bus.route.name.toLowerCase().includes(filters.search!.toLowerCase())
-        );
-      }
-      
-      if (filters?.routeId) {
-        filteredBuses = filteredBuses.filter(bus => bus.route.id.toString() === filters.routeId);
-      }
-      
-      if (filters?.status) {
-        filteredBuses = filteredBuses.filter(bus => bus.status === filters.status);
-      }
-      
-      return filteredBuses;
+      console.error('ActiveBusService: Failed to fetch active buses:', error);
+      throw error;
     }
   },
 
@@ -273,3 +228,5 @@ export const activeBusService = {
     }
   },
 };
+
+export default activeBusService;

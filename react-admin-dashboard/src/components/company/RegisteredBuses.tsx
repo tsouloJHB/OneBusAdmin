@@ -30,17 +30,21 @@ import { useCompanyManagement } from '../../contexts/CompanyManagementContext';
 const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
   companyId,
   companyName,
-  registeredBuses,
-  loading,
+  registeredBuses: _registeredBuses, // Rename prop to avoid confusion
+  loading: _loading,
   availableRoutes = [],
   onAdd,
   onEdit,
   onDelete
 }) => {
   const { state } = useCompanyManagement();
+  
+  // Use state from context instead of props for real-time updates
+  const registeredBuses = state.registeredBuses;
+  const loading = state.loading;
 
   const [openForm, setOpenForm] = useState(false);
-  const [editingBusId, setEditingBusId] = useState<string | null>(null);
+  const [editingBusId, setEditingBusId] = useState<number | null>(null);
 
   // Handle add new registered bus
   const handleAdd = () => {
@@ -50,14 +54,14 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
   };
 
   // Handle edit registered bus
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: number) => {
     console.log('RegisteredBuses: Edit registered bus:', id);
     setEditingBusId(id);
     setOpenForm(true);
   };
 
   // Handle delete registered bus
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     console.log('RegisteredBuses: Delete registered bus:', id);
     const ok = window.confirm('Are you sure you want to delete this registered bus?');
     if (!ok) return;
@@ -87,7 +91,7 @@ const RegisteredBuses: React.FC<RegisteredBusesProps> = ({
       </Box>
 
       {/* Content */}
-      {loading && registeredBuses.length === 0 ? (
+      {loading ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
             <CircularProgress size={48} />

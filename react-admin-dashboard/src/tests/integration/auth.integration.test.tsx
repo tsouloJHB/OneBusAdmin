@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from '../../App';
-import { authService } from '../../services/authService';
+import authService from '../../services/authService';
 
 // Mock the auth service
 jest.mock('../../services/authService');

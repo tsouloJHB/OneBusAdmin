@@ -7,13 +7,23 @@ import {
   Chip,
   Alert,
   CircularProgress,
-  useTheme
+  useTheme,
+  TextField,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  Paper,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
-import { Refresh as RefreshIcon, Pause, PlayArrow } from '@mui/icons-material';
-import { ActiveBusList, FilterPanel } from '../features';
-import { activeBusService } from '../../services/activeBusService';
-import { routeService } from '../../services/routeService';
+import { Refresh as RefreshIcon, Pause, PlayArrow, Map as MapIcon, ViewList } from '@mui/icons-material';
+import { ActiveBusList, FilterPanel, BusTrackingMap } from '../features';
+import activeBusService from '../../services/activeBusService';
+import routeService from '../../services/routeService';
+import { busCompanyService } from '../../services/busCompanyService';
 import { ActiveBus, ActiveBusFilters, Route, ApiError } from '../../types';
+import { BusCompany } from '../../types/busCompany';
 import { useNotification } from '../../contexts';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -26,11 +36,14 @@ const ActiveBusesPage: React.FC = () => {
   // State management
   const [activeBuses, setActiveBuses] = useState<ActiveBus[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
+  const [companies, setCompanies] = useState<BusCompany[]>([]);
   const [loading, setLoading] = useState(true);
+  const [companiesLoading, setCompaniesLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   // Parse filters from URL search params
   const filters: ActiveBusFilters = useMemo(() => {
@@ -41,6 +54,9 @@ const ActiveBusesPage: React.FC = () => {
     
     const routeId = searchParams.get('routeId');
     if (routeId) params.routeId = routeId;
+    
+    const companyId = searchParams.get('companyId');
+    if (companyId) params.companyId = companyId;
     
     const status = searchParams.get('status');
     if (status && ['on_route', 'at_stop', 'delayed'].includes(status)) {
@@ -56,10 +72,22 @@ const ActiveBusesPage: React.FC = () => {
     
     if (newFilters.search) params.set('search', newFilters.search);
     if (newFilters.routeId) params.set('routeId', newFilters.routeId);
+    if (newFilters.companyId) params.set('companyId', newFilters.companyId);
     if (newFilters.status) params.set('status', newFilters.status);
     
     setSearchParams(params);
   }, [setSearchParams]);
+
+  // Handle company selection
+  const handleCompanyChange = useCallback((companyId: string) => {
+    const newFilters: ActiveBusFilters = { ...filters };
+    if (companyId) {
+      newFilters.companyId = companyId;
+    } else {
+      delete newFilters.companyId;
+    }
+    handleFiltersChange(newFilters);
+  }, [filters, handleFiltersChange]);
 
   // Filter active buses based on current filters
   const filteredBuses = useMemo(() => {
@@ -88,6 +116,20 @@ const ActiveBusesPage: React.FC = () => {
     });
   }, [activeBuses, filters]);
 
+  // Fetch companies data
+  const fetchCompanies = useCallback(async () => {
+    try {
+      setCompaniesLoading(true);
+      const companiesData = await busCompanyService.getAllCompanies();
+      setCompanies(companiesData);
+    } catch (err) {
+      console.error('Failed to fetch companies:', err);
+      // Continue without companies data, not a critical failure
+    } finally {
+      setCompaniesLoading(false);
+    }
+  }, []);
+
   // Fetch active buses data
   const fetchActiveBuses = useCallback(async (showLoading = false) => {
     try {
@@ -99,7 +141,7 @@ const ActiveBusesPage: React.FC = () => {
       setError(null);
 
       const [busesData, routesData] = await Promise.all([
-        activeBusService.getActiveBuses(),
+        activeBusService.getActiveBuses(filters),
         routes.length === 0 ? routeService.getRoutes() : Promise.resolve({ data: routes })
       ]);
 
@@ -124,7 +166,7 @@ const ActiveBusesPage: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [routes, refreshing, showNotification]);
+  }, [routes, filters, refreshing, showNotification]);
 
   // Manual refresh handler
   const handleManualRefresh = useCallback(() => {
@@ -139,6 +181,7 @@ const ActiveBusesPage: React.FC = () => {
 
   // Initial data fetch
   useEffect(() => {
+    fetchCompanies();
     fetchActiveBuses(true);
   }, []);
 
@@ -220,6 +263,21 @@ const ActiveBusesPage: React.FC = () => {
         </Box>
         
         <Box sx={{ display: 'flex', gap: 1 }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(e, newMode) => newMode && setViewMode(newMode)}
+            size="small"
+          >
+            <ToggleButton value="list" aria-label="list view">
+              <ViewList sx={{ mr: 0.5 }} fontSize="small" />
+              List
+            </ToggleButton>
+            <ToggleButton value="map" aria-label="map view">
+              <MapIcon sx={{ mr: 0.5 }} fontSize="small" />
+              Map
+            </ToggleButton>
+          </ToggleButtonGroup>
           <Button
             variant="outlined"
             startIcon={autoRefreshEnabled ? <Pause /> : <PlayArrow />}
@@ -246,6 +304,42 @@ const ActiveBusesPage: React.FC = () => {
         </Alert>
       )}
 
+      {/* Company Selector */}
+      <Paper sx={{ p: 2, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5' }}>
+        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+          Filter by Bus Company
+        </Typography>
+        <FormControl sx={{ minWidth: 300 }} disabled={companiesLoading}>
+          <InputLabel id="company-select-label">Select Company</InputLabel>
+          <Select
+            labelId="company-select-label"
+            id="company-select"
+            value={filters.companyId || ''}
+            label="Select Company"
+            onChange={(e) => handleCompanyChange(e.target.value)}
+          >
+            <MenuItem value="">
+              <em>All Companies</em>
+            </MenuItem>
+            {companies.map((company) => (
+              <MenuItem key={company.id} value={company.id}>
+                {company.name} ({company.status})
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        {companiesLoading && (
+          <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+            Loading companies...
+          </Typography>
+        )}
+        {companies.length === 0 && !companiesLoading && (
+          <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+            No companies available
+          </Typography>
+        )}
+      </Paper>
+
       {/* Filter Panel */}
       <FilterPanel
         filters={filters}
@@ -256,13 +350,21 @@ const ActiveBusesPage: React.FC = () => {
         filteredCount={filteredBuses.length}
       />
 
-      {/* Active Buses List */}
-      <ActiveBusList
-        buses={filteredBuses}
-        loading={refreshing}
-        onRefresh={handleManualRefresh}
-        lastUpdated={lastUpdated || undefined}
-      />
+      {/* Active Buses List or Map */}
+      {viewMode === 'list' ? (
+        <ActiveBusList
+          buses={filteredBuses}
+          loading={refreshing}
+          onRefresh={handleManualRefresh}
+          lastUpdated={lastUpdated || undefined}
+        />
+      ) : (
+        <BusTrackingMap 
+          buses={filteredBuses} 
+          companyId={filters.companyId}
+          autoCenter={true}
+        />
+      )}
 
     </Box>
   );
