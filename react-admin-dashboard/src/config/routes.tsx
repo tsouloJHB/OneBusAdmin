@@ -7,7 +7,10 @@ import SimpleDashboard from '../components/pages/SimpleDashboard';
 import RoutesPage from '../components/pages/RoutesPage';
 import RouteMapPage from '../components/pages/RouteMapPage';
 import BusesPage from '../components/pages/BusesPage';
+import CompanyManagementPage from '../components/pages/CompanyManagementPage';
 import ActiveBusesPage from '../components/pages/ActiveBusesPage';
+import TrackersPage from '../components/pages/TrackersPage';
+import DriversPage from '../components/pages/DriversPage';
 import NotFoundPage from '../components/pages/NotFoundPage';
 
 // Simple prefetch function for basic routes
@@ -55,6 +58,7 @@ export interface RouteConfig {
   showInNavigation: boolean;
   icon?: string;
   order?: number;
+  children?: RouteConfig[]; // Support nested routes
 }
 
 // Basic route configurations with direct imports
@@ -78,18 +82,56 @@ export const protectedRoutes: RouteConfig[] = [
     order: 2,
   },
   {
+    path: '/companies',
+    element: <CompanyManagementPage />,
+    title: 'Company Management',
+    requiresAuth: true,
+    showInNavigation: false,
+    icon: 'business',
+    order: 3,
+  },
+  {
     path: '/buses',
     element: <BusesPage />,
     title: 'Buses',
     requiresAuth: true,
-    showInNavigation: true,
+    showInNavigation: false,
     icon: 'directions_bus',
     order: 3,
   },
   {
+    path: '/companies-menu',
+    element: <CompanyManagementPage />,
+    title: 'Companies',
+    requiresAuth: true,
+    showInNavigation: true,
+    icon: 'business',
+    order: 3,
+    children: [
+      {
+        path: '/companies',
+        element: <CompanyManagementPage />,
+        title: 'Company Management',
+        requiresAuth: true,
+        showInNavigation: true,
+        icon: 'business',
+        order: 1,
+      },
+      {
+        path: '/buses',
+        element: <BusesPage />,
+        title: 'Buses',
+        requiresAuth: true,
+        showInNavigation: true,
+        icon: 'directions_bus',
+        order: 2,
+      },
+    ],
+  },
+  {
     path: '/buses/company/:companyId',
     element: <BusesPage />,
-    title: 'Company Management',
+    title: 'Company Buses',
     requiresAuth: true,
     showInNavigation: false,
   },
@@ -103,6 +145,24 @@ export const protectedRoutes: RouteConfig[] = [
     order: 4,
   },
   {
+    path: '/trackers',
+    element: <TrackersPage />,
+    title: 'Trackers',
+    requiresAuth: true,
+    showInNavigation: true,
+    icon: 'sensors',
+    order: 5,
+  },
+  {
+    path: '/drivers',
+    element: <DriversPage />,
+    title: 'Drivers',
+    requiresAuth: true,
+    showInNavigation: true,
+    icon: 'person',
+    order: 6,
+  },
+  {
     path: '/routes/:id/map',
     element: <RouteMapPage />,
     title: 'Route Map',
@@ -113,10 +173,27 @@ export const protectedRoutes: RouteConfig[] = [
 
 // Convert route configs to React Router route objects
 export const createRouteObjects = (routes: RouteConfig[]): RouteObject[] => {
-  return routes.map(route => ({
-    path: route.path,
-    element: route.element,
-  }));
+  const result: RouteObject[] = [];
+  
+  routes.forEach(route => {
+    // Add the parent route
+    result.push({
+      path: route.path,
+      element: route.element,
+    });
+    
+    // Add children routes if they exist
+    if (route.children) {
+      route.children.forEach(child => {
+        result.push({
+          path: child.path,
+          element: child.element,
+        });
+      });
+    }
+  });
+  
+  return result;
 };
 
 // 404 route configuration
@@ -130,9 +207,16 @@ export const notFoundRoute: RouteConfig = {
 
 // Get navigation routes (routes that should appear in sidebar)
 export const getNavigationRoutes = (): RouteConfig[] => {
-  return protectedRoutes
+  const routes: RouteConfig[] = [];
+  
+  protectedRoutes
     .filter(route => route.showInNavigation)
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .forEach(route => {
+      routes.push(route);
+    });
+  
+  return routes;
 };
 
 // Prefetch adjacent routes for faster navigation

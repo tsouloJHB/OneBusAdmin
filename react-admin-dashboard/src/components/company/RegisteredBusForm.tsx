@@ -12,11 +12,14 @@ import {
   InputLabel,
   Select,
   CircularProgress,
-  Alert
+  Alert,
+  Typography
 } from '@mui/material';
 import { RegisteredBusFormData, RegisteredBus } from '../../types/busCompany';
+import { Tracker } from '../../types';
 import { busCompanyService } from '../../services/busCompanyService';
 import { registeredBusToFormData } from '../../utils/busCompanyUtils';
+import { ImeiSelector } from '../ui';
 
 interface RegisteredBusFormProps {
   open: boolean;
@@ -63,6 +66,8 @@ const RegisteredBusForm: React.FC<RegisteredBusFormProps> = ({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [dynamicRoutes, setDynamicRoutes] = useState<any[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
+  const [selectedTracker, setSelectedTracker] = useState<Tracker | null>(null);
+  const [autoSetInactive, setAutoSetInactive] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -80,16 +85,43 @@ const RegisteredBusForm: React.FC<RegisteredBusFormProps> = ({
 
       setFormData(prev => ({ ...prev, ...transformedData } as RegisteredBusFormData));
 
+      // Check if status should be auto-managed based on IMEI
+      const hasImei = transformedData.trackerImei && transformedData.trackerImei.trim() !== '';
+      const isInactive = transformedData.status === 'inactive';
+      setAutoSetInactive(!hasImei && isInactive);
+
       // Load routes for the selected bus number if it exists
       const busNumber = transformedData.busNumber;
       if (busNumber) {
         loadRoutesForBusNumber(busNumber);
       }
+    } else {
+      // Reset form for new registration
+      setAutoSetInactive(false);
     }
   }, [initialData]);
 
   const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value } as RegisteredBusFormData));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value } as RegisteredBusFormData;
+      
+      // Auto-set status based on IMEI presence
+      if (field === 'trackerImei') {
+        if (!value || value.trim() === '') {
+          // No IMEI provided, set status to inactive
+          newData.status = 'inactive';
+          setAutoSetInactive(true);
+        } else {
+          // IMEI provided, allow user to set status (but don't auto-change if they manually set it)
+          if (autoSetInactive && prev.status === 'inactive') {
+            newData.status = 'active';
+          }
+          setAutoSetInactive(false);
+        }
+      }
+      
+      return newData;
+    });
     
     // If bus number changed, load routes for that bus number
     if (field === 'busNumber' && value) {
@@ -171,13 +203,38 @@ const RegisteredBusForm: React.FC<RegisteredBusFormProps> = ({
               fullWidth
             />
 
-            <TextField
-              label="Tracker IMEI"
+            <ImeiSelector
               value={formData.trackerImei || ''}
-              onChange={(e) => handleChange('trackerImei', e.target.value)}
-              required
+              onChange={(imei, tracker) => {
+                handleChange('trackerImei', imei);
+                setSelectedTracker(tracker || null);
+              }}
+              label="Tracker IMEI (Optional)"
+              placeholder="Search trackers or enter IMEI... (Leave empty to register without tracker)"
+              required={false} // Make IMEI optional
               fullWidth
             />
+
+            {/* Info message about IMEI and status */}
+            {(!formData.trackerImei || formData.trackerImei.trim() === '') && (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                <Typography variant="body2">
+                  <strong>No tracker assigned:</strong> Bus will be registered with "inactive" status. 
+                  Add a tracker IMEI later to activate the bus for tracking.
+                </Typography>
+              </Alert>
+            )}
+
+            {selectedTracker && (
+              <Box sx={{ p: 1.5, bgcolor: 'success.50', borderRadius: 1, border: 1, borderColor: 'success.200' }}>
+                <Typography variant="body2" color="success.main" fontWeight="medium">
+                  ✓ Tracker Selected: {selectedTracker.brand} {selectedTracker.model}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Status: {selectedTracker.status} • Purchase Date: {selectedTracker.purchaseDate || 'N/A'}
+                </Typography>
+              </Box>
+            )}
 
             <TextField
               label="Driver ID (optional)"
@@ -265,13 +322,24 @@ const RegisteredBusForm: React.FC<RegisteredBusFormProps> = ({
               <Select
                 label="Status"
                 value={formData.status}
-                onChange={(e) => handleChange('status', e.target.value as any)}
+                onChange={(e) => {
+                  handleChange('status', e.target.value as any);
+                  // If user manually changes status, disable auto-setting
+                  if (e.target.value !== 'inactive' || (formData.trackerImei && formData.trackerImei.trim() !== '')) {
+                    setAutoSetInactive(false);
+                  }
+                }}
               >
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
                 <MenuItem value="maintenance">Maintenance</MenuItem>
                 <MenuItem value="retired">Retired</MenuItem>
               </Select>
+              {autoSetInactive && formData.status === 'inactive' && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  Status automatically set to "inactive" because no tracker IMEI is provided.
+                </Typography>
+              )}
             </FormControl>
           </Box>
         </DialogContent>

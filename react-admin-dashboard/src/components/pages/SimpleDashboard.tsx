@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
   useTheme,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import { 
   DirectionsBus as BusIcon,
@@ -14,18 +16,48 @@ import {
 } from '@mui/icons-material';
 import { StatsCard, ModernCard, ModernButton, OneBusLogo } from '../ui';
 import { designTokens } from '../../theme';
+import dashboardService from '../../services/dashboardService';
+import { DashboardStats } from '../../types';
 
 const SimpleDashboard: React.FC = () => {
   const theme = useTheme();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadDashboardStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await dashboardService.getDashboardStats();
+      setStats(data);
+    } catch (err) {
+      setError('Failed to load dashboard statistics');
+      console.error('Dashboard load error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardStats();
+  }, []);
+
+  const handleRefresh = () => {
+    loadDashboardStats();
+  };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ 
+      p: { xs: 2, sm: 3 }, // Responsive padding
+      maxWidth: '100%',
+      overflow: 'hidden',
+    }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+      <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 2, sm: 3 } }}>
           <OneBusLogo 
-            size={64} 
-            sx={{ boxShadow: designTokens.shadows.soft }}
+            size={{ xs: 48, sm: 64 }} // Responsive logo size
           />
         </Box>
         <Box sx={{ textAlign: 'center' }}>
@@ -33,7 +65,7 @@ const SimpleDashboard: React.FC = () => {
             variant="h3" 
             component="h1" 
             sx={{ 
-              fontSize: { xs: '2rem', sm: '2.5rem' },
+              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' }, // More responsive sizing
               fontWeight: 700,
               mb: 1,
               // Use gradient text only in light mode, solid color in dark mode
@@ -52,72 +84,99 @@ const SimpleDashboard: React.FC = () => {
           <Typography 
             variant="h6" 
             color="text.secondary"
-            sx={{ fontSize: { xs: '1rem', sm: '1.125rem' } }}
+            sx={{ 
+              fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem' }, // Responsive subtitle
+              px: { xs: 1, sm: 0 }, // Add padding on mobile
+            }}
           >
             Monitor your bus fleet operations in real-time
           </Typography>
         </Box>
         
-        <Box sx={{ mt: 2 }}>
+        <Box sx={{ 
+          mt: 2, 
+          display: 'flex', 
+          justifyContent: 'center',
+        }}>
           <ModernButton
             variant="primary"
-            icon={<RefreshIcon />}
-            onClick={() => window.location.reload()}
+            icon={loading ? <CircularProgress size={16} color="inherit" /> : <RefreshIcon />}
+            onClick={handleRefresh}
+            disabled={loading}
+            sx={{
+              fontSize: { xs: '0.875rem', sm: '1rem' }, // Responsive button text
+              px: { xs: 2, sm: 3 }, // Responsive padding
+            }}
           >
-            Refresh Data
+            {loading ? 'Loading...' : 'Refresh Data'}
           </ModernButton>
         </Box>
       </Box>
 
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Loading State */}
+      {loading && !stats && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
       {/* Stats Cards */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(4, 1fr)',
-          },
-          gap: 3,
-          mb: 4,
-        }}
-      >
-        <StatsCard
-          title="Total Routes"
-          value="12"
-          icon={<RouteIcon />}
-          color="primary"
-          change={8}
-          changeLabel="vs last month"
-        />
+      {stats && (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              lg: 'repeat(4, 1fr)',
+            },
+            gap: { xs: 2, sm: 3 }, // Responsive gap
+            mb: { xs: 3, sm: 4 },
+          }}
+        >
+          <StatsCard
+            title="Total Routes"
+            value={stats.totalRoutes?.toString() || '0'}
+            icon={<RouteIcon />}
+            color="primary"
+            change={stats.routesChange}
+            changeLabel="vs last month"
+          />
 
-        <StatsCard
-          title="Total Buses"
-          value="45"
-          icon={<BusIcon />}
-          color="secondary"
-          change={12}
-          changeLabel="vs last month"
-        />
+          <StatsCard
+            title="Total Buses"
+            value={stats.totalBuses?.toString() || '0'}
+            icon={<BusIcon />}
+            color="secondary"
+            change={stats.busesChange}
+            changeLabel="vs last month"
+          />
 
-        <StatsCard
-          title="Active Buses"
-          value="32"
-          icon={<ActiveIcon />}
-          color="success"
-          change={-3}
-          changeLabel="vs yesterday"
-        />
+          <StatsCard
+            title="Active Buses"
+            value={stats.activeBuses?.toString() || '0'}
+            icon={<ActiveIcon />}
+            color="success"
+            changeLabel="currently active"
+          />
 
-        <StatsCard
-          title="Total Users"
-          value="1,234"
-          icon={<UsersIcon />}
-          color="warning"
-          change={25}
-          changeLabel="vs last month"
-        />
-      </Box>
+          <StatsCard
+            title="Total Users"
+            value={stats.totalUsers?.toString() || '0'}
+            icon={<UsersIcon />}
+            color="warning"
+            change={stats.usersChange}
+            changeLabel="vs last month"
+          />
+        </Box>
+      )}
 
       {/* System Status */}
       <Box
@@ -125,9 +184,9 @@ const SimpleDashboard: React.FC = () => {
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
-            md: '2fr 1fr',
+            lg: '2fr 1fr',
           },
-          gap: 3,
+          gap: { xs: 2, sm: 3 }, // Responsive gap
         }}
       >
         <ModernCard 

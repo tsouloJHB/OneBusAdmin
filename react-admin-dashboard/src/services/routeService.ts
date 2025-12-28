@@ -49,6 +49,7 @@ const routeService = {
         return {
           id: routeId,
           name: backendRoute.routeName || backendRoute.name || 'Unknown Route',
+          company: backendRoute.company || '',
           startPoint: backendRoute.startPoint || 'Start Point',
           endPoint: backendRoute.endPoint || 'End Point',
           direction: backendRoute.direction || '',
@@ -64,13 +65,22 @@ const routeService = {
       let filteredRoutes = routes;
       
       if (filters?.search) {
-        filteredRoutes = routes.filter((route: Route) => 
+        filteredRoutes = filteredRoutes.filter((route: Route) => 
           route.name.toLowerCase().includes(filters.search!.toLowerCase())
         );
       }
       
       if (filters?.isActive !== undefined) {
         filteredRoutes = filteredRoutes.filter((route: Route) => route.isActive === filters.isActive);
+      }
+      
+      // Filter by company if specified
+      if (filters?.company) {
+        filteredRoutes = filteredRoutes.filter((route: Route) => {
+          // Check if route has company field and matches
+          const routeCompany = route.company || '';
+          return routeCompany.toLowerCase() === filters.company!.toLowerCase();
+        });
       }
       
       // Apply client-side pagination

@@ -113,9 +113,9 @@ export const StatsCard: React.FC<StatsCardProps> = ({
         />
       )}
 
-      <Box sx={{ position: 'relative', zIndex: 1, p: 1 }}>
+      <Box sx={{ position: 'relative', zIndex: 1, p: { xs: 1.5, sm: 2 } }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: { xs: 1.5, sm: 2 } }}>
           <Typography
             variant="body2"
             color="text.secondary"
@@ -123,7 +123,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
               fontWeight: 500,
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
-              fontSize: '0.75rem',
+              fontSize: { xs: '0.6875rem', sm: '0.75rem' }, // Responsive font size
             }}
           >
             {title}
@@ -134,8 +134,8 @@ export const StatsCard: React.FC<StatsCardProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 40,
-                height: 40,
+                width: { xs: 36, sm: 40 }, // Responsive icon container
+                height: { xs: 36, sm: 40 },
                 borderRadius: '8px',
                 backgroundColor: alpha(getColorValue(), 0.1),
                 color: getColorValue(),
@@ -146,7 +146,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
                   component="span"
                   sx={{
                     display: 'inline-flex',
-                    fontSize: 20,
+                    fontSize: { xs: 18, sm: 20 }, // Responsive icon size
                   }}
                 >
                   {icon}
@@ -164,6 +164,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
             color: 'text.primary',
             mb: 1,
             lineHeight: 1.2,
+            fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' }, // Responsive value size
           }}
         >
           {value}
@@ -178,7 +179,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
               sx={{
                 color: getTrendColor(),
                 fontWeight: 500,
-                fontSize: '0.75rem',
+                fontSize: { xs: '0.6875rem', sm: '0.75rem' }, // Responsive change text
               }}
             >
               {change !== undefined && (

@@ -178,6 +178,7 @@ export interface LoginResponse {
 export interface RouteFilters {
   search?: string;
   isActive?: boolean;
+  company?: string;
   sortBy?: 'name' | 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
 }
@@ -262,7 +263,14 @@ export interface DashboardStats {
   totalBuses: number;
   activeBuses: number;
   totalUsers: number;
-  recentActivity: ActivityItem[];
+  totalCompanies?: number;
+  totalTrackers?: number;
+  routesChange?: number;
+  busesChange?: number;
+  usersChange?: number;
+  lastUpdated?: string;
+  lastSnapshot?: string | null;
+  recentActivity?: ActivityItem[];
 }
 
 export interface ActivityItem {
@@ -272,6 +280,52 @@ export interface ActivityItem {
   timestamp: Date;
   userId: string;
   userName: string;
+}
+
+// Tracker Types
+export interface Tracker {
+  id: number;
+  imei: string;
+  brand: string;
+  model: string;
+  purchaseDate?: string;
+  status: 'AVAILABLE' | 'IN_USE' | 'MAINTENANCE' | 'DAMAGED' | 'RETIRED';
+  companyId?: number;
+  companyName?: string;
+  assignedBusId?: number;
+  assignedBusNumber?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateTrackerRequest {
+  imei: string;
+  brand: string;
+  model: string;
+  purchaseDate?: string;
+  status: 'AVAILABLE' | 'IN_USE' | 'MAINTENANCE' | 'DAMAGED' | 'RETIRED';
+  companyId?: number;
+  notes?: string;
+}
+
+export interface UpdateTrackerRequest {
+  imei?: string;
+  brand?: string;
+  model?: string;
+  purchaseDate?: string;
+  status?: 'AVAILABLE' | 'IN_USE' | 'MAINTENANCE' | 'DAMAGED' | 'RETIRED';
+  companyId?: number;
+  notes?: string;
+}
+
+export interface TrackerStatistics {
+  total: number;
+  available: number;
+  inUse: number;
+  maintenance: number;
+  damaged: number;
+  retired: number;
 }
 
 // Re-export marker types

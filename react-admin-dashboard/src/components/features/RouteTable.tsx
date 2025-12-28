@@ -148,54 +148,82 @@ const RouteTable: React.FC<RouteTableProps> = ({
       field: 'name',
       headerName: 'Route Name',
       flex: 1,
-      minWidth: 200,
+      minWidth: 150, // Reduced for mobile
       sortable: true,
       renderCell: (params) => (
-        <Typography variant="body2" fontWeight="medium">
+        <Typography 
+          variant="body2" 
+          fontWeight="medium"
+          sx={{
+            fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Responsive font size
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {params.value}
         </Typography>
       ),
     },
     {
       field: 'startPoint',
-      headerName: 'Start Point',
+      headerName: 'Start',
       flex: 1,
-      minWidth: 150,
-      sortable: false,
-    },
-    {
-      field: 'endPoint',
-      headerName: 'End Point',
-      flex: 1,
-      minWidth: 150,
-      sortable: false,
-    },
-    {
-      field: 'stops',
-      headerName: 'Stops',
-      width: 120,
+      minWidth: 120, // Reduced for mobile
       sortable: false,
       renderCell: (params) => (
-        <Typography variant="body2" color="text.secondary">
-          {formatStops(params.value)}
+        <Typography 
+          variant="body2"
+          sx={{
+            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {params.value}
         </Typography>
       ),
     },
     {
-      field: 'direction',
-      headerName: 'Direction',
-      width: 140,
+      field: 'endPoint',
+      headerName: 'End',
+      flex: 1,
+      minWidth: 120, // Reduced for mobile
       sortable: false,
       renderCell: (params) => (
-        <Typography variant="body2" color="text.secondary">
-          {params.row?.direction || 'N/A'}
+        <Typography 
+          variant="body2"
+          sx={{
+            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: 'stops',
+      headerName: 'Stops',
+      width: 80, // Reduced for mobile
+      sortable: false,
+      renderCell: (params) => (
+        <Typography 
+          variant="body2" 
+          color="text.secondary"
+          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+        >
+          {formatStops(params.value)}
         </Typography>
       ),
     },
     {
       field: 'isActive',
       headerName: 'Status',
-      width: 100,
+      width: 90, // Reduced for mobile
       sortable: false,
       renderCell: (params) => (
         <Chip
@@ -203,45 +231,20 @@ const RouteTable: React.FC<RouteTableProps> = ({
           color={params.value ? 'success' : 'default'}
           size="small"
           variant="outlined"
+          sx={{
+            fontSize: { xs: '0.6875rem', sm: '0.75rem' },
+            height: { xs: 20, sm: 24 },
+          }}
         />
-      ),
-    },
-    {
-      field: 'createdAt',
-      headerName: 'Created',
-      width: 120,
-      sortable: true,
-      renderCell: (params) => (
-        <Typography variant="body2" color="text.secondary">
-          {formatDate(params.value)}
-        </Typography>
       ),
     },
     {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 200,
+      width: 120, // Reduced for mobile
       getActions: (params: GridRowParams<Route>) => {
         const actions = [];
-
-
-
-        if (onView) {
-          actions.push(
-            <GridActionsCellItem
-              key="view"
-              icon={
-                <Tooltip title="View Details">
-                  <ViewIcon />
-                </Tooltip>
-              }
-              label="View"
-              onClick={handleView(params.row)}
-              aria-label={`View route ${params.row.name}`}
-            />
-          );
-        }
 
         if (onMapView) {
           actions.push(
@@ -249,7 +252,7 @@ const RouteTable: React.FC<RouteTableProps> = ({
               key="map"
               icon={
                 <Tooltip title="View on Map">
-                  <MapIcon />
+                  <MapIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
                 </Tooltip>
               }
               label="Map"
@@ -264,7 +267,7 @@ const RouteTable: React.FC<RouteTableProps> = ({
             key="edit"
             icon={
               <Tooltip title="Edit Route">
-                <EditIcon />
+                <EditIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
               </Tooltip>
             }
             label="Edit"
@@ -275,7 +278,10 @@ const RouteTable: React.FC<RouteTableProps> = ({
             key="delete"
             icon={
               <Tooltip title="Delete Route">
-                <DeleteIcon color="error" />
+                <DeleteIcon 
+                  color="error" 
+                  sx={{ fontSize: { xs: 18, sm: 20 } }}
+                />
               </Tooltip>
             }
             label="Delete"
@@ -318,7 +324,11 @@ const RouteTable: React.FC<RouteTableProps> = ({
           variant="banner"
         />
         {/* Render table with existing data */}
-        <Box sx={{ height: 600, width: '100%' }}>
+        <Box sx={{ 
+          height: { xs: 400, sm: 500, md: 600 }, // Responsive height
+          width: '100%',
+          overflow: 'hidden', // Prevent container overflow
+        }}>
           <DataGrid
             rows={routes}
             columns={columns}
@@ -339,17 +349,30 @@ const RouteTable: React.FC<RouteTableProps> = ({
               '& .MuiDataGrid-root': {
                 border: 'none',
               },
+              '& .MuiDataGrid-main': {
+                overflow: 'auto', // Enable horizontal scrolling
+              },
+              '& .MuiDataGrid-virtualScroller': {
+                overflow: 'auto', // Enable scrolling in virtual scroller
+              },
               '& .MuiDataGrid-cell': {
                 borderBottom: '1px solid',
                 borderBottomColor: 'divider',
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Responsive font size
+                padding: { xs: '4px 8px', sm: '8px 16px' }, // Responsive padding
               },
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'grey.50',
                 borderBottom: '2px solid',
                 borderBottomColor: 'divider',
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Responsive header font
               },
               '& .MuiDataGrid-columnHeaderTitle': {
                 fontWeight: 600,
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              },
+              '& .MuiDataGrid-row': {
+                minHeight: { xs: '40px', sm: '52px' }, // Responsive row height
               },
               '& .MuiDataGrid-row:hover': {
                 backgroundColor: 'action.hover',
@@ -357,6 +380,17 @@ const RouteTable: React.FC<RouteTableProps> = ({
               '& .MuiDataGrid-footerContainer': {
                 borderTop: '2px solid',
                 borderTopColor: 'divider',
+                minHeight: { xs: '40px', sm: '52px' }, // Responsive footer height
+              },
+              // Mobile-specific styles
+              '@media (max-width: 600px)': {
+                '& .MuiDataGrid-columnHeaders': {
+                  fontSize: '0.6875rem',
+                },
+                '& .MuiDataGrid-cell': {
+                  fontSize: '0.6875rem',
+                  padding: '4px 6px',
+                },
               },
             }}
             slots={{
@@ -369,13 +403,25 @@ const RouteTable: React.FC<RouteTableProps> = ({
                     justifyContent: 'center',
                     height: '100%',
                     gap: 2,
+                    p: { xs: 2, sm: 3 }, // Responsive padding
                   }}
                 >
-                  <RouteIcon sx={{ fontSize: 48, color: 'text.secondary' }} />
-                  <Typography variant="h6" color="text.secondary">
+                  <RouteIcon sx={{ fontSize: { xs: 40, sm: 48 }, color: 'text.secondary' }} />
+                  <Typography 
+                    variant="h6" 
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+                  >
                     No routes found
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      textAlign: 'center',
+                    }}
+                  >
                     {filters.search
                       ? 'Try adjusting your search criteria'
                       : 'Create your first route to get started'}
@@ -392,8 +438,12 @@ const RouteTable: React.FC<RouteTableProps> = ({
                     gap: 2,
                   }}
                 >
-                  <CircularProgress size={24} />
-                  <Typography variant="body2" color="text.secondary">
+                  <CircularProgress size={20} />
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                  >
                     Loading routes...
                   </Typography>
                 </Box>
@@ -416,7 +466,11 @@ const RouteTable: React.FC<RouteTableProps> = ({
   }
 
   return (
-    <Box sx={{ height: 600, width: '100%' }}>
+    <Box sx={{ 
+      height: { xs: 400, sm: 500, md: 600 }, // Responsive height
+      width: '100%',
+      overflow: 'hidden', // Prevent container overflow
+    }}>
       <DataGrid
         rows={routes}
         columns={columns}
@@ -437,17 +491,30 @@ const RouteTable: React.FC<RouteTableProps> = ({
           '& .MuiDataGrid-root': {
             border: 'none',
           },
+          '& .MuiDataGrid-main': {
+            overflow: 'auto', // Enable horizontal scrolling
+          },
+          '& .MuiDataGrid-virtualScroller': {
+            overflow: 'auto', // Enable scrolling in virtual scroller
+          },
           '& .MuiDataGrid-cell': {
             borderBottom: '1px solid',
             borderBottomColor: 'divider',
+            fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Responsive font size
+            padding: { xs: '4px 8px', sm: '8px 16px' }, // Responsive padding
           },
           '& .MuiDataGrid-columnHeaders': {
             backgroundColor: 'grey.50',
             borderBottom: '2px solid',
             borderBottomColor: 'divider',
+            fontSize: { xs: '0.75rem', sm: '0.875rem' }, // Responsive header font
           },
           '& .MuiDataGrid-columnHeaderTitle': {
             fontWeight: 600,
+            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+          },
+          '& .MuiDataGrid-row': {
+            minHeight: { xs: '40px', sm: '52px' }, // Responsive row height
           },
           '& .MuiDataGrid-row:hover': {
             backgroundColor: 'action.hover',
@@ -455,6 +522,20 @@ const RouteTable: React.FC<RouteTableProps> = ({
           '& .MuiDataGrid-footerContainer': {
             borderTop: '2px solid',
             borderTopColor: 'divider',
+            minHeight: { xs: '40px', sm: '52px' }, // Responsive footer height
+          },
+          '& .MuiDataGrid-toolbar': {
+            padding: { xs: '8px', sm: '16px' }, // Responsive toolbar padding
+          },
+          // Mobile-specific styles
+          '@media (max-width: 600px)': {
+            '& .MuiDataGrid-columnHeaders': {
+              fontSize: '0.6875rem',
+            },
+            '& .MuiDataGrid-cell': {
+              fontSize: '0.6875rem',
+              padding: '4px 6px',
+            },
           },
         }}
         slots={{
@@ -467,12 +548,24 @@ const RouteTable: React.FC<RouteTableProps> = ({
                 justifyContent: 'center',
                 height: '100%',
                 gap: 2,
+                p: { xs: 2, sm: 3 }, // Responsive padding
               }}
             >
-              <Typography variant="h6" color="text.secondary">
+              <Typography 
+                variant="h6" 
+                color="text.secondary"
+                sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+              >
                 No routes found
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  textAlign: 'center',
+                }}
+              >
                 {filters.search
                   ? 'Try adjusting your search criteria'
                   : 'Create your first route to get started'}
@@ -489,8 +582,12 @@ const RouteTable: React.FC<RouteTableProps> = ({
                 gap: 2,
               }}
             >
-              <CircularProgress size={24} />
-              <Typography variant="body2" color="text.secondary">
+              <CircularProgress size={20} />
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+              >
                 Loading routes...
               </Typography>
             </Box>

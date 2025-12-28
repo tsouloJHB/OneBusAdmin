@@ -17,22 +17,33 @@ import {
   MenuItem,
   Chip,
   IconButton,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Search as SearchIcon,
   FilterList as FilterIcon,
   Close as CloseIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import { RouteTable, RouteForm } from '../features';
 import routeService from '../../services/routeService';
+import { busCompanyService } from '../../services/busCompanyService';
 import { Route, RouteFilters, CreateRouteRequest, UpdateRouteRequest, ApiError } from '../../types';
+import { BusCompany } from '../../types/busCompany';
 import { useNotification } from '../../contexts';
 
 const RoutesPage: React.FC = () => {
   // Notification
   const { showNotification } = useNotification();
   const navigate = useNavigate();
+  
+  // Company selection state
+  const [companies, setCompanies] = useState<BusCompany[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<BusCompany | null>(null);
+  const [companiesLoading, setCompaniesLoading] = useState(false);
+  const [companiesError, setCompaniesError] = useState<string | null>(null);
   
   // State management
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -62,13 +73,46 @@ const RoutesPage: React.FC = () => {
     sortOrder: 'asc',
   });
 
-  // Load routes data
+  // Load companies on component mount
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  // Load companies data
+  const loadCompanies = useCallback(async () => {
+    try {
+      setCompaniesLoading(true);
+      setCompaniesError(null);
+      const companiesData = await busCompanyService.getAllCompanies();
+      setCompanies(companiesData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load companies';
+      setCompaniesError(errorMessage);
+      showNotification(errorMessage, 'error');
+    } finally {
+      setCompaniesLoading(false);
+    }
+  }, [showNotification]);
+
+  // Load routes data (only when company is selected)
   const loadRoutes = useCallback(async () => {
+    if (!selectedCompany) {
+      setRoutes([]);
+      setTotalCount(0);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       
-      const response = await routeService.getRoutes(filters, page + 1, pageSize);
+      // Add company filter to the request
+      const companyFilters = {
+        ...filters,
+        company: selectedCompany.name, // Filter by company name
+      };
+      
+      const response = await routeService.getRoutes(companyFilters, page + 1, pageSize);
       setRoutes(response.data);
       setTotalCount(response.pagination.total);
     } catch (err) {
@@ -79,13 +123,26 @@ const RoutesPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, page, pageSize, showNotification]);
+  }, [selectedCompany, filters, page, pageSize, showNotification]);
 
   // Load routes on component mount and when dependencies change
   useEffect(() => {
     loadRoutes();
   }, [loadRoutes]);
 
+  // Handle company selection
+  const handleCompanyChange = (companyId: string) => {
+    const company = companies.find(c => c.id === companyId);
+    setSelectedCompany(company || null);
+    setPage(0); // Reset to first page when changing company
+    // Clear any existing filters when changing company
+    setFilters({
+      search: '',
+      isActive: undefined,
+      sortBy: 'name',
+      sortOrder: 'asc',
+    });
+  };
   // Search and filter handlers
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(prev => ({ ...prev, search: event.target.value }));
@@ -107,6 +164,10 @@ const RoutesPage: React.FC = () => {
 
   // CRUD operation handlers
   const handleAddRoute = () => {
+    if (!selectedCompany) {
+      showNotification('Please select a company first', 'warning');
+      return;
+    }
     setSelectedRoute(undefined);
     setFormOpen(true);
   };
@@ -184,95 +245,210 @@ const RoutesPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ 
+      p: { xs: 2, sm: 3 }, // Responsive padding
+      maxWidth: '100%',
+      overflow: 'hidden',
+    }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Routes Management
-        </Typography>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        flexDirection: { xs: 'column', sm: 'row' },
+        gap: { xs: 2, sm: 0 },
+        mb: 3 
+      }}>
+        <Box>
+          <Typography 
+            variant="h4" 
+            component="h1"
+            sx={{
+              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' }, // Responsive title
+              mb: 1,
+            }}
+          >
+            Routes Management
+          </Typography>
+          {selectedCompany && (
+            <Typography variant="body1" color="text.secondary">
+              Managing routes for {selectedCompany.name}
+            </Typography>
+          )}
+        </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAddRoute}
-          disabled={loading}
+          disabled={loading || !selectedCompany}
+          sx={{
+            minWidth: { xs: '100%', sm: 'auto' }, // Full width on mobile
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+          }}
         >
           Add Route
         </Button>
       </Box>
 
-      {/* Filters */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        <TextField
-          placeholder="Search routes..."
-          value={filters.search}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ minWidth: 250 }}
-        />
-        
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel>Status</InputLabel>
+      {/* Company Selection */}
+      <Box sx={{ mb: 3 }}>
+        <FormControl sx={{ minWidth: { xs: '100%', sm: 300 } }}>
+          <InputLabel>Select Company</InputLabel>
           <Select
-            value={filters.isActive === undefined ? 'all' : filters.isActive ? 'active' : 'inactive'}
-            label="Status"
-            onChange={(e) => {
-              const value = e.target.value;
-              handleActiveFilterChange(
-                value === 'all' ? undefined : value === 'active'
-              );
-            }}
+            value={selectedCompany?.id || ''}
+            label="Select Company"
+            onChange={(e) => handleCompanyChange(e.target.value)}
+            disabled={companiesLoading}
+            startAdornment={
+              <InputAdornment position="start">
+                <BusinessIcon />
+              </InputAdornment>
+            }
           >
-            <MenuItem value="all">All Routes</MenuItem>
-            <MenuItem value="active">Active Only</MenuItem>
-            <MenuItem value="inactive">Inactive Only</MenuItem>
+            <MenuItem value="">
+              <em>Choose a company...</em>
+            </MenuItem>
+            {companies.map((company) => (
+              <MenuItem key={company.id} value={company.id}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography>{company.name}</Typography>
+                  <Chip
+                    label={company.status}
+                    size="small"
+                    color={company.status === 'active' ? 'success' : 'default'}
+                    sx={{ ml: 1 }}
+                  />
+                </Box>
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         
-        {(filters.search || filters.isActive !== undefined) && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {companiesLoading && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+            <CircularProgress size={16} />
             <Typography variant="body2" color="text.secondary">
-              Filters:
+              Loading companies...
             </Typography>
-            {filters.search && (
-              <Chip
-                label={`Search: "${filters.search}"`}
-                onDelete={() => setFilters(prev => ({ ...prev, search: '' }))}
-                size="small"
-              />
-            )}
-            {filters.isActive !== undefined && (
-              <Chip
-                label={`Status: ${filters.isActive ? 'Active' : 'Inactive'}`}
-                onDelete={() => setFilters(prev => ({ ...prev, isActive: undefined }))}
-                size="small"
-              />
-            )}
           </Box>
+        )}
+        
+        {companiesError && (
+          <Alert severity="error" sx={{ mt: 1 }}>
+            {companiesError}
+            <Button size="small" onClick={loadCompanies} sx={{ ml: 1 }}>
+              Retry
+            </Button>
+          </Alert>
+        )}
+        
+        {!selectedCompany && !companiesLoading && !companiesError && (
+          <Alert severity="info" sx={{ mt: 1 }}>
+            Please select a company to view and manage their routes.
+          </Alert>
         )}
       </Box>
 
-      {/* Routes Table */}
-      <RouteTable
-        routes={routes}
-        loading={loading}
-        error={error}
-        totalCount={totalCount}
-        page={page}
-        pageSize={pageSize}
-        filters={filters}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-        onSortChange={handleSortChange}
-        onEdit={handleEditRoute}
-        onDelete={handleDeleteRoute}
-        onMapView={handleMapView}
-      />
+      {/* Filters - Only show when company is selected */}
+      {selectedCompany && (
+        <Box sx={{ 
+          display: 'flex', 
+          gap: { xs: 1, sm: 2 }, 
+          mb: 3, 
+          flexWrap: 'wrap',
+          flexDirection: { xs: 'column', sm: 'row' }, // Stack on mobile
+        }}>
+          <TextField
+            placeholder="Search routes..."
+            value={filters.search}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ 
+              minWidth: { xs: '100%', sm: 250 }, // Full width on mobile
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+            }}
+            size="small" // Smaller input on mobile
+          />
+          
+          <FormControl sx={{ 
+            minWidth: { xs: '100%', sm: 150 }, // Full width on mobile
+          }}>
+            <InputLabel size="small">Status</InputLabel>
+            <Select
+              value={filters.isActive === undefined ? 'all' : filters.isActive ? 'active' : 'inactive'}
+              label="Status"
+              size="small" // Smaller select on mobile
+              onChange={(e) => {
+                const value = e.target.value;
+                handleActiveFilterChange(
+                  value === 'all' ? undefined : value === 'active'
+                );
+              }}
+            >
+              <MenuItem value="all">All Routes</MenuItem>
+              <MenuItem value="active">Active Only</MenuItem>
+              <MenuItem value="inactive">Inactive Only</MenuItem>
+            </Select>
+          </FormControl>
+          
+          {(filters.search || filters.isActive !== undefined) && (
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              width: { xs: '100%', sm: 'auto' }, // Full width on mobile
+              flexWrap: 'wrap',
+            }}>
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+              >
+                Filters:
+              </Typography>
+              {filters.search && (
+                <Chip
+                  label={`Search: "${filters.search}"`}
+                  onDelete={() => setFilters(prev => ({ ...prev, search: '' }))}
+                  size="small"
+                />
+              )}
+              {filters.isActive !== undefined && (
+                <Chip
+                  label={`Status: ${filters.isActive ? 'Active' : 'Inactive'}`}
+                  onDelete={() => setFilters(prev => ({ ...prev, isActive: undefined }))}
+                  size="small"
+                />
+              )}
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Routes Table - Only show when company is selected */}
+      {selectedCompany && (
+        <RouteTable
+          routes={routes}
+          loading={loading}
+          error={error}
+          totalCount={totalCount}
+          page={page}
+          pageSize={pageSize}
+          filters={filters}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          onSortChange={handleSortChange}
+          onEdit={handleEditRoute}
+          onDelete={handleDeleteRoute}
+          onMapView={handleMapView}
+        />
+      )}
 
       {/* Route Form Dialog */}
       <RouteForm

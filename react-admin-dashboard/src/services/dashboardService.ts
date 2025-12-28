@@ -46,57 +46,30 @@ const mockDashboardStats: DashboardStats = {
 
 const dashboardService = {
   /**
-   * Get dashboard statistics
+   * Get dashboard statistics from the optimized backend endpoint
    */
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      console.log('DashboardService: Attempting to fetch real data from backend...');
+      console.log('DashboardService: Fetching dashboard stats from backend...');
       
-      // Try to get real data from your backend endpoints
-      const [routesResponse, activeBusesResponse] = await Promise.all([
-        httpClient.get(config.endpoints.routes).catch(() => ({ data: [] })),
-        httpClient.get(config.endpoints.activeBuses).catch(() => ({ data: [] }))
-      ]);
+      // Call the new unified dashboard stats endpoint
+      const response = await httpClient.get('/dashboard/stats');
+      const stats = response.data;
       
-      const routes = routesResponse.data || [];
-      const activeBusIds = activeBusesResponse.data || [];
+      console.log('DashboardService: Received stats:', stats);
       
-      console.log('DashboardService: Routes from backend:', routes.length);
-      console.log('DashboardService: Active buses from backend:', activeBusIds.length);
-      
-      // Calculate stats from real backend data
-      const stats: DashboardStats = {
-        totalRoutes: routes.length,
-        totalBuses: activeBusIds.length + 10, // Add some inactive buses for demo
-        activeBuses: activeBusIds.length,
-        totalUsers: 5, // This would come from a users endpoint
-        recentActivity: [
-          {
-            id: '1',
-            type: 'route_created',
-            description: `Route data loaded: ${routes.length} routes found`,
-            timestamp: new Date(Date.now() - 5 * 60 * 1000),
-            userId: 'system',
-            userName: 'System',
-          },
-          {
-            id: '2',
-            type: 'bus_added',
-            description: `Active buses detected: ${activeBusIds.length} buses`,
-            timestamp: new Date(Date.now() - 10 * 60 * 1000),
-            userId: 'system',
-            userName: 'System',
-          },
-          ...mockDashboardStats.recentActivity.slice(2), // Add some mock activities
-        ],
+      // Add mock recent activity since backend doesn't provide it yet
+      const dashboardStats: DashboardStats = {
+        ...stats,
+        recentActivity: mockDashboardStats.recentActivity || [],
       };
       
-      return stats;
+      return dashboardStats;
       
     } catch (error) {
-      console.log('DashboardService: Backend API failed, using mock data:', error);
+      console.error('DashboardService: Failed to fetch dashboard stats:', error);
       
-      // Fallback to mock data if API calls fail
+      // Fallback to mock data if API call fails
       return mockDashboardStats;
     }
   },
@@ -111,7 +84,7 @@ const dashboardService = {
         console.log('DashboardService: Using mock recent activity for development');
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 300));
-        return mockDashboardStats.recentActivity.slice(0, limit);
+        return mockDashboardStats.recentActivity?.slice(0, limit) || [];
       }
       
       // Production API call
@@ -119,7 +92,7 @@ const dashboardService = {
         `${config.endpoints.dashboard}/activity?limit=${limit}`
       );
       
-      return response.data.data;
+      return response.data.data || [];
     } catch (error) {
       throw error;
     }

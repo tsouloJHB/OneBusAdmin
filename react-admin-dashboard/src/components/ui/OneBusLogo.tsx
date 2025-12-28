@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, SxProps, Theme } from '@mui/material';
 
 interface OneBusLogoProps {
-  size?: number;
+  size?: number | { xs?: number; sm?: number; md?: number; lg?: number };
   variant?: 'default' | 'white' | 'gradient-bg';
   sx?: SxProps<Theme>;
 }
@@ -12,11 +12,21 @@ export const OneBusLogo: React.FC<OneBusLogoProps> = ({
   variant = 'default',
   sx = {},
 }) => {
+  // Handle responsive size
+  const getResponsiveSize = () => {
+    if (typeof size === 'number') {
+      return size;
+    }
+    return size;
+  };
+
+  const responsiveSize = getResponsiveSize();
+
   const getLogoStyles = () => {
     const baseStyles = {
-      height: size,
+      height: responsiveSize,
       width: 'auto', // Let width adjust to maintain aspect ratio
-      maxWidth: size * 1.5, // Prevent it from getting too wide
+      maxWidth: typeof responsiveSize === 'number' ? responsiveSize * 1.5 : 'none',
       borderRadius: 0.5,
       objectFit: 'contain' as const,
     };
@@ -47,8 +57,8 @@ export const OneBusLogo: React.FC<OneBusLogoProps> = ({
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: size,
-          height: size,
+          width: responsiveSize,
+          height: responsiveSize,
           background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
           borderRadius: 1,
           boxShadow: '0 4px 16px rgba(220, 0, 78, 0.12)',

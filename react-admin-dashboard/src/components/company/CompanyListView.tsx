@@ -208,25 +208,15 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
       <Typography variant="h5" color="text.secondary" gutterBottom>
         {state.searchQuery || Object.keys(state.filters).length > 0
           ? 'No companies found'
-          : 'No companies yet'
+          : 'No companies available'
         }
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
         {state.searchQuery || Object.keys(state.filters).length > 0
           ? 'Try adjusting your search criteria or filters'
-          : 'Get started by adding your first bus company'
+          : 'Contact your administrator to set up bus companies'
         }
       </Typography>
-      {!state.searchQuery && Object.keys(state.filters).length === 0 && (
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddCompany}
-          size="large"
-        >
-          Add First Company
-        </Button>
-      )}
     </Paper>
   );
 
@@ -250,35 +240,6 @@ const CompanyListView: React.FC<CompanyListViewProps> = ({ onCompanySelect }) =>
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Bus Companies
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Manage bus companies and their fleet operations
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddCompany}
-          size="large"
-          disabled={state.loading}
-        >
-          Add Company
-        </Button>
-      </Box>
-
-      {/* Search and Filters */}
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <CompanySearch />
-        <Box sx={{ mt: 2 }}>
-          <CompanyFilters />
-        </Box>
-      </Paper>
-
       {/* Error Alert */}
       {state.error && (
         <Alert

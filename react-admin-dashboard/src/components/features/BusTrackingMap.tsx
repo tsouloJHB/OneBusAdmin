@@ -82,6 +82,7 @@ const BusTrackingMap: React.FC<BusTrackingMapProps> = ({
 }) => {
   const [busLocations, setBusLocations] = useState<Map<string, BusLocation>>(new Map());
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  const [recentEvents, setRecentEvents] = useState<Array<{ ts: number; busKey: string; summary: string }>>([]);
   const stompClientRef = useRef<Client | null>(null);
   const subscriptionsRef = useRef<Map<string, any>>(new Map());
   const subscribedBusesRef = useRef<Set<string>>(new Set());
@@ -230,6 +231,16 @@ const BusTrackingMap: React.FC<BusTrackingMapProps> = ({
               });
               return newLocations;
             });
+
+            // Track recent events for on-screen health/logging
+            setRecentEvents(prev => {
+              const next = [{
+                ts: Date.now(),
+                busKey: key,
+                summary: `${data.lat?.toFixed?.(4) ?? data.lat}, ${data.lon?.toFixed?.(4) ?? data.lon}`,
+              }, ...prev];
+              return next.slice(0, 8); // keep last 8 events
+            });
           } catch (error) {
             console.error('[WebSocket] Error parsing message:', error);
           }
@@ -283,6 +294,43 @@ const BusTrackingMap: React.FC<BusTrackingMapProps> = ({
         <Typography variant="caption">
           {busLocations.size} bus{busLocations.size !== 1 ? 'es' : ''}
         </Typography>
+      </Paper>
+
+      {/* Health & Logs Panel */}
+      <Paper
+        sx={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          zIndex: 1000,
+          p: 1,
+          minWidth: 240,
+          maxWidth: 320,
+          maxHeight: 200,
+          overflow: 'auto',
+        }}
+        elevation={3}
+      >
+        <Typography variant="caption" fontWeight={600} display="block" gutterBottom>
+          Live Tracker Health
+        </Typography>
+        <Typography variant="caption" display="block">
+          Subscriptions: {subscriptionsRef.current.size}
+        </Typography>
+        <Typography variant="caption" display="block">
+          Received events: {recentEvents.length}
+        </Typography>
+        <Box sx={{ mt: 0.5, borderTop: '1px solid rgba(0,0,0,0.08)', pt: 0.5 }}>
+          {recentEvents.length === 0 ? (
+            <Typography variant="caption" color="text.secondary">Waiting for bus updates…</Typography>
+          ) : (
+            recentEvents.map((evt, idx) => (
+              <Typography key={`${evt.ts}-${idx}`} variant="caption" display="block" noWrap>
+                {new Date(evt.ts).toLocaleTimeString()} · {evt.busKey} · {evt.summary}
+              </Typography>
+            ))
+          )}
+        </Box>
       </Paper>
 
       {/* Map Container */}

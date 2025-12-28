@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -13,13 +13,19 @@ import {
   useTheme,
   useMediaQuery,
   alpha,
+  Collapse,
 } from '@mui/material';
 import {
   Dashboard,
   Route as RouteIcon,
   DirectionsBus,
   TrackChanges,
+  Sensors,
   Settings,
+  Business,
+  ExpandLess,
+  ExpandMore,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { designTokens } from '../../theme';
 import { OneBusLogo } from '../ui';
@@ -30,6 +36,7 @@ interface NavigationItem {
   path: string;
   icon: React.ReactElement;
   description?: string;
+  children?: NavigationItem[]; // Support nested items
 }
 
 interface SidebarProps {
@@ -55,11 +62,27 @@ const navigationItems: NavigationItem[] = [
     description: 'Manage bus routes',
   },
   {
-    id: 'buses',
-    label: 'Buses',
-    path: '/buses',
-    icon: <DirectionsBus />,
-    description: 'Manage bus fleet',
+    id: 'companies',
+    label: 'Companies',
+    path: '/companies-menu',
+    icon: <Business />,
+    description: 'Manage companies and buses',
+    children: [
+      {
+        id: 'company-management',
+        label: 'Company Management',
+        path: '/companies',
+        icon: <Business />,
+        description: 'Manage bus companies',
+      },
+      {
+        id: 'buses',
+        label: 'Buses',
+        path: '/buses',
+        icon: <DirectionsBus />,
+        description: 'Manage bus fleet',
+      },
+    ],
   },
   {
     id: 'active-buses',
@@ -67,6 +90,20 @@ const navigationItems: NavigationItem[] = [
     path: '/active-buses',
     icon: <TrackChanges />,
     description: 'Monitor active buses',
+  },
+  {
+    id: 'trackers',
+    label: 'Trackers',
+    path: '/trackers',
+    icon: <Sensors />,
+    description: 'Manage GPS trackers',
+  },
+  {
+    id: 'drivers',
+    label: 'Drivers',
+    path: '/drivers',
+    icon: <PersonIcon />,
+    description: 'Manage bus drivers',
   },
 ];
 
@@ -90,6 +127,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navigate = useNavigate();
   const theme = useTheme();
   const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+
+  const handleToggleExpand = (itemId: string) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+  };
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -105,88 +150,108 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return location.pathname.startsWith(path);
   };
 
-  const renderNavigationItems = (items: NavigationItem[], showDivider = false) => (
+  const renderNavigationItems = (items: NavigationItem[], showDivider = false, isNested = false) => (
     <>
       {showDivider && <Divider sx={{ my: 1 }} role="separator" />}
       <List role="list">
         {items.map((item) => {
           const isActive = isActiveRoute(item.path);
+          const hasChildren = item.children && item.children.length > 0;
+          const isExpanded = expandedItems[item.id] || false;
           
           return (
-            <ListItem key={item.id} disablePadding role="listitem">
-              <ListItemButton
-                onClick={() => handleNavigation(item.path)}
-                selected={isActive}
-                role="button"
-                aria-current={isActive ? 'page' : undefined}
-                aria-label={`Navigate to ${item.label}. ${item.description}`}
-                sx={{
-                  mx: 1,
-                  borderRadius: designTokens.borderRadius.md,
-                  minHeight: 48, // Minimum touch target size
-                  transition: designTokens.transitions.medium,
-                  '&.Mui-selected': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                    color: theme.palette.primary.main,
-                    '&:hover': {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.16),
-                    },
-                    '& .MuiListItemIcon-root': {
-                      color: theme.palette.primary.main,
-                    },
-                    '&:before': {
-                      content: '""',
-                      position: 'absolute',
-                      left: 0,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: 3,
-                      height: '60%',
-                      backgroundColor: theme.palette.primary.main,
-                      borderRadius: '0 2px 2px 0',
-                    },
-                  },
-                  '&:hover': {
-                    backgroundColor: isActive 
-                      ? alpha(theme.palette.primary.main, 0.16)
-                      : alpha(theme.palette.text.primary, 0.04),
-                    transform: 'translateX(2px)',
-                  },
-                  '&:focus-visible': {
-                    outline: '2px solid',
-                    outlineColor: theme.palette.primary.main,
-                    outlineOffset: '2px',
-                  },
-                  position: 'relative',
-                }}
-              >
-                <ListItemIcon
+            <React.Fragment key={item.id}>
+              <ListItem disablePadding role="listitem">
+                <ListItemButton
+                  onClick={() => {
+                    if (hasChildren) {
+                      handleToggleExpand(item.id);
+                    } else {
+                      handleNavigation(item.path);
+                    }
+                  }}
+                  selected={isActive && !hasChildren}
+                  role="button"
+                  aria-current={isActive && !hasChildren ? 'page' : undefined}
+                  aria-label={`Navigate to ${item.label}. ${item.description}`}
+                  aria-expanded={hasChildren ? isExpanded : undefined}
                   sx={{
-                    color: isActive 
-                      ? theme.palette.primary.main
-                      : theme.palette.text.secondary,
-                    minWidth: isTablet ? 36 : 40,
+                    mx: 1,
+                    ml: isNested ? 3 : 1,
+                    borderRadius: designTokens.borderRadius.md,
+                    minHeight: 48, // Minimum touch target size
                     transition: designTokens.transitions.medium,
+                    '&.Mui-selected': {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                      color: theme.palette.primary.main,
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.16),
+                      },
+                      '& .MuiListItemIcon-root': {
+                        color: theme.palette.primary.main,
+                      },
+                      '&:before': {
+                        content: '""',
+                        position: 'absolute',
+                        left: 0,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: 3,
+                        height: '60%',
+                        backgroundColor: theme.palette.primary.main,
+                        borderRadius: '0 2px 2px 0',
+                      },
+                    },
+                    '&:hover': {
+                      backgroundColor: isActive && !hasChildren
+                        ? alpha(theme.palette.primary.main, 0.16)
+                        : alpha(theme.palette.text.primary, 0.04),
+                      transform: 'translateX(2px)',
+                    },
+                    '&:focus-visible': {
+                      outline: '2px solid',
+                      outlineColor: theme.palette.primary.main,
+                      outlineOffset: '2px',
+                    },
+                    position: 'relative',
                   }}
-                  aria-hidden="true"
                 >
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  secondary={!isTablet ? item.description : undefined}
-                  primaryTypographyProps={{
-                    fontWeight: isActive ? 600 : 500,
-                    fontSize: isTablet ? '0.8125rem' : '0.875rem',
-                  }}
-                  secondaryTypographyProps={{
-                    fontSize: '0.75rem',
-                    color: theme.palette.text.secondary,
-                    sx: { opacity: 0.8 },
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
+                  <ListItemIcon
+                    sx={{
+                      color: theme.palette.primary.main, // Always red
+                      minWidth: isTablet ? 36 : 40,
+                      transition: designTokens.transitions.medium,
+                      opacity: (isActive && !hasChildren) ? 1 : 0.8, // Slightly transparent when not active
+                    }}
+                    aria-hidden="true"
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    secondary={!isTablet ? item.description : undefined}
+                    primaryTypographyProps={{
+                      fontWeight: (isActive && !hasChildren) ? 600 : 500,
+                      fontSize: isTablet ? '0.8125rem' : '0.875rem',
+                    }}
+                    secondaryTypographyProps={{
+                      fontSize: '0.75rem',
+                      color: theme.palette.text.secondary,
+                      sx: { opacity: 0.8 },
+                    }}
+                  />
+                  {hasChildren && (
+                    isExpanded ? <ExpandLess /> : <ExpandMore />
+                  )}
+                </ListItemButton>
+              </ListItem>
+              
+              {hasChildren && (
+                <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                  {renderNavigationItems(item.children!, false, true)}
+                </Collapse>
+              )}
+            </React.Fragment>
           );
         })}
       </List>

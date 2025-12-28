@@ -35,8 +35,8 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
           size={16}
           sx={{
             color: 'inherit',
-            mr: iconPosition === 'start' ? 1 : 0,
-            ml: iconPosition === 'end' ? 1 : 0,
+            mr: iconPosition === 'start' ? { xs: 0.5, sm: 1 } : 0,
+            ml: iconPosition === 'end' ? { xs: 0.5, sm: 1 } : 0,
           }}
         />
       );
@@ -48,9 +48,9 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
           component="span"
           sx={{
             display: 'inline-flex',
-            fontSize: 18,
-            mr: iconPosition === 'start' ? 1 : 0,
-            ml: iconPosition === 'end' ? 1 : 0,
+            fontSize: { xs: 16, sm: 18 }, // Responsive icon size
+            mr: iconPosition === 'start' ? { xs: 0.5, sm: 1 } : 0,
+            ml: iconPosition === 'end' ? { xs: 0.5, sm: 1 } : 0,
           }}
         >
           {icon}
@@ -106,10 +106,11 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
       disabled={disabled || loading}
       sx={{
         borderRadius: designTokens.borderRadius.md,
-        padding: '12px 24px',
-        minHeight: '44px',
+        padding: { xs: '10px 16px', sm: '12px 24px' }, // Responsive padding
+        minHeight: { xs: '40px', sm: '44px' }, // Responsive height
         fontWeight: 500,
         textTransform: 'none',
+        fontSize: { xs: '0.875rem', sm: '1rem' }, // Responsive font size
         transition: designTokens.transitions.medium,
         ...(variant === 'gradient' && {
           background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,

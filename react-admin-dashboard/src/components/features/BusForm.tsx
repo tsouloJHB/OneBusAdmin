@@ -22,8 +22,8 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { Bus, CreateBusRequest, UpdateBusRequest, ApiError } from '../../types';
-import { RetryComponent } from '../ui';
+import { Bus, CreateBusRequest, UpdateBusRequest, ApiError, Tracker } from '../../types';
+import { RetryComponent, ImeiSelector } from '../ui';
 
 interface BusFormProps {
   bus?: Bus;
@@ -91,7 +91,7 @@ const BusForm: React.FC<BusFormProps> = ({
   loading = false,
 }) => {
   const [submitError, setSubmitError] = useState<ApiError | null>(null);
-  // Removed route loading logic since backend doesn't need it
+  const [selectedTracker, setSelectedTracker] = useState<Tracker | null>(null);
 
   const {
     control,
@@ -307,22 +307,33 @@ const BusForm: React.FC<BusFormProps> = ({
                     name="trackerImei"
                     control={control}
                     render={({ field }) => (
-                      <TextField
-                        {...field}
+                      <ImeiSelector
+                        value={field.value}
+                        onChange={(imei, tracker) => {
+                          field.onChange(imei);
+                          setSelectedTracker(tracker || null);
+                        }}
                         label="Tracker IMEI"
-                        fullWidth
+                        placeholder="Search trackers or enter IMEI..."
                         required
                         error={!!errors.trackerImei}
-                        helperText={errors.trackerImei?.message || '15-17 digit IMEI number'}
+                        helperText={errors.trackerImei?.message || 'Select from available trackers or enter IMEI manually'}
                         disabled={loading}
-                        placeholder="359339072173798"
-                        inputProps={{
-                          'aria-label': 'Tracker IMEI',
-                          inputMode: 'numeric',
-                        }}
+                        fullWidth
+                        excludeBusId={bus?.id} // Exclude current bus when editing
                       />
                     )}
                   />
+                  {selectedTracker && (
+                    <Box sx={{ mt: 1, p: 1.5, bgcolor: 'success.50', borderRadius: 1, border: 1, borderColor: 'success.200' }}>
+                      <Typography variant="body2" color="success.main" fontWeight="medium">
+                        ✓ Tracker Selected: {selectedTracker.brand} {selectedTracker.model}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Status: {selectedTracker.status} • Purchase Date: {selectedTracker.purchaseDate || 'N/A'}
+                      </Typography>
+                    </Box>
+                  )}
                 </Grid>
                 
                 <Grid size={12}>
