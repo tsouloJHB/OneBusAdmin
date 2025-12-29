@@ -6,6 +6,7 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import SimpleDashboard from '../components/pages/SimpleDashboard';
 import RoutesPage from '../components/pages/RoutesPage';
 import RouteMapPage from '../components/pages/RouteMapPage';
+import FullRouteMapPage from '../components/pages/FullRouteMapPage';
 import BusesPage from '../components/pages/BusesPage';
 import CompanyManagementPage from '../components/pages/CompanyManagementPage';
 import ActiveBusesPage from '../components/pages/ActiveBusesPage';
@@ -166,6 +167,13 @@ export const protectedRoutes: RouteConfig[] = [
     path: '/routes/:id/map',
     element: <RouteMapPage />,
     title: 'Route Map',
+    requiresAuth: true,
+    showInNavigation: false,
+  },
+  {
+    path: '/full-routes/:id/map',
+    element: <FullRouteMapPage />,
+    title: 'Full Route Map',
     requiresAuth: true,
     showInNavigation: false,
   },

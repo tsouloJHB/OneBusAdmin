@@ -22,6 +22,7 @@ import {
   Visibility as ViewIcon,
   Route as RouteIcon,
   Map as MapIcon,
+  Timeline as TimelineIcon,
 } from '@mui/icons-material';
 import { Route, RouteFilters, ApiError } from '../../types';
 import { TableSkeleton, RetryComponent } from '../ui';
@@ -41,6 +42,7 @@ interface RouteTableProps {
   onDelete: (routeId: number) => void;
   onView?: (route: Route) => void;
   onMapView?: (route: Route) => void;
+  onDrawFullRoute?: (route: Route) => void;
   onRetry?: () => void;
 }
 
@@ -59,6 +61,7 @@ const RouteTable: React.FC<RouteTableProps> = ({
   onDelete,
   onView,
   onMapView,
+  onDrawFullRoute,
   onRetry,
 }) => {
   const [sortModel, setSortModel] = useState<GridSortModel>([
@@ -121,6 +124,15 @@ const RouteTable: React.FC<RouteTableProps> = ({
       }
     },
     [onMapView]
+  );
+
+  const handleDrawFullRoute = useCallback(
+    (route: Route) => () => {
+      if (onDrawFullRoute) {
+        onDrawFullRoute(route);
+      }
+    },
+    [onDrawFullRoute]
   );
 
 
@@ -242,9 +254,25 @@ const RouteTable: React.FC<RouteTableProps> = ({
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 120, // Reduced for mobile
+      width: 150, // Increased for more actions
       getActions: (params: GridRowParams<Route>) => {
         const actions = [];
+
+        if (onDrawFullRoute) {
+          actions.push(
+            <GridActionsCellItem
+              key="draw"
+              icon={
+                <Tooltip title="Draw Full Route">
+                  <TimelineIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                </Tooltip>
+              }
+              label="Draw"
+              onClick={handleDrawFullRoute(params.row)}
+              aria-label={`Draw full route for ${params.row.name}`}
+            />
+          );
+        }
 
         if (onMapView) {
           actions.push(

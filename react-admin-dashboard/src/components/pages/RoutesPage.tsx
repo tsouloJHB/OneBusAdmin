@@ -27,10 +27,11 @@ import {
   Close as CloseIcon,
   Business as BusinessIcon,
 } from '@mui/icons-material';
-import { RouteTable, RouteForm } from '../features';
+import { RouteTable, RouteForm, FullRouteTable, FullRouteViewer, FullRouteForm } from '../features';
 import routeService from '../../services/routeService';
+import fullRouteService from '../../services/fullRouteService';
 import { busCompanyService } from '../../services/busCompanyService';
-import { Route, RouteFilters, CreateRouteRequest, UpdateRouteRequest, ApiError } from '../../types';
+import { Route, RouteFilters, CreateRouteRequest, UpdateRouteRequest, ApiError, FullRoute, CreateFullRouteRequest, UpdateFullRouteRequest } from '../../types';
 import { BusCompany } from '../../types/busCompany';
 import { useNotification } from '../../contexts';
 
@@ -52,6 +53,19 @@ const RoutesPage: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+
+  // Full routes state
+  const [routeViewMode, setRouteViewMode] = useState<'stops' | 'full'>('stops');
+  const [fullRoutes, setFullRoutes] = useState<FullRoute[]>([]);
+  const [fullRoutesLoading, setFullRoutesLoading] = useState(false);
+  const [fullRoutesError, setFullRoutesError] = useState<ApiError | null>(null);
+  const [selectedFullRoute, setSelectedFullRoute] = useState<FullRoute | null>(null);
+  const [fullViewerOpen, setFullViewerOpen] = useState(false);
+  const [fullFormOpen, setFullFormOpen] = useState(false);
+  const [editingFullRoute, setEditingFullRoute] = useState<FullRoute | undefined>(undefined);
+  const [fullFormLoading, setFullFormLoading] = useState(false);
+  const [deleteFullDialogOpen, setDeleteFullDialogOpen] = useState(false);
+  const [fullRouteToDelete, setFullRouteToDelete] = useState<number | null>(null);
   
   // Form state
   const [formOpen, setFormOpen] = useState(false);
@@ -125,10 +139,36 @@ const RoutesPage: React.FC = () => {
     }
   }, [selectedCompany, filters, page, pageSize, showNotification]);
 
-  // Load routes on component mount and when dependencies change
+  // Load full routes (only when company is selected)
+  const loadFullRoutes = useCallback(async () => {
+    if (!selectedCompany) {
+      setFullRoutes([]);
+      return;
+    }
+
+    try {
+      setFullRoutesLoading(true);
+      setFullRoutesError(null);
+      const data = await fullRouteService.getFullRoutes({ companyId: selectedCompany.id });
+      setFullRoutes(data);
+    } catch (err) {
+      const apiError = err as ApiError;
+      setFullRoutesError(apiError);
+      const errorMessage = apiError?.message || 'Failed to load full routes';
+      showNotification(errorMessage, 'error');
+    } finally {
+      setFullRoutesLoading(false);
+    }
+  }, [selectedCompany, showNotification]);
+
+  // Load routes/full routes based on view mode
   useEffect(() => {
-    loadRoutes();
-  }, [loadRoutes]);
+    if (routeViewMode === 'stops') {
+      loadRoutes();
+    } else {
+      loadFullRoutes();
+    }
+  }, [routeViewMode, loadRoutes, loadFullRoutes]);
 
   // Handle company selection
   const handleCompanyChange = (companyId: string) => {
@@ -142,6 +182,8 @@ const RoutesPage: React.FC = () => {
       sortBy: 'name',
       sortOrder: 'asc',
     });
+    // Default back to stops routes when switching companies
+    setRouteViewMode('stops');
   };
   // Search and filter handlers
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -237,6 +279,94 @@ const RoutesPage: React.FC = () => {
     setRouteToDelete(null);
   };
 
+  const handleFullRouteView = (route: FullRoute) => {
+    setSelectedFullRoute(route);
+    setFullViewerOpen(true);
+  };
+
+  const handleFullRouteViewerClose = () => {
+    setFullViewerOpen(false);
+    setSelectedFullRoute(null);
+  };
+
+  const handleAddFullRoute = () => {
+    if (!selectedCompany) {
+      showNotification('Please select a company first', 'warning');
+      return;
+    }
+    setEditingFullRoute(undefined);
+    setFullFormOpen(true);
+  };
+
+  const handleEditFullRoute = (route: FullRoute) => {
+    setEditingFullRoute(route);
+    setFullFormOpen(true);
+  };
+
+  const handleDeleteFullRoute = (routeId: number) => {
+    setFullRouteToDelete(routeId);
+    setDeleteFullDialogOpen(true);
+  };
+
+  const handleFullRouteMapView = (route: FullRoute) => {
+    navigate(`/full-routes/${route.id}/map`);
+  };
+
+  const handleFullFormSubmit = async (data: CreateFullRouteRequest | UpdateFullRouteRequest) => {
+    try {
+      setFullFormLoading(true);
+      
+      if (editingFullRoute) {
+        // Update existing full route
+        await fullRouteService.updateFullRoute(editingFullRoute.id, data as UpdateFullRouteRequest);
+        showNotification('Full route updated successfully', 'success');
+      } else {
+        // Create new full route
+        await fullRouteService.createFullRoute(data as CreateFullRouteRequest);
+        showNotification('Full route created successfully', 'success');
+      }
+      
+      setFullFormOpen(false);
+      await loadFullRoutes();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save full route';
+      showNotification(errorMessage, 'error');
+      throw new Error(errorMessage);
+    } finally {
+      setFullFormLoading(false);
+    }
+  };
+
+  const handleConfirmDeleteFullRoute = async () => {
+    if (!fullRouteToDelete) return;
+    
+    try {
+      setFullFormLoading(true);
+      await fullRouteService.deleteFullRoute(fullRouteToDelete);
+      showNotification('Full route deleted successfully', 'success');
+      setDeleteFullDialogOpen(false);
+      setFullRouteToDelete(null);
+      await loadFullRoutes();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete full route';
+      showNotification(errorMessage, 'error');
+    } finally {
+      setFullFormLoading(false);
+    }
+  };
+
+  const handleCancelDeleteFullRoute = () => {
+    setDeleteFullDialogOpen(false);
+    setFullRouteToDelete(null);
+  };
+
+  const handleFullFormClose = () => {
+    if (!fullFormLoading) {
+      setFullFormOpen(false);
+      setEditingFullRoute(undefined);
+    }
+  };
+
   const handleFormClose = () => {
     if (!formLoading) {
       setFormOpen(false);
@@ -279,14 +409,14 @@ const RoutesPage: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={handleAddRoute}
-          disabled={loading || !selectedCompany}
+          onClick={routeViewMode === 'stops' ? handleAddRoute : handleAddFullRoute}
+          disabled={loading || fullRoutesLoading || !selectedCompany}
           sx={{
             minWidth: { xs: '100%', sm: 'auto' }, // Full width on mobile
             fontSize: { xs: '0.875rem', sm: '1rem' },
           }}
         >
-          Add Route
+          {routeViewMode === 'stops' ? 'Add Route' : 'Add Full Route'}
         </Button>
       </Box>
 
@@ -358,6 +488,19 @@ const RoutesPage: React.FC = () => {
           flexWrap: 'wrap',
           flexDirection: { xs: 'column', sm: 'row' }, // Stack on mobile
         }}>
+          <FormControl sx={{ minWidth: { xs: '100%', sm: 180 } }}>
+            <InputLabel size="small">Route Data</InputLabel>
+            <Select
+              size="small"
+              value={routeViewMode}
+              label="Route Data"
+              onChange={(e) => setRouteViewMode(e.target.value as 'stops' | 'full')}
+            >
+              <MenuItem value="stops">Stops Routes</MenuItem>
+              <MenuItem value="full">Full Routes</MenuItem>
+            </Select>
+          </FormControl>
+
           <TextField
             placeholder="Search routes..."
             value={filters.search}
@@ -431,8 +574,8 @@ const RoutesPage: React.FC = () => {
         </Box>
       )}
 
-      {/* Routes Table - Only show when company is selected */}
-      {selectedCompany && (
+      {/* Routes / Full Routes Table - Only show when company is selected */}
+      {selectedCompany && routeViewMode === 'stops' && (
         <RouteTable
           routes={routes}
           loading={loading}
@@ -447,6 +590,19 @@ const RoutesPage: React.FC = () => {
           onEdit={handleEditRoute}
           onDelete={handleDeleteRoute}
           onMapView={handleMapView}
+        />
+      )}
+
+      {selectedCompany && routeViewMode === 'full' && (
+        <FullRouteTable
+          fullRoutes={fullRoutes}
+          loading={fullRoutesLoading}
+          error={fullRoutesError}
+          onView={handleFullRouteView}
+          onEdit={handleEditFullRoute}
+          onDelete={handleDeleteFullRoute}
+          onMapView={handleFullRouteMapView}
+          onRetry={loadFullRoutes}
         />
       )}
 
@@ -487,6 +643,52 @@ const RoutesPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Full Route Viewer */}
+      <FullRouteViewer
+        open={fullViewerOpen}
+        onClose={handleFullRouteViewerClose}
+        route={selectedFullRoute}
+      />
+
+      {/* Full Route Form Dialog */}
+      {selectedCompany && (
+        <FullRouteForm
+          open={fullFormOpen}
+          onClose={handleFullFormClose}
+          onSave={handleFullFormSubmit}
+          route={editingFullRoute}
+          companyId={parseInt(selectedCompany.id)}
+          routeId={0} // You can make this dynamic if needed
+        />
+      )}
+
+      {/* Full Route Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteFullDialogOpen}
+        onClose={handleCancelDeleteFullRoute}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Confirm Delete Full Route</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this full route? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDeleteFullRoute} disabled={fullFormLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDeleteFullRoute}
+            color="error"
+            variant="contained"
+            disabled={fullFormLoading}
+          >
+            {fullFormLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
 
     </Box>

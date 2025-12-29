@@ -14,6 +14,7 @@ export const config = {
       refresh: '/auth/refresh',
     },
     routes: '/routes',
+    fullRoutes: '/full-routes',
     buses: '/buses',
     activeBuses: '/buses/active',
     dashboard: '/dashboard/stats',

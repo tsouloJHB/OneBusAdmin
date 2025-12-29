@@ -2,6 +2,7 @@
 export { default as DashboardPage } from './SimpleDashboard';
 export { default as RoutesPage } from './RoutesPage';
 export { default as RouteMapPage } from './RouteMapPage';
+export { default as FullRouteMapPage } from './FullRouteMapPage';
 export { default as BusesPage } from './BusesPage';
 export { default as CompanyManagementPage } from './CompanyManagementPage';
 export { default as ActiveBusesPage } from './ActiveBusesPage';

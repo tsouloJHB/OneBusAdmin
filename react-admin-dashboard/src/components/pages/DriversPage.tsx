@@ -126,11 +126,6 @@ const DriversPage: React.FC = () => {
   };
 
   const loadStatistics = async () => {
-      const errorMessage = err?.message || 'Failed to save driver. Please try again.';
-      setError(errorMessage);
-      showNotification(errorMessage, 'error');
-    }
-
     try {
       const stats = await driverService.getDriverStatistics();
       setStatistics(stats);
