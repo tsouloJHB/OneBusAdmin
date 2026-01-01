@@ -312,12 +312,39 @@ const RoutesPage: React.FC = () => {
     navigate(`/full-routes/${route.id}/map`);
   };
 
+  const handleDuplicateFullRoute = (route: FullRoute) => {
+    // Determine the opposite direction
+    const currentDirection = route.direction?.toLowerCase() || '';
+    const oppositeDirection = currentDirection === 'northbound' 
+      ? 'Southbound' 
+      : currentDirection === 'southbound' 
+        ? 'Northbound' 
+        : route.direction || 'Northbound'; // Default to Northbound if direction is undefined
+
+    // Reverse the coordinates array to flip the route
+    const reversedCoordinates = route.coordinates ? [...route.coordinates].reverse() : [];
+
+    // Create a new route with reversed coordinates and opposite direction
+    // Omit 'id' to ensure it's treated as a new route (POST) not an update (PUT)
+    const { id, ...routeWithoutId } = route;
+    const duplicatedRoute: Partial<FullRoute> = {
+      ...routeWithoutId,
+      name: `${route.name} (${oppositeDirection})`,
+      direction: oppositeDirection,
+      coordinates: reversedCoordinates,
+    };
+
+    // Open form with duplicated route data - pass undefined to treat as new route
+    setEditingFullRoute(duplicatedRoute as FullRoute);
+    setFullFormOpen(true);
+  };
+
   const handleFullFormSubmit = async (data: CreateFullRouteRequest | UpdateFullRouteRequest) => {
     try {
       setFullFormLoading(true);
       
-      if (editingFullRoute) {
-        // Update existing full route
+      if (editingFullRoute && editingFullRoute.id) {
+        // Update existing full route (only if it has a valid ID)
         await fullRouteService.updateFullRoute(editingFullRoute.id, data as UpdateFullRouteRequest);
         showNotification('Full route updated successfully', 'success');
       } else {
@@ -602,6 +629,7 @@ const RoutesPage: React.FC = () => {
           onEdit={handleEditFullRoute}
           onDelete={handleDeleteFullRoute}
           onMapView={handleFullRouteMapView}
+          onDuplicate={handleDuplicateFullRoute}
           onRetry={loadFullRoutes}
         />
       )}

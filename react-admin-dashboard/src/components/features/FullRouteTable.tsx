@@ -4,7 +4,7 @@ import {
   GridColDef,
 } from '@mui/x-data-grid';
 import { Box, Typography, Chip, Tooltip, IconButton, CircularProgress, Alert } from '@mui/material';
-import { Visibility as ViewIcon, Edit as EditIcon, Delete as DeleteIcon, Refresh as RefreshIcon, Map as MapIcon } from '@mui/icons-material';
+import { Visibility as ViewIcon, Edit as EditIcon, Delete as DeleteIcon, Refresh as RefreshIcon, Map as MapIcon, FlipToBack as DuplicateIcon } from '@mui/icons-material';
 import { FullRoute, ApiError } from '../../types';
 
 interface FullRouteTableProps {
@@ -15,10 +15,11 @@ interface FullRouteTableProps {
   onEdit?: (route: FullRoute) => void;
   onDelete?: (routeId: number) => void;
   onMapView?: (route: FullRoute) => void;
+  onDuplicate?: (route: FullRoute) => void;
   onRetry?: () => void;
 }
 
-const FullRouteTable: React.FC<FullRouteTableProps> = ({ fullRoutes, loading, error, onView, onEdit, onDelete, onMapView, onRetry }) => {
+const FullRouteTable: React.FC<FullRouteTableProps> = ({ fullRoutes, loading, error, onView, onEdit, onDelete, onMapView, onDuplicate, onRetry }) => {
   const columns: GridColDef<FullRoute>[] = [
     { field: 'name', headerName: 'Route Name', flex: 1, minWidth: 160 },
     { field: 'direction', headerName: 'Direction', flex: 0.6, minWidth: 110, renderCell: (params) => (
@@ -37,7 +38,7 @@ const FullRouteTable: React.FC<FullRouteTableProps> = ({ fullRoutes, loading, er
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 180,
+      width: 220,
       sortable: false,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -50,6 +51,13 @@ const FullRouteTable: React.FC<FullRouteTableProps> = ({ fullRoutes, loading, er
             <Tooltip title="Edit Coordinates on Map">
               <IconButton size="small" onClick={() => onMapView(params.row)} color="info">
                 <MapIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {onDuplicate && (
+            <Tooltip title="Duplicate to Opposite Direction">
+              <IconButton size="small" onClick={() => onDuplicate(params.row)} color="secondary">
+                <DuplicateIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           )}
