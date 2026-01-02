@@ -12,6 +12,7 @@ import CompanyManagementPage from '../components/pages/CompanyManagementPage';
 import ActiveBusesPage from '../components/pages/ActiveBusesPage';
 import TrackersPage from '../components/pages/TrackersPage';
 import DriversPage from '../components/pages/DriversPage';
+import MetricsPage from '../components/pages/MetricsPage';
 import NotFoundPage from '../components/pages/NotFoundPage';
 
 // Simple prefetch function for basic routes
@@ -162,6 +163,15 @@ export const protectedRoutes: RouteConfig[] = [
     showInNavigation: true,
     icon: 'person',
     order: 6,
+  },
+  {
+    path: '/metrics',
+    element: <MetricsPage />,
+    title: 'Performance Metrics',
+    requiresAuth: true,
+    showInNavigation: true,
+    icon: 'analytics',
+    order: 7,
   },
   {
     path: '/routes/:id/map',

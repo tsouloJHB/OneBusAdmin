@@ -26,6 +26,7 @@ import {
   ExpandLess,
   ExpandMore,
   Person as PersonIcon,
+  Analytics as AnalyticsIcon,
 } from '@mui/icons-material';
 import { designTokens } from '../../theme';
 import { OneBusLogo } from '../ui';
@@ -104,6 +105,13 @@ const navigationItems: NavigationItem[] = [
     path: '/drivers',
     icon: <PersonIcon />,
     description: 'Manage bus drivers',
+  },
+  {
+    id: 'metrics',
+    label: 'Performance Metrics',
+    path: '/metrics',
+    icon: <AnalyticsIcon />,
+    description: 'Monitor system performance',
   },
 ];
 
