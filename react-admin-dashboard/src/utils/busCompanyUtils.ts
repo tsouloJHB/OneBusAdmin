@@ -77,6 +77,7 @@ export const transformRegisteredBusResponse = (response: RegisteredBusResponse):
   status: response.status as 'active' | 'inactive' | 'maintenance' | 'retired',
   routeId: response.routeId,
   routeName: response.routeName,
+  tripDirection: response.tripDirection,
   routeAssignedAt: response.routeAssignedAt ? new Date(response.routeAssignedAt) : undefined,
   lastInspection: response.lastInspection ? new Date(response.lastInspection) : undefined,
   nextInspection: response.nextInspection ? new Date(response.nextInspection) : undefined,

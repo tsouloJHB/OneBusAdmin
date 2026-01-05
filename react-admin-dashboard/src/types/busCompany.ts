@@ -54,6 +54,7 @@ export interface RegisteredBus {
   status: 'active' | 'inactive' | 'maintenance' | 'retired';
   routeId?: number;
   routeName?: string;
+  tripDirection?: string;
   routeAssignedAt?: Date;
   lastInspection?: Date;
   nextInspection?: Date;
@@ -177,6 +178,7 @@ export interface RegisteredBusResponse {
   status: string;
   routeId?: number;
   routeName?: string;
+  tripDirection?: string;
   routeAssignedAt?: string;
   lastInspection?: string;
   nextInspection?: string;
