@@ -29,6 +29,7 @@ const fullRouteService = {
           description: item.description || '',
           coordinatesJson: item.coordinatesJson || JSON.stringify(coordinates),
           coordinates,
+          cumulativeDistances: item.cumulativeDistances || [],
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         } as FullRoute;
@@ -44,7 +45,7 @@ const fullRouteService = {
       const response = await httpClient.get(`${config.endpoints.fullRoutes}/${id}`);
       const item = response.data;
       const coordinates: Coordinate[] = item.coordinates || item.coords || [];
-      
+
       return {
         id: typeof item.id === 'number' ? item.id : parseInt(item.id || '0', 10),
         companyId: item.companyId,
@@ -54,6 +55,7 @@ const fullRouteService = {
         description: item.description || '',
         coordinatesJson: item.coordinatesJson || JSON.stringify(coordinates),
         coordinates,
+        cumulativeDistances: item.cumulativeDistances || [],
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       } as FullRoute;
@@ -68,7 +70,7 @@ const fullRouteService = {
       const response = await httpClient.post(config.endpoints.fullRoutes, data);
       const item = response.data;
       const coordinates: Coordinate[] = item.coordinates || data.coordinates || [];
-      
+
       return {
         id: typeof item.id === 'number' ? item.id : parseInt(item.id || '0', 10),
         companyId: item.companyId,
@@ -78,6 +80,7 @@ const fullRouteService = {
         description: item.description || '',
         coordinatesJson: item.coordinatesJson || JSON.stringify(coordinates),
         coordinates,
+        cumulativeDistances: item.cumulativeDistances || [],
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       } as FullRoute;
@@ -92,7 +95,7 @@ const fullRouteService = {
       const response = await httpClient.put(`${config.endpoints.fullRoutes}/${id}`, data);
       const item = response.data;
       const coordinates: Coordinate[] = item.coordinates || data.coordinates || [];
-      
+
       return {
         id: typeof item.id === 'number' ? item.id : parseInt(item.id || '0', 10),
         companyId: item.companyId,
@@ -102,6 +105,7 @@ const fullRouteService = {
         description: item.description || '',
         coordinatesJson: item.coordinatesJson || JSON.stringify(coordinates),
         coordinates,
+        cumulativeDistances: item.cumulativeDistances || [],
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
       } as FullRoute;
@@ -116,6 +120,16 @@ const fullRouteService = {
       await httpClient.delete(`${config.endpoints.fullRoutes}/${id}`);
     } catch (error) {
       console.error('fullRouteService: failed to delete full route', error);
+      throw error;
+    }
+  },
+
+  async backfillDistances(): Promise<any> {
+    try {
+      const response = await httpClient.post(`${config.endpoints.fullRoutes}/maintenance/backfill-distances`);
+      return response.data;
+    } catch (error) {
+      console.error('fullRouteService: failed to backfill distances', error);
       throw error;
     }
   },

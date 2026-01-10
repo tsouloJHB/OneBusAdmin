@@ -15,9 +15,13 @@ import {
   Select,
   Paper,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
-import { Refresh as RefreshIcon, Pause, PlayArrow, Map as MapIcon, ViewList } from '@mui/icons-material';
+import { Refresh as RefreshIcon, Pause, PlayArrow, Map as MapIcon, ViewList, DeleteSweep as ClearIcon } from '@mui/icons-material';
 import { ActiveBusList, FilterPanel, BusTrackingMap } from '../features';
 import activeBusService from '../../services/activeBusService';
 import routeService from '../../services/routeService';
@@ -25,6 +29,8 @@ import { busCompanyService } from '../../services/busCompanyService';
 import { ActiveBus, ActiveBusFilters, Route, ApiError } from '../../types';
 import { BusCompany } from '../../types/busCompany';
 import { useNotification } from '../../contexts';
+import { invalidateActiveBusCache } from '../../services/httpClient';
+import { config } from '../../config';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
@@ -44,6 +50,8 @@ const ActiveBusesPage: React.FC = () => {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [resettingRedis, setResettingRedis] = useState(false);
 
   // Parse filters from URL search params
   const filters: ActiveBusFilters = useMemo(() => {
@@ -173,6 +181,37 @@ const ActiveBusesPage: React.FC = () => {
     fetchActiveBuses(false);
   }, [fetchActiveBuses]);
 
+  // Reset Redis handler
+  const handleResetRedis = useCallback(async () => {
+    try {
+      setResettingRedis(true);
+      
+      // Clear frontend cache for active buses
+      invalidateActiveBusCache();
+      
+      const response = await fetch(`${config.apiBaseUrl}/clear`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        showNotification('Redis and database cache cleared successfully', 'success');
+        setShowResetDialog(false);
+        // Refresh buses to reload clean data
+        fetchActiveBuses(true);
+      } else {
+        showNotification('Failed to clear cache', 'error');
+      }
+    } catch (err) {
+      console.error('Error clearing cache:', err);
+      showNotification('Error clearing cache', 'error');
+    } finally {
+      setResettingRedis(false);
+    }
+  }, [showNotification, fetchActiveBuses]);
+
   // Toggle auto-refresh
   const handleToggleAutoRefresh = useCallback(() => {
     setAutoRefreshEnabled(prev => !prev);
@@ -294,6 +333,16 @@ const ActiveBusesPage: React.FC = () => {
           >
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<ClearIcon />}
+            onClick={() => setShowResetDialog(true)}
+            disabled={resettingRedis}
+            size="small"
+          >
+            Reset Redis
+          </Button>
         </Box>
       </Box>
 
@@ -365,6 +414,35 @@ const ActiveBusesPage: React.FC = () => {
           autoCenter={true}
         />
       )}
+
+      {/* Reset Redis Confirmation Dialog */}
+      <Dialog
+        open={showResetDialog}
+        onClose={() => setShowResetDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Reset Redis Cache</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            This will clear all cached bus tracking data from Redis. This may help resolve duplicate bus display issues on the map.
+          </Typography>
+          <Typography variant="body2" color="error" sx={{ mt: 2, fontWeight: 'bold' }}>
+            ⚠️ Warning: This will temporarily disable real-time bus tracking until new data is received from the trackers.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowResetDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleResetRedis}
+            variant="contained"
+            color="error"
+            disabled={resettingRedis}
+          >
+            {resettingRedis ? 'Resetting...' : 'Reset Redis'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
     </Box>
   );

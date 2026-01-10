@@ -19,6 +19,7 @@ import {
   IconButton,
   Alert,
   CircularProgress,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -26,6 +27,7 @@ import {
   FilterList as FilterIcon,
   Close as CloseIcon,
   Business as BusinessIcon,
+  Calculate as CalculateIcon,
 } from '@mui/icons-material';
 import { RouteTable, RouteForm, FullRouteTable, FullRouteViewer, FullRouteForm } from '../features';
 import routeService from '../../services/routeService';
@@ -39,13 +41,13 @@ const RoutesPage: React.FC = () => {
   // Notification
   const { showNotification } = useNotification();
   const navigate = useNavigate();
-  
+
   // Company selection state
   const [companies, setCompanies] = useState<BusCompany[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<BusCompany | null>(null);
   const [companiesLoading, setCompaniesLoading] = useState(false);
   const [companiesError, setCompaniesError] = useState<string | null>(null);
-  
+
   // State management
   const [routes, setRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,19 +68,19 @@ const RoutesPage: React.FC = () => {
   const [fullFormLoading, setFullFormLoading] = useState(false);
   const [deleteFullDialogOpen, setDeleteFullDialogOpen] = useState(false);
   const [fullRouteToDelete, setFullRouteToDelete] = useState<number | null>(null);
-  
+
   // Form state
   const [formOpen, setFormOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<Route | undefined>(undefined);
   const [formLoading, setFormLoading] = useState(false);
-  
+
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [routeToDelete, setRouteToDelete] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  
 
-  
+
+
   // Filters state
   const [filters, setFilters] = useState<RouteFilters>({
     search: '',
@@ -119,13 +121,13 @@ const RoutesPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Add company filter to the request
       const companyFilters = {
         ...filters,
         company: selectedCompany.name, // Filter by company name
       };
-      
+
       const response = await routeService.getRoutes(companyFilters, page + 1, pageSize);
       setRoutes(response.data);
       setTotalCount(response.pagination.total);
@@ -197,10 +199,10 @@ const RoutesPage: React.FC = () => {
   };
 
   const handleSortChange = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    setFilters(prev => ({ 
-      ...prev, 
-      sortBy: sortBy as 'name' | 'createdAt' | 'updatedAt', 
-      sortOrder 
+    setFilters(prev => ({
+      ...prev,
+      sortBy: sortBy as 'name' | 'createdAt' | 'updatedAt',
+      sortOrder
     }));
   };
 
@@ -235,7 +237,7 @@ const RoutesPage: React.FC = () => {
   const handleFormSubmit = async (data: CreateRouteRequest | UpdateRouteRequest) => {
     try {
       setFormLoading(true);
-      
+
       if (selectedRoute) {
         // Update existing route
         await routeService.updateRoute(selectedRoute.id, data as UpdateRouteRequest);
@@ -245,7 +247,7 @@ const RoutesPage: React.FC = () => {
         await routeService.createRoute(data as CreateRouteRequest);
         showNotification('Route created successfully', 'success');
       }
-      
+
       setFormOpen(false);
       await loadRoutes(); // Reload the routes list
     } catch (err) {
@@ -258,7 +260,7 @@ const RoutesPage: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (!routeToDelete) return;
-    
+
     try {
       setDeleteLoading(true);
       await routeService.deleteRoute(routeToDelete);
@@ -315,10 +317,10 @@ const RoutesPage: React.FC = () => {
   const handleDuplicateFullRoute = (route: FullRoute) => {
     // Determine the opposite direction
     const currentDirection = route.direction?.toLowerCase() || '';
-    const oppositeDirection = currentDirection === 'northbound' 
-      ? 'Southbound' 
-      : currentDirection === 'southbound' 
-        ? 'Northbound' 
+    const oppositeDirection = currentDirection === 'northbound'
+      ? 'Southbound'
+      : currentDirection === 'southbound'
+        ? 'Northbound'
         : route.direction || 'Northbound'; // Default to Northbound if direction is undefined
 
     // Reverse the coordinates array to flip the route
@@ -342,7 +344,7 @@ const RoutesPage: React.FC = () => {
   const handleFullFormSubmit = async (data: CreateFullRouteRequest | UpdateFullRouteRequest) => {
     try {
       setFullFormLoading(true);
-      
+
       if (editingFullRoute && editingFullRoute.id) {
         // Update existing full route (only if it has a valid ID)
         await fullRouteService.updateFullRoute(editingFullRoute.id, data as UpdateFullRouteRequest);
@@ -352,7 +354,7 @@ const RoutesPage: React.FC = () => {
         await fullRouteService.createFullRoute(data as CreateFullRouteRequest);
         showNotification('Full route created successfully', 'success');
       }
-      
+
       setFullFormOpen(false);
       await loadFullRoutes();
     } catch (err) {
@@ -366,7 +368,7 @@ const RoutesPage: React.FC = () => {
 
   const handleConfirmDeleteFullRoute = async () => {
     if (!fullRouteToDelete) return;
-    
+
     try {
       setFullFormLoading(true);
       await fullRouteService.deleteFullRoute(fullRouteToDelete);
@@ -394,6 +396,19 @@ const RoutesPage: React.FC = () => {
     }
   };
 
+  const handleBackfillDistances = async () => {
+    try {
+      setFullRoutesLoading(true);
+      const result = await fullRouteService.backfillDistances();
+      showNotification(`Backfill complete: ${result.updated} routes updated, ${result.skipped} skipped.`, 'success');
+      await loadFullRoutes();
+    } catch (err) {
+      showNotification('Failed to backfill distances', 'error');
+    } finally {
+      setFullRoutesLoading(false);
+    }
+  };
+
   const handleFormClose = () => {
     if (!formLoading) {
       setFormOpen(false);
@@ -402,23 +417,23 @@ const RoutesPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       p: { xs: 2, sm: 3 }, // Responsive padding
       maxWidth: '100%',
       overflow: 'hidden',
     }}>
       {/* Header */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: { xs: 'flex-start', sm: 'center' },
         flexDirection: { xs: 'column', sm: 'row' },
         gap: { xs: 2, sm: 0 },
-        mb: 3 
+        mb: 3
       }}>
         <Box>
-          <Typography 
-            variant="h4" 
+          <Typography
+            variant="h4"
             component="h1"
             sx={{
               fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' }, // Responsive title
@@ -433,6 +448,26 @@ const RoutesPage: React.FC = () => {
             </Typography>
           )}
         </Box>
+        {routeViewMode === 'full' && (
+          <Tooltip title="Calculate road-path distances for all routes missing them. This enables accurate real-time tracking and ETA.">
+            <span>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<CalculateIcon />}
+                onClick={handleBackfillDistances}
+                disabled={loading || fullRoutesLoading || !selectedCompany}
+                sx={{
+                  mr: { xs: 0, sm: 2 },
+                  mb: { xs: 1, sm: 0 },
+                  minWidth: { xs: '100%', sm: 'auto' },
+                }}
+              >
+                Backfill Distances
+              </Button>
+            </span>
+          </Tooltip>
+        )}
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -480,7 +515,7 @@ const RoutesPage: React.FC = () => {
             ))}
           </Select>
         </FormControl>
-        
+
         {companiesLoading && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
             <CircularProgress size={16} />
@@ -489,7 +524,7 @@ const RoutesPage: React.FC = () => {
             </Typography>
           </Box>
         )}
-        
+
         {companiesError && (
           <Alert severity="error" sx={{ mt: 1 }}>
             {companiesError}
@@ -498,7 +533,7 @@ const RoutesPage: React.FC = () => {
             </Button>
           </Alert>
         )}
-        
+
         {!selectedCompany && !companiesLoading && !companiesError && (
           <Alert severity="info" sx={{ mt: 1 }}>
             Please select a company to view and manage their routes.
@@ -507,132 +542,138 @@ const RoutesPage: React.FC = () => {
       </Box>
 
       {/* Filters - Only show when company is selected */}
-      {selectedCompany && (
-        <Box sx={{ 
-          display: 'flex', 
-          gap: { xs: 1, sm: 2 }, 
-          mb: 3, 
-          flexWrap: 'wrap',
-          flexDirection: { xs: 'column', sm: 'row' }, // Stack on mobile
-        }}>
-          <FormControl sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-            <InputLabel size="small">Route Data</InputLabel>
-            <Select
-              size="small"
-              value={routeViewMode}
-              label="Route Data"
-              onChange={(e) => setRouteViewMode(e.target.value as 'stops' | 'full')}
-            >
-              <MenuItem value="stops">Stops Routes</MenuItem>
-              <MenuItem value="full">Full Routes</MenuItem>
-            </Select>
-          </FormControl>
-
-          <TextField
-            placeholder="Search routes..."
-            value={filters.search}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ 
-              minWidth: { xs: '100%', sm: 250 }, // Full width on mobile
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-            }}
-            size="small" // Smaller input on mobile
-          />
-          
-          <FormControl sx={{ 
-            minWidth: { xs: '100%', sm: 150 }, // Full width on mobile
+      {
+        selectedCompany && (
+          <Box sx={{
+            display: 'flex',
+            gap: { xs: 1, sm: 2 },
+            mb: 3,
+            flexWrap: 'wrap',
+            flexDirection: { xs: 'column', sm: 'row' }, // Stack on mobile
           }}>
-            <InputLabel size="small">Status</InputLabel>
-            <Select
-              value={filters.isActive === undefined ? 'all' : filters.isActive ? 'active' : 'inactive'}
-              label="Status"
-              size="small" // Smaller select on mobile
-              onChange={(e) => {
-                const value = e.target.value;
-                handleActiveFilterChange(
-                  value === 'all' ? undefined : value === 'active'
-                );
-              }}
-            >
-              <MenuItem value="all">All Routes</MenuItem>
-              <MenuItem value="active">Active Only</MenuItem>
-              <MenuItem value="inactive">Inactive Only</MenuItem>
-            </Select>
-          </FormControl>
-          
-          {(filters.search || filters.isActive !== undefined) && (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              width: { xs: '100%', sm: 'auto' }, // Full width on mobile
-              flexWrap: 'wrap',
-            }}>
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+            <FormControl sx={{ minWidth: { xs: '100%', sm: 180 } }}>
+              <InputLabel size="small">Route Data</InputLabel>
+              <Select
+                size="small"
+                value={routeViewMode}
+                label="Route Data"
+                onChange={(e) => setRouteViewMode(e.target.value as 'stops' | 'full')}
               >
-                Filters:
-              </Typography>
-              {filters.search && (
-                <Chip
-                  label={`Search: "${filters.search}"`}
-                  onDelete={() => setFilters(prev => ({ ...prev, search: '' }))}
-                  size="small"
-                />
-              )}
-              {filters.isActive !== undefined && (
-                <Chip
-                  label={`Status: ${filters.isActive ? 'Active' : 'Inactive'}`}
-                  onDelete={() => setFilters(prev => ({ ...prev, isActive: undefined }))}
-                  size="small"
-                />
-              )}
-            </Box>
-          )}
-        </Box>
-      )}
+                <MenuItem value="stops">Stops Routes</MenuItem>
+                <MenuItem value="full">Full Routes</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              placeholder="Search routes..."
+              value={filters.search}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                minWidth: { xs: '100%', sm: 250 }, // Full width on mobile
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
+              size="small" // Smaller input on mobile
+            />
+
+            <FormControl sx={{
+              minWidth: { xs: '100%', sm: 150 }, // Full width on mobile
+            }}>
+              <InputLabel size="small">Status</InputLabel>
+              <Select
+                value={filters.isActive === undefined ? 'all' : filters.isActive ? 'active' : 'inactive'}
+                label="Status"
+                size="small" // Smaller select on mobile
+                onChange={(e) => {
+                  const value = e.target.value;
+                  handleActiveFilterChange(
+                    value === 'all' ? undefined : value === 'active'
+                  );
+                }}
+              >
+                <MenuItem value="all">All Routes</MenuItem>
+                <MenuItem value="active">Active Only</MenuItem>
+                <MenuItem value="inactive">Inactive Only</MenuItem>
+              </Select>
+            </FormControl>
+
+            {(filters.search || filters.isActive !== undefined) && (
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                width: { xs: '100%', sm: 'auto' }, // Full width on mobile
+                flexWrap: 'wrap',
+              }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                >
+                  Filters:
+                </Typography>
+                {filters.search && (
+                  <Chip
+                    label={`Search: "${filters.search}"`}
+                    onDelete={() => setFilters(prev => ({ ...prev, search: '' }))}
+                    size="small"
+                  />
+                )}
+                {filters.isActive !== undefined && (
+                  <Chip
+                    label={`Status: ${filters.isActive ? 'Active' : 'Inactive'}`}
+                    onDelete={() => setFilters(prev => ({ ...prev, isActive: undefined }))}
+                    size="small"
+                  />
+                )}
+              </Box>
+            )}
+          </Box>
+        )
+      }
 
       {/* Routes / Full Routes Table - Only show when company is selected */}
-      {selectedCompany && routeViewMode === 'stops' && (
-        <RouteTable
-          routes={routes}
-          loading={loading}
-          error={error}
-          totalCount={totalCount}
-          page={page}
-          pageSize={pageSize}
-          filters={filters}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-          onSortChange={handleSortChange}
-          onEdit={handleEditRoute}
-          onDelete={handleDeleteRoute}
-          onMapView={handleMapView}
-        />
-      )}
+      {
+        selectedCompany && routeViewMode === 'stops' && (
+          <RouteTable
+            routes={routes}
+            loading={loading}
+            error={error}
+            totalCount={totalCount}
+            page={page}
+            pageSize={pageSize}
+            filters={filters}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            onSortChange={handleSortChange}
+            onEdit={handleEditRoute}
+            onDelete={handleDeleteRoute}
+            onMapView={handleMapView}
+          />
+        )
+      }
 
-      {selectedCompany && routeViewMode === 'full' && (
-        <FullRouteTable
-          fullRoutes={fullRoutes}
-          loading={fullRoutesLoading}
-          error={fullRoutesError}
-          onView={handleFullRouteView}
-          onEdit={handleEditFullRoute}
-          onDelete={handleDeleteFullRoute}
-          onMapView={handleFullRouteMapView}
-          onDuplicate={handleDuplicateFullRoute}
-          onRetry={loadFullRoutes}
-        />
-      )}
+      {
+        selectedCompany && routeViewMode === 'full' && (
+          <FullRouteTable
+            fullRoutes={fullRoutes}
+            loading={fullRoutesLoading}
+            error={fullRoutesError}
+            onView={handleFullRouteView}
+            onEdit={handleEditFullRoute}
+            onDelete={handleDeleteFullRoute}
+            onMapView={handleFullRouteMapView}
+            onDuplicate={handleDuplicateFullRoute}
+            onRetry={loadFullRoutes}
+          />
+        )
+      }
 
       {/* Route Form Dialog */}
       <RouteForm
@@ -679,16 +720,18 @@ const RoutesPage: React.FC = () => {
       />
 
       {/* Full Route Form Dialog */}
-      {selectedCompany && (
-        <FullRouteForm
-          open={fullFormOpen}
-          onClose={handleFullFormClose}
-          onSave={handleFullFormSubmit}
-          route={editingFullRoute}
-          companyId={parseInt(selectedCompany.id)}
-          routeId={0} // You can make this dynamic if needed
-        />
-      )}
+      {
+        selectedCompany && (
+          <FullRouteForm
+            open={fullFormOpen}
+            onClose={handleFullFormClose}
+            onSave={handleFullFormSubmit}
+            route={editingFullRoute}
+            companyId={parseInt(selectedCompany!.id)}
+            routeId={0} // You can make this dynamic if needed
+          />
+        )
+      }
 
       {/* Full Route Delete Confirmation Dialog */}
       <Dialog

@@ -4,7 +4,7 @@ import {
   GridColDef,
 } from '@mui/x-data-grid';
 import { Box, Typography, Chip, Tooltip, IconButton, CircularProgress, Alert } from '@mui/material';
-import { Visibility as ViewIcon, Edit as EditIcon, Delete as DeleteIcon, Refresh as RefreshIcon, Map as MapIcon, FlipToBack as DuplicateIcon } from '@mui/icons-material';
+import { Visibility as ViewIcon, Edit as EditIcon, Delete as DeleteIcon, Refresh as RefreshIcon, Map as MapIcon, FlipToBack as DuplicateIcon, Speed as DistanceIcon } from '@mui/icons-material';
 import { FullRoute, ApiError } from '../../types';
 
 interface FullRouteTableProps {
@@ -22,19 +22,50 @@ interface FullRouteTableProps {
 const FullRouteTable: React.FC<FullRouteTableProps> = ({ fullRoutes, loading, error, onView, onEdit, onDelete, onMapView, onDuplicate, onRetry }) => {
   const columns: GridColDef<FullRoute>[] = [
     { field: 'name', headerName: 'Route Name', flex: 1, minWidth: 160 },
-    { field: 'direction', headerName: 'Direction', flex: 0.6, minWidth: 110, renderCell: (params) => (
-      params.value ? <Chip size="small" label={params.value} color="primary" /> : <Typography variant="body2">-</Typography>
-    )},
-    { field: 'description', headerName: 'Description', flex: 1.2, minWidth: 200, renderCell: (params) => (
-      <Tooltip title={params.value || ''}>
-        <Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {params.value || '-'}
-        </Typography>
-      </Tooltip>
-    )},
+    {
+      field: 'direction', headerName: 'Direction', flex: 0.6, minWidth: 110, renderCell: (params) => (
+        params.value ? <Chip size="small" label={params.value} color="primary" /> : <Typography variant="body2">-</Typography>
+      )
+    },
+    {
+      field: 'description', headerName: 'Description', flex: 1.2, minWidth: 200, renderCell: (params) => (
+        <Tooltip title={params.value || ''}>
+          <Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {params.value || '-'}
+          </Typography>
+        </Tooltip>
+      )
+    },
     { field: 'routeId', headerName: 'Route ID', width: 110 },
     { field: 'companyId', headerName: 'Company ID', width: 120 },
     { field: 'points', headerName: 'Points', width: 90, valueGetter: (value, row) => row.coordinates?.length || 0 },
+    {
+      field: 'distanceCalc', headerName: 'Road Dist', width: 100, renderCell: (params) => {
+        const hasDistances = params.row.cumulativeDistances && params.row.cumulativeDistances.length > 0;
+        return (
+          <Tooltip title={hasDistances ? "Road-path distances calculated" : "Straight-line (Haversine) only"}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+              {hasDistances ? (
+                <Chip
+                  icon={<DistanceIcon style={{ fontSize: '14px' }} />}
+                  label="Active"
+                  size="small"
+                  color="success"
+                  variant="outlined"
+                />
+              ) : (
+                <Chip
+                  label="Legacy"
+                  size="small"
+                  variant="outlined"
+                  sx={{ color: 'text.secondary', borderColor: 'divider' }}
+                />
+              )}
+            </Box>
+          </Tooltip>
+        );
+      }
+    },
     {
       field: 'actions',
       headerName: 'Actions',

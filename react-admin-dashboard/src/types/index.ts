@@ -31,6 +31,7 @@ export interface Route {
     description?: string;
     coordinatesJson: string; // JSON string of Coordinate[]
     coordinates?: Coordinate[]; // Parsed coordinates
+    cumulativeDistances?: number[]; // Pre-calculated distances along the route
     createdAt?: string;
     updatedAt?: string;
   }
