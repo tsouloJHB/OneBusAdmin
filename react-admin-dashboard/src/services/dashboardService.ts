@@ -48,27 +48,28 @@ const dashboardService = {
   /**
    * Get dashboard statistics from the optimized backend endpoint
    */
-  async getDashboardStats(): Promise<DashboardStats> {
+  async getDashboardStats(companyId?: number): Promise<DashboardStats> {
     try {
-      console.log('DashboardService: Fetching dashboard stats from backend...');
-      
+      console.log(`DashboardService: Fetching dashboard stats ${companyId ? `for company ${companyId}` : ''} from backend...`);
+
       // Call the new unified dashboard stats endpoint
-      const response = await httpClient.get('/dashboard/stats');
+      const url = companyId ? `/dashboard/stats?companyId=${companyId}` : '/dashboard/stats';
+      const response = await httpClient.get(url);
       const stats = response.data;
-      
+
       console.log('DashboardService: Received stats:', stats);
-      
+
       // Add mock recent activity since backend doesn't provide it yet
       const dashboardStats: DashboardStats = {
         ...stats,
         recentActivity: mockDashboardStats.recentActivity || [],
       };
-      
+
       return dashboardStats;
-      
+
     } catch (error) {
       console.error('DashboardService: Failed to fetch dashboard stats:', error);
-      
+
       // Fallback to mock data if API call fails
       return mockDashboardStats;
     }
@@ -86,12 +87,12 @@ const dashboardService = {
         await new Promise(resolve => setTimeout(resolve, 300));
         return mockDashboardStats.recentActivity?.slice(0, limit) || [];
       }
-      
+
       // Production API call
       const response = await httpClient.get<ApiResponse<DashboardStats['recentActivity']>>(
         `${config.endpoints.dashboard}/activity?limit=${limit}`
       );
-      
+
       return response.data.data || [];
     } catch (error) {
       throw error;

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
+import {
+  Box,
+  Typography,
   useTheme,
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { 
+import {
   DirectionsBus as BusIcon,
   Route as RouteIcon,
   PlayArrow as ActiveIcon,
@@ -18,9 +18,11 @@ import { StatsCard, ModernCard, ModernButton, OneBusLogo } from '../ui';
 import { designTokens } from '../../theme';
 import dashboardService from '../../services/dashboardService';
 import { DashboardStats } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SimpleDashboard: React.FC = () => {
   const theme = useTheme();
+  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,9 @@ const SimpleDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await dashboardService.getDashboardStats();
+
+      const companyId = user?.role === 'COMPANY_ADMIN' ? user.companyId : undefined;
+      const data = await dashboardService.getDashboardStats(companyId);
       setStats(data);
     } catch (err) {
       setError('Failed to load dashboard statistics');
@@ -48,7 +52,7 @@ const SimpleDashboard: React.FC = () => {
   };
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       p: { xs: 2, sm: 3 }, // Responsive padding
       maxWidth: '100%',
       overflow: 'hidden',
@@ -56,15 +60,15 @@ const SimpleDashboard: React.FC = () => {
       {/* Header */}
       <Box sx={{ mb: { xs: 3, sm: 4 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 2, sm: 3 } }}>
-          <OneBusLogo 
+          <OneBusLogo
             size={{ xs: 48, sm: 64 }} // Responsive logo size
           />
         </Box>
         <Box sx={{ textAlign: 'center' }}>
-          <Typography 
-            variant="h3" 
-            component="h1" 
-            sx={{ 
+          <Typography
+            variant="h3"
+            component="h1"
+            sx={{
               fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' }, // More responsive sizing
               fontWeight: 700,
               mb: 1,
@@ -81,10 +85,10 @@ const SimpleDashboard: React.FC = () => {
           >
             Dashboard
           </Typography>
-          <Typography 
-            variant="h6" 
+          <Typography
+            variant="h6"
             color="text.secondary"
-            sx={{ 
+            sx={{
               fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem' }, // Responsive subtitle
               px: { xs: 1, sm: 0 }, // Add padding on mobile
             }}
@@ -92,10 +96,10 @@ const SimpleDashboard: React.FC = () => {
             Monitor your bus fleet operations in real-time
           </Typography>
         </Box>
-        
-        <Box sx={{ 
-          mt: 2, 
-          display: 'flex', 
+
+        <Box sx={{
+          mt: 2,
+          display: 'flex',
           justifyContent: 'center',
         }}>
           <ModernButton
@@ -189,24 +193,24 @@ const SimpleDashboard: React.FC = () => {
           gap: { xs: 2, sm: 3 }, // Responsive gap
         }}
       >
-        <ModernCard 
-          title="System Status" 
+        <ModernCard
+          title="System Status"
           variant="gradient"
           headerAction={
-            <Box sx={{ 
-              width: 8, 
-              height: 8, 
-              borderRadius: '50%', 
-              bgcolor: 'success.main' 
+            <Box sx={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              bgcolor: 'success.main'
             }} />
           }
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ 
-              width: 12, 
-              height: 12, 
-              borderRadius: '50%', 
-              bgcolor: 'success.main' 
+            <Box sx={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              bgcolor: 'success.main'
             }} />
             <Box>
               <Typography variant="body1" fontWeight="600">
@@ -218,9 +222,9 @@ const SimpleDashboard: React.FC = () => {
             </Box>
           </Box>
         </ModernCard>
-        
-        <ModernCard 
-          title="Quick Actions" 
+
+        <ModernCard
+          title="Quick Actions"
           variant="elevated"
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

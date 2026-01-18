@@ -114,11 +114,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       console.log('AuthProvider: Initializing authentication...');
-      
+
       try {
         const storedToken = getStoredToken();
         console.log('AuthProvider: Stored token:', storedToken ? 'exists' : 'none');
-        
+
         if (storedToken) {
           console.log('AuthProvider: Found stored token, attempting verification...');
           try {
@@ -151,22 +151,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Login function
   const login = async (credentials: LoginRequest): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
-    
+
     try {
       const response = await authService.login(credentials);
-      
+
       // Store token
       setStoredToken(response.token);
-      
+
       // Convert flat response to User object
       const user: User = {
         id: response.email, // Using email as ID since backend doesn't return ID
         email: response.email,
         fullName: response.fullName,
         role: response.role,
+        companyId: response.companyId,
         isActive: true,
       };
-      
+
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user, token: response.token },
@@ -193,10 +194,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshToken = async (): Promise<void> => {
     try {
       const response = await authService.refreshToken();
-      
+
       // Update stored tokens
       setStoredToken(response.token);
-      
+
       // Convert flat response to User object
       const user: User = {
         id: response.email,
@@ -205,7 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         role: response.role,
         isActive: true,
       };
-      
+
       dispatch({
         type: 'REFRESH_TOKEN_SUCCESS',
         payload: { user, token: response.token },
@@ -235,11 +236,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 // Custom hook to use auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
+
   return context;
 };
 

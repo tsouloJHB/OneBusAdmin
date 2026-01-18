@@ -35,9 +35,11 @@ import fullRouteService from '../../services/fullRouteService';
 import { busCompanyService } from '../../services/busCompanyService';
 import { Route, RouteFilters, CreateRouteRequest, UpdateRouteRequest, ApiError, FullRoute, CreateFullRouteRequest, UpdateFullRouteRequest } from '../../types';
 import { BusCompany } from '../../types/busCompany';
-import { useNotification } from '../../contexts';
+import { useNotification, useAuth } from '../../contexts';
 
 const RoutesPage: React.FC = () => {
+  // Authentication
+  const { user } = useAuth();
   // Notification
   const { showNotification } = useNotification();
   const navigate = useNavigate();
@@ -101,6 +103,14 @@ const RoutesPage: React.FC = () => {
       setCompaniesError(null);
       const companiesData = await busCompanyService.getAllCompanies();
       setCompanies(companiesData);
+
+      // Pre-select company for COMPANY_ADMIN
+      if (user?.role === 'COMPANY_ADMIN' && user.companyId) {
+        const userCompany = companiesData.find(c => c.id === user.companyId?.toString());
+        if (userCompany) {
+          setSelectedCompany(userCompany);
+        }
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load companies';
       setCompaniesError(errorMessage);
@@ -108,7 +118,7 @@ const RoutesPage: React.FC = () => {
     } finally {
       setCompaniesLoading(false);
     }
-  }, [showNotification]);
+  }, [showNotification, user]);
 
   // Load routes data (only when company is selected)
   const loadRoutes = useCallback(async () => {

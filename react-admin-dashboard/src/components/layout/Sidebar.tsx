@@ -21,15 +21,18 @@ import {
   DirectionsBus,
   TrackChanges,
   Sensors,
+  CheckCircle,
   Settings,
   Business,
   ExpandLess,
   ExpandMore,
   Person as PersonIcon,
   Analytics as AnalyticsIcon,
+  Article,
 } from '@mui/icons-material';
 import { designTokens } from '../../theme';
 import { OneBusLogo } from '../ui';
+import { useAuthState } from '../../hooks/useAuthState';
 
 interface NavigationItem {
   id: string;
@@ -37,6 +40,7 @@ interface NavigationItem {
   path: string;
   icon: React.ReactElement;
   description?: string;
+  allowedRoles?: string[]; // Optional: restrict access to specific roles
   children?: NavigationItem[]; // Support nested items
 }
 
@@ -75,6 +79,7 @@ const navigationItems: NavigationItem[] = [
         path: '/companies',
         icon: <Business />,
         description: 'Manage bus companies',
+        allowedRoles: ['ADMIN', 'admin'],
       },
       {
         id: 'buses',
@@ -113,6 +118,22 @@ const navigationItems: NavigationItem[] = [
     icon: <AnalyticsIcon />,
     description: 'Monitor system performance',
   },
+  {
+    id: 'documentation',
+    label: 'Documentation',
+    path: '/documentation-menu',
+    icon: <Article />,
+    description: 'System documentation',
+    children: [
+      {
+        id: 'onboarding-checklist',
+        label: 'Onboarding Checklist',
+        path: '/documentation/onboarding',
+        icon: <CheckCircle />,
+        description: 'New company onboarding guide',
+      },
+    ],
+  },
 ];
 
 const secondaryItems: NavigationItem[] = [
@@ -135,7 +156,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navigate = useNavigate();
   const theme = useTheme();
   const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
+  const { user } = useAuthState();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+
+  const hasPermission = (item: NavigationItem): boolean => {
+    if (!item.allowedRoles) return true;
+    if (!user) return false;
+    return item.allowedRoles.includes(user.role);
+  };
+
+  const filterNavigationItems = (items: NavigationItem[]): NavigationItem[] => {
+    return items.reduce<NavigationItem[]>((filtered, item) => {
+      if (!hasPermission(item)) {
+        return filtered;
+      }
+
+      if (item.children) {
+        const filteredChildren = filterNavigationItems(item.children);
+        // If it has children but all are filtered out, checking if we should still show parent or not.
+        // For now, let's keep parent if it has permission itself, even if children are empty, 
+        // unless the design implies parent is only a container.
+        // In our case 'Companies' parent has no direct link (it redirects or opens menu), 
+        // but 'routes.tsx' says /companies-menu -> CompanyManagementPage.
+        // Actually, sidebar parent items usually just expand. 
+        // If children are filtered, we update the item with filtered children.
+        return [...filtered, { ...item, children: filteredChildren }];
+      }
+
+      return [...filtered, item];
+    }, []);
+  };
+
+  const filteredNavigationItems = filterNavigationItems(navigationItems);
+  const filteredSecondaryItems = filterNavigationItems(secondaryItems);
 
   const handleToggleExpand = (itemId: string) => {
     setExpandedItems(prev => ({
@@ -166,7 +219,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           const isActive = isActiveRoute(item.path);
           const hasChildren = item.children && item.children.length > 0;
           const isExpanded = expandedItems[item.id] || false;
-          
+
           return (
             <React.Fragment key={item.id}>
               <ListItem disablePadding role="listitem">
@@ -253,7 +306,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )}
                 </ListItemButton>
               </ListItem>
-              
+
               {hasChildren && (
                 <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                   {renderNavigationItems(item.children!, false, true)}
@@ -267,25 +320,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   );
 
   const drawerContent = (
-    <Box 
+    <Box
       sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
       role="navigation"
       aria-label="Main navigation"
     >
       {/* Header */}
-      <Box sx={{ 
-        p: { xs: 2, md: 3 }, 
-        borderBottom: 1, 
+      <Box sx={{
+        p: { xs: 2, md: 3 },
+        borderBottom: 1,
         borderColor: 'divider',
         background: alpha(theme.palette.primary.main, 0.02),
       }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
           <OneBusLogo size={40} />
         </Box>
-        <Typography 
-          variant="body2" 
+        <Typography
+          variant="body2"
           color="text.secondary"
-          sx={{ 
+          sx={{
             fontSize: isTablet ? '0.75rem' : '0.875rem',
             fontWeight: 500,
             textAlign: 'center',
@@ -296,9 +349,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </Box>
 
       {/* Navigation Items */}
-      <Box 
-        sx={{ 
-          flexGrow: 1, 
+      <Box
+        sx={{
+          flexGrow: 1,
           overflow: 'auto',
           '&:focus-within': {
             outline: 'none',
@@ -307,23 +360,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         role="navigation"
         aria-label="Primary navigation"
       >
-        {renderNavigationItems(navigationItems)}
-        {renderNavigationItems(secondaryItems, true)}
+        {renderNavigationItems(filteredNavigationItems)}
+        {renderNavigationItems(filteredSecondaryItems, true)}
       </Box>
 
       {/* Footer */}
-      <Box sx={{ 
-        p: { xs: 2, md: 3 }, 
-        borderTop: 1, 
+      <Box sx={{
+        p: { xs: 2, md: 3 },
+        borderTop: 1,
         borderColor: 'divider',
         background: alpha(theme.palette.background.paper, 0.5),
       }}>
-        <Typography 
-          variant="caption" 
-          color="text.secondary" 
-          align="center" 
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          align="center"
           display="block"
-          sx={{ 
+          sx={{
             fontSize: isTablet ? '0.6875rem' : '0.75rem',
             fontWeight: 500,
           }}

@@ -13,7 +13,7 @@ import './styles/accessibility.css';
 function App() {
   console.log('App: Component rendering...');
   console.log('App: Starting ErrorBoundary render');
-  
+
   try {
     console.log('App: About to return JSX');
     return (
@@ -29,18 +29,18 @@ function App() {
               <Router>
                 <Routes>
                   {/* Login Route - No authentication required */}
-                  <Route 
-                    path="/login" 
+                  <Route
+                    path="/login"
                     element={<LoginPage />}
                   />
-                  
+
                   {/* Protected Routes with Layout */}
                   {protectedRoutes.map((route, index) => (
                     <Route
                       key={route.path || index}
                       path={route.path}
                       element={
-                        <ProtectedRoute requiredRoles={undefined}>
+                        <ProtectedRoute requiredRoles={route.allowedRoles as any}>
                           <AppLayout>
                             {route.element}
                           </AppLayout>
@@ -48,10 +48,10 @@ function App() {
                       }
                     />
                   ))}
-                  
+
                   {/* Root redirect - must come after other routes */}
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  
+
                   {/* 404 Route - must be last */}
                   <Route
                     path={notFoundRoute.path}
@@ -74,7 +74,7 @@ function App() {
     );
   } catch (error) {
     console.error('App: Error during render:', error);
-    return <div style={{color: 'red', padding: '20px'}}>Error: {String(error)}</div>;
+    return <div style={{ color: 'red', padding: '20px' }}>Error: {String(error)}</div>;
   }
 }
 

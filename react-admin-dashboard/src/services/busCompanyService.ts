@@ -32,10 +32,10 @@ class BusCompanyService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     // Get JWT token from localStorage if available
     const token = localStorage.getItem('authToken');
-    
+
     const defaultOptions: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -85,12 +85,12 @@ class BusCompanyService {
       if (error instanceof Error && error.name === 'CompanyManagementError') {
         throw error;
       }
-      
+
       // Handle network errors (connection refused, etc.)
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw this.createError(404, 'API server not available', endpoint);
       }
-      
+
       throw this.createError(500, error instanceof Error ? error.message : 'Unknown error', endpoint);
     }
   }
@@ -106,13 +106,13 @@ class BusCompanyService {
         // Prefer server-provided validation details when available so the UI can show precise messages.
         if (message) {
           try {
-              const parsed = JSON.parse(message);
-              // Common backend shapes: { message: '...' } or { error: '...' }
-              if (parsed && typeof parsed === 'object') {
-                userMessage = parsed.message || parsed.error || JSON.stringify(parsed);
-              } else {
-                userMessage = String(parsed);
-              }
+            const parsed = JSON.parse(message);
+            // Common backend shapes: { message: '...' } or { error: '...' }
+            if (parsed && typeof parsed === 'object') {
+              userMessage = parsed.message || parsed.error || JSON.stringify(parsed);
+            } else {
+              userMessage = String(parsed);
+            }
           } catch (e) {
             // Not JSON - use raw text
             userMessage = message;
@@ -192,14 +192,14 @@ class BusCompanyService {
         country: 'South Africa', // Default country
         isActive: companyData.status === 'active'
       };
-      
+
       console.log('BusCompanyService: Creating company with data:', apiData);
-      
+
       const response = await this.apiCall<BusCompanyResponse>('/bus-companies', {
         method: 'POST',
         body: JSON.stringify(apiData),
       });
-      
+
       console.log('BusCompanyService: Company created successfully:', response);
       return transformBusCompanyResponse(response);
     } catch (error) {
@@ -218,7 +218,7 @@ class BusCompanyService {
       if (companyData.image) {
         return this.createCompanyMultipart(companyData);
       }
-      
+
       // Otherwise use regular JSON endpoint
       return this.createCompany(companyData);
     } catch (error) {
@@ -232,13 +232,13 @@ class BusCompanyService {
    */
   private async createCompanyMultipart(companyData: CompanyFormData): Promise<BusCompany> {
     const formData = new FormData();
-    
+
     // Add form fields
     formData.append('name', companyData.name);
     formData.append('registrationNumber', companyData.registrationNumber);
     formData.append('companyCode', companyData.companyCode);
     formData.append('city', companyData.city);
-    
+
     if (companyData.contactInfo?.email) {
       formData.append('email', companyData.contactInfo.email);
     }
@@ -248,10 +248,10 @@ class BusCompanyService {
     if (companyData.address) {
       formData.append('address', companyData.address);
     }
-    
+
     formData.append('country', 'South Africa');
     formData.append('isActive', (companyData.status === 'active').toString());
-    
+
     // Add image file
     if (companyData.image) {
       formData.append('image', companyData.image);
@@ -260,7 +260,7 @@ class BusCompanyService {
     try {
       const url = `${this.baseUrl}/bus-companies`;
       console.log(`BusCompanyService: Creating company with image at ${url}`);
-      
+
       const response = await fetch(url, {
         method: 'POST',
         body: formData,
@@ -287,7 +287,7 @@ class BusCompanyService {
   async updateCompany(id: string, updates: Partial<CompanyFormData>): Promise<BusCompany> {
     try {
       console.log('BusCompanyService: Updating company with data:', updates);
-      
+
       // Transform the form data to match API expectations
       const apiData: any = {};
       if (updates.name !== undefined) apiData.name = updates.name;
@@ -298,15 +298,15 @@ class BusCompanyService {
       if (updates.address !== undefined) apiData.address = updates.address;
       if (updates.city !== undefined) apiData.city = updates.city;
       if (updates.status !== undefined) apiData.isActive = updates.status === 'active';
-      
+
       console.log('BusCompanyService: Transformed API data:', apiData);
       console.log('BusCompanyService: API URL:', `${this.baseUrl}/bus-companies/${id}`);
-      
+
       const response = await this.apiCall<BusCompanyResponse>(`/bus-companies/${id}`, {
         method: 'PUT',
         body: JSON.stringify(apiData),
       });
-      
+
       console.log('BusCompanyService: Update response:', response);
       const transformedResponse = transformBusCompanyResponse(response);
       console.log('BusCompanyService: Transformed response:', transformedResponse);
@@ -326,7 +326,7 @@ class BusCompanyService {
       if (updates.image) {
         return this.updateCompanyMultipart(id, updates);
       }
-      
+
       // Otherwise use regular JSON endpoint
       return this.updateCompany(id, updates);
     } catch (error) {
@@ -340,7 +340,7 @@ class BusCompanyService {
    */
   private async updateCompanyMultipart(id: string, updates: Partial<CompanyFormData>): Promise<BusCompany> {
     const formData = new FormData();
-    
+
     // Add form fields (only if they're provided)
     if (updates.name !== undefined) formData.append('name', updates.name);
     if (updates.registrationNumber !== undefined) formData.append('registrationNumber', updates.registrationNumber);
@@ -350,7 +350,7 @@ class BusCompanyService {
     if (updates.contactInfo?.phone !== undefined) formData.append('phone', updates.contactInfo.phone);
     if (updates.address !== undefined) formData.append('address', updates.address);
     if (updates.status !== undefined) formData.append('isActive', (updates.status === 'active').toString());
-    
+
     // Add image file
     if (updates.image) {
       formData.append('image', updates.image);
@@ -359,7 +359,7 @@ class BusCompanyService {
     try {
       const url = `${this.baseUrl}/bus-companies/${id}`;
       console.log(`BusCompanyService: Updating company with image at ${url}`);
-      
+
       const response = await fetch(url, {
         method: 'PUT',
         body: formData,
@@ -493,13 +493,13 @@ class BusCompanyService {
       return allBusNumbers.filter(busNumber => busNumber.busCompanyId === companyId);
     } catch (error) {
       console.error(`BusCompanyService: Error getting bus numbers for company ${companyId}:`, error);
-      
+
       // If it's a 404 or connection error, return empty array for development
       if (error instanceof Error && (error as CompanyManagementError).type === CompanyManagementErrorType.NOT_FOUND) {
         console.log('BusCompanyService: API not available, returning empty bus numbers list for development');
         return [];
       }
-      
+
       throw error;
     }
   }
@@ -539,18 +539,18 @@ class BusCompanyService {
         ...busNumberData,
         busCompanyId: parseInt(companyId)
       };
-      
+
       console.log('=== BUS COMPANY SERVICE CREATE ===');
       console.log('BusCompanyService: Creating bus number with data:', requestData);
       console.log('BusCompanyService: Company ID:', companyId);
       console.log('BusCompanyService: Parsed Company ID:', parseInt(companyId));
       console.log('BusCompanyService: API URL:', `${this.baseUrl}/bus-numbers`);
-      
+
       const response = await this.apiCall<BusNumberResponse>('/bus-numbers', {
         method: 'POST',
         body: JSON.stringify(requestData),
       });
-      
+
       console.log('BusCompanyService: Bus number created successfully:', response);
       const transformedResponse = transformBusNumberResponse(response);
       console.log('BusCompanyService: Transformed response:', transformedResponse);
@@ -569,25 +569,25 @@ class BusCompanyService {
   async updateBusNumber(id: string, updates: Partial<BusNumberFormData>): Promise<BusNumber> {
     try {
       console.log('BusCompanyService: Updating bus number with data:', updates);
-      
+
       // First get the existing bus number to retrieve the busCompanyId
       const existingBusNumber = await this.getBusNumberById(id);
       console.log('BusCompanyService: Existing bus number:', existingBusNumber);
-      
+
       // Transform the data to match API expectations
       const requestData = {
         ...updates,
         busCompanyId: parseInt(existingBusNumber.busCompanyId) // Include required busCompanyId
       };
-      
+
       console.log('BusCompanyService: Transformed request data:', requestData);
       console.log('BusCompanyService: API URL:', `${this.baseUrl}/bus-numbers/${id}`);
-      
+
       const response = await this.apiCall<BusNumberResponse>(`/bus-numbers/${id}`, {
         method: 'PUT',
         body: JSON.stringify(requestData),
       });
-      
+
       console.log('BusCompanyService: Bus number updated successfully:', response);
       return transformBusNumberResponse(response);
     } catch (error) {
@@ -652,18 +652,18 @@ class BusCompanyService {
     try {
       // Use the registered-buses endpoint which directly queries the registered_buses table
       const response = await this.apiCall<RegisteredBusResponse[]>(`/registered-buses/company/${companyId}`);
-      
+
       // Transform response to RegisteredBus format
       return response.map(transformRegisteredBusResponse);
     } catch (error) {
       console.error(`BusCompanyService: Error getting registered buses for company ${companyId}:`, error);
-      
+
       // If it's a 404 or connection error, return empty array for development
       if (error instanceof Error && (error as CompanyManagementError).type === CompanyManagementErrorType.NOT_FOUND) {
         console.log('BusCompanyService: API not available, returning empty registered buses list for development');
         return [];
       }
-      
+
       throw error;
     }
   }
@@ -687,7 +687,7 @@ class BusCompanyService {
         method: 'POST',
         body: JSON.stringify(requestData),
       });
-      console.log('BusCompanyService: Registered bus created successfully:', response); 
+      console.log('BusCompanyService: Registered bus created successfully:', response);
 
       // Also create/update the consolidated Bus record so the Active Buses view sees it
       try {
@@ -863,6 +863,35 @@ class BusCompanyService {
       return response.routes || [];
     } catch (error) {
       console.error('BusCompanyService: Error getting routes by bus number and company:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a company user
+   */
+  async updateCompanyUser(companyId: string | number, userId: string | number, userData: any): Promise<any> {
+    try {
+      return await this.apiCall(`/bus-companies/${companyId}/users/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(userData)
+      });
+    } catch (error) {
+      console.error(`BusCompanyService: Error updating user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a company user
+   */
+  async deleteCompanyUser(companyId: string | number, userId: string | number): Promise<void> {
+    try {
+      await this.apiCall(`/bus-companies/${companyId}/users/${userId}`, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      console.error(`BusCompanyService: Error deleting user ${userId}:`, error);
       throw error;
     }
   }

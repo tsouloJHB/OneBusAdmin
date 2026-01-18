@@ -40,6 +40,24 @@ const authService = {
   },
 
   /**
+   * Register a new company admin (password auto-generated)
+   */
+  async registerCompanyAdmin(data: RegisterRequest): Promise<LoginResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/register-company-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error || 'Company Admin registration failed');
+    }
+
+    return response.json();
+  },
+
+  /**
    * Logout user (client-side only, backend doesn't require logout)
    */
   async logout(): Promise<void> {
@@ -66,13 +84,14 @@ const authService = {
     }
 
     const data = await response.json();
-    
+
     // Convert flat backend response to User object
     return {
       id: data.email, // Using email as ID since backend doesn't return ID
       email: data.email,
       fullName: data.fullName,
       role: data.role,
+      companyId: data.companyId,
       isActive: true,
     };
   },

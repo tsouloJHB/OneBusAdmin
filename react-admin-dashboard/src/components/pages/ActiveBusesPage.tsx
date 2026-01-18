@@ -8,7 +8,6 @@ import {
   Alert,
   CircularProgress,
   useTheme,
-  TextField,
   MenuItem,
   FormControl,
   InputLabel,
@@ -38,7 +37,7 @@ const ActiveBusesPage: React.FC = () => {
   const theme = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const { showNotification } = useNotification();
-  
+
   // State management
   const [activeBuses, setActiveBuses] = useState<ActiveBus[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -56,33 +55,33 @@ const ActiveBusesPage: React.FC = () => {
   // Parse filters from URL search params
   const filters: ActiveBusFilters = useMemo(() => {
     const params: ActiveBusFilters = {};
-    
+
     const search = searchParams.get('search');
     if (search) params.search = search;
-    
+
     const routeId = searchParams.get('routeId');
     if (routeId) params.routeId = routeId;
-    
+
     const companyId = searchParams.get('companyId');
     if (companyId) params.companyId = companyId;
-    
+
     const status = searchParams.get('status');
     if (status && ['on_route', 'at_stop', 'delayed'].includes(status)) {
       params.status = status as ActiveBus['status'];
     }
-    
+
     return params;
   }, [searchParams]);
 
   // Update URL when filters change
   const handleFiltersChange = useCallback((newFilters: ActiveBusFilters) => {
     const params = new URLSearchParams();
-    
+
     if (newFilters.search) params.set('search', newFilters.search);
     if (newFilters.routeId) params.set('routeId', newFilters.routeId);
     if (newFilters.companyId) params.set('companyId', newFilters.companyId);
     if (newFilters.status) params.set('status', newFilters.status);
-    
+
     setSearchParams(params);
   }, [setSearchParams]);
 
@@ -109,17 +108,17 @@ const ActiveBusesPage: React.FC = () => {
           return false;
         }
       }
-      
+
       // Route filter
       if (filters.routeId && bus.route.id.toString() !== filters.routeId) {
         return false;
       }
-      
+
       // Status filter
       if (filters.status && bus.status !== filters.status) {
         return false;
       }
-      
+
       return true;
     });
   }, [activeBuses, filters]);
@@ -166,7 +165,7 @@ const ActiveBusesPage: React.FC = () => {
       const apiError = err as ApiError;
       const errorMessage = apiError.message || 'Failed to fetch active buses';
       setError(errorMessage);
-      
+
       if (!showLoading) {
         showNotification(`Update failed: ${errorMessage}`, 'error');
       }
@@ -185,10 +184,10 @@ const ActiveBusesPage: React.FC = () => {
   const handleResetRedis = useCallback(async () => {
     try {
       setResettingRedis(true);
-      
+
       // Clear frontend cache for active buses
       invalidateActiveBusCache();
-      
+
       const response = await fetch(`${config.apiBaseUrl}/clear`, {
         method: 'POST',
         headers: {
@@ -222,7 +221,7 @@ const ActiveBusesPage: React.FC = () => {
   useEffect(() => {
     fetchCompanies();
     fetchActiveBuses(true);
-  }, []);
+  }, [fetchCompanies, fetchActiveBuses]);
 
   // Auto-refresh effect
   useEffect(() => {
@@ -270,7 +269,7 @@ const ActiveBusesPage: React.FC = () => {
             {refreshing ? 'Refreshing...' : 'Retry'}
           </Button>
         </Box>
-        
+
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
@@ -287,11 +286,11 @@ const ActiveBusesPage: React.FC = () => {
             Active Buses
           </Typography>
           <Box sx={{ mt: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Chip 
-              label="Real-time Monitoring" 
-              color="success" 
-              size="small" 
-              variant="outlined" 
+            <Chip
+              label="Real-time Monitoring"
+              color="success"
+              size="small"
+              variant="outlined"
             />
             {lastUpdated && (
               <Typography variant="caption" color="text.secondary">
@@ -300,7 +299,7 @@ const ActiveBusesPage: React.FC = () => {
             )}
           </Box>
         </Box>
-        
+
         <Box sx={{ display: 'flex', gap: 1 }}>
           <ToggleButtonGroup
             value={viewMode}
@@ -408,8 +407,8 @@ const ActiveBusesPage: React.FC = () => {
           lastUpdated={lastUpdated || undefined}
         />
       ) : (
-        <BusTrackingMap 
-          buses={filteredBuses} 
+        <BusTrackingMap
+          buses={filteredBuses}
           companyId={filters.companyId}
           autoCenter={true}
         />

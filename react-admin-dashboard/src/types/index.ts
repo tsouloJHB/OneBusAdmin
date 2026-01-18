@@ -17,24 +17,24 @@ export interface Route {
   updatedAt?: Date;
 }
 
-  export interface Coordinate {
-    lat: number;
-    lon: number;
-  }
+export interface Coordinate {
+  lat: number;
+  lon: number;
+}
 
-  export interface FullRoute {
-    id: number;
-    companyId: number;
-    routeId: number;
-    name: string;
-    direction?: string;
-    description?: string;
-    coordinatesJson: string; // JSON string of Coordinate[]
-    coordinates?: Coordinate[]; // Parsed coordinates
-    cumulativeDistances?: number[]; // Pre-calculated distances along the route
-    createdAt?: string;
-    updatedAt?: string;
-  }
+export interface FullRoute {
+  id: number;
+  companyId: number;
+  routeId: number;
+  name: string;
+  direction?: string;
+  description?: string;
+  coordinatesJson: string; // JSON string of Coordinate[]
+  coordinates?: Coordinate[]; // Parsed coordinates
+  cumulativeDistances?: number[]; // Pre-calculated distances along the route
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export interface Stop {
   id: string;
@@ -115,9 +115,14 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
+  surname?: string;
+  position?: string;
   role: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER';
   isActive: boolean;
   lastLogin?: Date;
+  companyId?: number;
+  createdAt?: string;
+  password?: string;
 }
 
 // API Response Types
@@ -160,19 +165,19 @@ export interface UpdateRouteRequest extends Partial<CreateRouteRequest> {
   id: number;
 }
 
-  export interface CreateFullRouteRequest {
-    companyId: number;
-    routeId: number;
-    name: string;
-    direction?: string;
-    description?: string;
-    busNumberId?: string;
-    coordinates?: Coordinate[];
-  }
+export interface CreateFullRouteRequest {
+  companyId: number;
+  routeId: number;
+  name: string;
+  direction?: string;
+  description?: string;
+  busNumberId?: string;
+  coordinates?: Coordinate[];
+}
 
-  export interface UpdateFullRouteRequest extends Partial<CreateFullRouteRequest> {
-    id?: number;
-  }
+export interface UpdateFullRouteRequest extends Partial<CreateFullRouteRequest> {
+  id?: number;
+}
 
 export interface CreateBusRequest {
   busId: string;
@@ -195,8 +200,11 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   email: string;
-  password: string;
+  password?: string; // Optional for company admin
   fullName: string;
+  surname?: string;
+  position?: string;
+  companyId?: number;
 }
 
 export interface LoginResponse {
@@ -205,6 +213,7 @@ export interface LoginResponse {
   email: string;
   fullName: string;
   role: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER';
+  companyId?: number;
 }
 
 // Filter and Search Types

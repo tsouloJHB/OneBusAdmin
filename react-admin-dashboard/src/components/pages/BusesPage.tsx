@@ -16,6 +16,7 @@ import { useParams } from 'react-router-dom';
 import { CompanyManagementProvider } from '../../contexts/CompanyManagementContext';
 import CompanyListView from '../company/CompanyListView';
 import CompanyManagementView from '../company/CompanyManagementView';
+import { useAuth } from '../../contexts/AuthContext';
 import { BusCompany } from '../../types/busCompany';
 import { busCompanyService } from '../../services/busCompanyService';
 
@@ -25,11 +26,13 @@ const BusesPageContent: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'list' | 'management'>('list');
   const { companyId } = useParams<{ companyId: string }>();
+  const { user } = useAuth();
 
-  // Fetch company data on page load if companyId is in URL
+  // Fetch company data on page load
   useEffect(() => {
     const fetchCompanyData = async () => {
-      if (companyId && !selectedCompany) {
+      // Priority 1: companyId from URL (for ADMINs)
+      if (companyId) {
         setLoading(true);
         try {
           const company = await busCompanyService.getCompanyById(companyId);
@@ -37,7 +40,21 @@ const BusesPageContent: React.FC = () => {
           setView('management');
           console.log('BusesPage: Loaded company from URL:', company.name);
         } catch (error) {
-          console.error('Failed to load company:', error);
+          console.error('Failed to load company from URL:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+      // Priority 2: user's own company (for COMPANY_ADMIN)
+      else if (user?.role === 'COMPANY_ADMIN' && user.companyId) {
+        setLoading(true);
+        try {
+          const company = await busCompanyService.getCompanyById(user.companyId.toString());
+          setSelectedCompany(company);
+          setView('management');
+          console.log('BusesPage: Loaded user company:', company.name);
+        } catch (error) {
+          console.error('Failed to load user company:', error);
         } finally {
           setLoading(false);
         }
@@ -45,7 +62,7 @@ const BusesPageContent: React.FC = () => {
     };
 
     fetchCompanyData();
-  }, [companyId]);
+  }, [companyId, user]);
 
   // Handle company selection
   const handleCompanySelect = (company: BusCompany) => {
@@ -83,7 +100,7 @@ const BusesPageContent: React.FC = () => {
         <BusinessIcon fontSize="small" />
         Companies
       </Link>
-      
+
       {selectedCompany && (
         <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <BusIcon fontSize="small" />
@@ -95,16 +112,16 @@ const BusesPageContent: React.FC = () => {
 
   // Render page header
   const renderPageHeader = () => (
-    <Box sx={{ 
-      display: 'flex', 
-      justifyContent: 'space-between', 
+    <Box sx={{
+      display: 'flex',
+      justifyContent: 'space-between',
       alignItems: 'center',
-      mb: 3 
+      mb: 3
     }}>
       <Box sx={{ px: 2, py: 1 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          {view === 'list' 
-            ? 'Buses' 
+          {view === 'list'
+            ? 'Buses'
             : `${selectedCompany?.name} - Fleet Management`
           }
         </Typography>
@@ -115,7 +132,7 @@ const BusesPageContent: React.FC = () => {
           }
         </Typography>
       </Box>
-      
+
       {view === 'management' && selectedCompany && (
         <Chip
           icon={<BusIcon />}
@@ -131,10 +148,10 @@ const BusesPageContent: React.FC = () => {
     <Box sx={{ p: { xs: 2, sm: 3 } }} role="main" aria-labelledby="buses-page-title">
       {/* Breadcrumbs */}
       {renderBreadcrumbs()}
-      
+
       {/* Page Header */}
       {renderPageHeader()}
-      
+
       {/* Loading State */}
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>

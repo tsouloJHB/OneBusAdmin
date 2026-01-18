@@ -39,8 +39,10 @@ import {
 } from '@mui/icons-material';
 import trackerService from '../../services/trackerService';
 import { Tracker, CreateTrackerRequest, TrackerStatistics } from '../../types';
+import { useAuth } from '../../contexts';
 
 const TrackersPage: React.FC = () => {
+  const { user } = useAuth();
   const [trackers, setTrackers] = useState<Tracker[]>([]);
   const [statistics, setStatistics] = useState<TrackerStatistics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,12 +72,12 @@ const TrackersPage: React.FC = () => {
     loadTrackers();
     loadStatistics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const loadTrackers = async () => {
     try {
       setLoading(true);
-      const data = await trackerService.getAllTrackers();
+      const data = await trackerService.getAllTrackers(user?.role === 'COMPANY_ADMIN' ? user.companyId : undefined);
       setTrackers(data);
     } catch (error) {
       showSnackbar('Failed to load trackers', 'error');
@@ -87,7 +89,7 @@ const TrackersPage: React.FC = () => {
 
   const loadStatistics = async () => {
     try {
-      const stats = await trackerService.getTrackerStatistics();
+      const stats = await trackerService.getTrackerStatistics(user?.role === 'COMPANY_ADMIN' ? user.companyId : undefined);
       setStatistics(stats);
     } catch (error) {
       console.error('Error loading statistics:', error);
@@ -102,7 +104,10 @@ const TrackersPage: React.FC = () => {
 
     try {
       setLoading(true);
-      const results = await trackerService.searchTrackers(searchQuery);
+      const results = await trackerService.searchTrackers(
+        searchQuery,
+        user?.role === 'COMPANY_ADMIN' ? user.companyId : undefined
+      );
       setTrackers(results);
     } catch (error) {
       showSnackbar('Search failed', 'error');

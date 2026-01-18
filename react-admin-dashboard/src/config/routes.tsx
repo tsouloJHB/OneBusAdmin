@@ -13,6 +13,7 @@ import ActiveBusesPage from '../components/pages/ActiveBusesPage';
 import TrackersPage from '../components/pages/TrackersPage';
 import DriversPage from '../components/pages/DriversPage';
 import MetricsPage from '../components/pages/MetricsPage';
+import OnboardingChecklistPage from '../components/pages/OnboardingChecklistPage';
 import NotFoundPage from '../components/pages/NotFoundPage';
 
 // Simple prefetch function for basic routes
@@ -42,14 +43,7 @@ const RouteLoader: React.FC = () => (
   </Box>
 );
 
-// Wrapper component for routes with suspense and error handling
-const LazyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <Suspense fallback={<RouteLoader />}>
-      {children}
-    </Suspense>
-  );
-};
+
 
 // Route configuration with metadata
 export interface RouteConfig {
@@ -60,6 +54,7 @@ export interface RouteConfig {
   showInNavigation: boolean;
   icon?: string;
   order?: number;
+  allowedRoles?: string[]; // Optional: restrict access to specific roles
   children?: RouteConfig[]; // Support nested routes
 }
 
@@ -91,6 +86,7 @@ export const protectedRoutes: RouteConfig[] = [
     showInNavigation: false,
     icon: 'business',
     order: 3,
+    allowedRoles: ['ADMIN', 'admin'],
   },
   {
     path: '/buses',
@@ -118,6 +114,7 @@ export const protectedRoutes: RouteConfig[] = [
         showInNavigation: true,
         icon: 'business',
         order: 1,
+        allowedRoles: ['ADMIN', 'admin'],
       },
       {
         path: '/buses',
@@ -174,6 +171,14 @@ export const protectedRoutes: RouteConfig[] = [
     order: 7,
   },
   {
+    path: '/documentation/onboarding',
+    element: <OnboardingChecklistPage />,
+    title: 'Onboarding Checklist',
+    requiresAuth: true,
+    showInNavigation: false,
+    icon: 'checklist',
+  },
+  {
     path: '/routes/:id/map',
     element: <RouteMapPage />,
     title: 'Route Map',
@@ -192,14 +197,14 @@ export const protectedRoutes: RouteConfig[] = [
 // Convert route configs to React Router route objects
 export const createRouteObjects = (routes: RouteConfig[]): RouteObject[] => {
   const result: RouteObject[] = [];
-  
+
   routes.forEach(route => {
     // Add the parent route
     result.push({
       path: route.path,
       element: route.element,
     });
-    
+
     // Add children routes if they exist
     if (route.children) {
       route.children.forEach(child => {
@@ -210,7 +215,7 @@ export const createRouteObjects = (routes: RouteConfig[]): RouteObject[] => {
       });
     }
   });
-  
+
   return result;
 };
 
@@ -226,14 +231,14 @@ export const notFoundRoute: RouteConfig = {
 // Get navigation routes (routes that should appear in sidebar)
 export const getNavigationRoutes = (): RouteConfig[] => {
   const routes: RouteConfig[] = [];
-  
+
   protectedRoutes
     .filter(route => route.showInNavigation)
     .sort((a, b) => (a.order || 0) - (b.order || 0))
     .forEach(route => {
       routes.push(route);
     });
-  
+
   return routes;
 };
 
@@ -241,14 +246,14 @@ export const getNavigationRoutes = (): RouteConfig[] => {
 export const prefetchAdjacentRoutes = (currentPath: string): void => {
   const routes = getNavigationRoutes();
   const currentIndex = routes.findIndex(route => route.path === currentPath);
-  
+
   if (currentIndex !== -1) {
     // Prefetch next route if exists
     if (currentIndex < routes.length - 1) {
       const nextRoute = routes[currentIndex + 1];
       prefetchRoute(nextRoute.path);
     }
-    
+
     // Prefetch previous route if exists
     if (currentIndex > 0) {
       const prevRoute = routes[currentIndex - 1];

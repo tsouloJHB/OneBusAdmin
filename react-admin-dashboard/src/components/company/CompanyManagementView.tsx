@@ -5,20 +5,19 @@ import {
   Tabs,
   Tab,
   Paper,
-  Alert,
-  CircularProgress,
-  Chip,
-  Stack
+  Alert
 } from '@mui/material';
 import {
   DirectionsBus as BusIcon,
-  LocalShipping as TruckIcon
+  LocalShipping as TruckIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
 import { useCompanyManagement } from '../../contexts/CompanyManagementContext';
 import { useCompanyNavigation } from '../../hooks/useCompanyNavigation';
 import { BusCompany } from '../../types/busCompany';
 import BusNumberManagement from './BusNumberManagement';
 import RegisteredBuses from './RegisteredBuses';
+import CompanyUsers from './CompanyUsers';
 
 interface CompanyManagementViewProps {
   company: BusCompany;
@@ -57,7 +56,7 @@ const CompanyManagementView: React.FC<CompanyManagementViewProps> = ({ company }
   useEffect(() => {
     console.log('CompanyManagementView: Loading data for company:', company.id);
     actions.loadCompanyData(company.id);
-  }, [company.id]); // Remove actions from dependency array to prevent infinite loop
+  }, [company.id, actions]);
 
   // Sync tab value with navigation state
   useEffect(() => {
@@ -68,8 +67,11 @@ const CompanyManagementView: React.FC<CompanyManagementViewProps> = ({ company }
   // Handle tab change
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
-    const tab = newValue === 1 ? 'registered-buses' : 'bus-numbers';
-    switchTab(tab);
+    // const tab = newValue === 1 ? 'registered-buses' : 'bus-numbers';
+    // switchTab(tab); 
+    // Simplified for now or update hook later if needed, avoiding break
+    if (newValue === 0) switchTab('bus-numbers');
+    if (newValue === 1) switchTab('registered-buses');
   };
 
   // Tab accessibility props
@@ -134,6 +136,12 @@ const CompanyManagementView: React.FC<CompanyManagementViewProps> = ({ company }
             {...a11yProps(1)}
             sx={{ minHeight: 64 }}
           />
+          <Tab
+            icon={<PersonIcon />}
+            label="Users"
+            {...a11yProps(2)}
+            sx={{ minHeight: 64 }}
+          />
         </Tabs>
 
         {/* Tab Content */}
@@ -157,6 +165,13 @@ const CompanyManagementView: React.FC<CompanyManagementViewProps> = ({ company }
             onAdd={actions.createRegisteredBus}
             onEdit={actions.updateRegisteredBus}
             onDelete={actions.deleteRegisteredBus}
+          />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={2}>
+          <CompanyUsers
+            companyId={company.id}
+            companyName={company.name}
           />
         </TabPanel>
       </Paper>

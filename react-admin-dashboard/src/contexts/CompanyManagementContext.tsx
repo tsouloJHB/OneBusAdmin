@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useMemo, ReactNode } from 'react';
 import {
   BusCompany,
   BusNumber,
@@ -100,8 +100,8 @@ const companyManagementReducer = (
         companies: state.companies.map(company =>
           company.id === action.payload.id ? action.payload.company : company
         ),
-        selectedCompany: state.selectedCompany?.id === action.payload.id 
-          ? action.payload.company 
+        selectedCompany: state.selectedCompany?.id === action.payload.id
+          ? action.payload.company
           : state.selectedCompany,
         loading: false,
         error: null
@@ -199,9 +199,9 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
   // Helper function to handle errors
   const handleError = useCallback((error: any, context: string) => {
     console.error(`CompanyManagementContext: Error in ${context}:`, error);
-    
+
     let errorMessage = 'An unexpected error occurred';
-    
+
     if (error instanceof Error) {
       const managementError = error as CompanyManagementError;
       if (managementError.type) {
@@ -210,7 +210,7 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
         errorMessage = error.message;
       }
     }
-    
+
     dispatch({ type: 'SET_ERROR', payload: errorMessage });
   }, []);
 
@@ -254,13 +254,13 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
 
   const loadCompanyData = useCallback(async (companyId: string) => {
     console.log('CompanyManagementContext: Loading company data for:', companyId);
-    
+
     // Force a synchronous state update before async operations
     dispatch({ type: 'SET_LOADING', payload: true });
-    
+
     // Use a small delay to ensure the loading state renders before fetch
     await new Promise(resolve => setTimeout(resolve, 50));
-    
+
     console.log('CompanyManagementContext: Starting fetch...');
 
     try {
@@ -272,9 +272,9 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
       console.log('CompanyManagementContext: Fetch complete, setting data...');
       dispatch({ type: 'SET_BUS_NUMBERS', payload: busNumbers });
       dispatch({ type: 'SET_REGISTERED_BUSES', payload: registeredBuses });
-      
+
       console.log(`CompanyManagementContext: Loaded ${busNumbers.length} bus numbers and ${registeredBuses.length} registered buses`);
-      
+
       dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error) {
       handleError(error, 'loadCompanyData');
@@ -288,10 +288,10 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
     dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
 
     try {
-      const companies = query.trim() 
+      const companies = query.trim()
         ? await busCompanyService.searchCompanies(query)
         : await busCompanyService.getAllCompanies();
-      
+
       dispatch({ type: 'SET_COMPANIES', payload: companies });
       console.log(`CompanyManagementContext: Found ${companies.length} companies`);
     } catch (error) {
@@ -449,23 +449,23 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
     }
   }, [handleError]);
 
-  // Create actions object
-  const actions: CompanyManagementActions = {
+  // Create actions object with useMemo to prevent recreation on every render
+  const actions: CompanyManagementActions = useMemo(() => ({
     // Navigation
     selectCompany,
     goBackToCompanyList,
     setActiveTab,
-    
+
     // Data operations
     loadCompanies,
     loadCompanyData,
     searchCompanies,
-    
+
     // CRUD operations
     createCompany,
     updateCompany,
     deleteCompany,
-    
+
     // Extended actions for bus numbers and registered buses
     createBusNumber,
     updateBusNumber,
@@ -473,7 +473,23 @@ export const CompanyManagementProvider: React.FC<CompanyManagementProviderProps>
     createRegisteredBus,
     updateRegisteredBus,
     deleteRegisteredBus
-  };
+  }), [
+    selectCompany,
+    goBackToCompanyList,
+    setActiveTab,
+    loadCompanies,
+    loadCompanyData,
+    searchCompanies,
+    createCompany,
+    updateCompany,
+    deleteCompany,
+    createBusNumber,
+    updateBusNumber,
+    deleteBusNumber,
+    createRegisteredBus,
+    updateRegisteredBus,
+    deleteRegisteredBus
+  ]);
 
   const contextValue: CompanyManagementContextType = {
     state,

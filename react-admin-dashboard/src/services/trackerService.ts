@@ -1,19 +1,20 @@
 import httpClient from './httpClient';
-import { 
-  Tracker, 
-  CreateTrackerRequest, 
+import {
+  Tracker,
+  CreateTrackerRequest,
   UpdateTrackerRequest,
   TrackerStatistics,
-  ApiResponse 
+  ApiResponse
 } from '../types';
 
 const trackerService = {
   /**
    * Get all trackers
    */
-  async getAllTrackers(): Promise<Tracker[]> {
+  async getAllTrackers(companyId?: number): Promise<Tracker[]> {
     try {
-      const response = await httpClient.get('/trackers');
+      const params = companyId ? { companyId } : {};
+      const response = await httpClient.get('/trackers', { params });
       return response.data;
     } catch (error) {
       console.error('TrackerService: Error fetching trackers:', error);
@@ -78,7 +79,7 @@ const trackerService = {
    */
   async getAvailableTrackers(companyId?: number): Promise<Tracker[]> {
     try {
-      const url = companyId 
+      const url = companyId
         ? `/trackers/available?companyId=${companyId}`
         : '/trackers/available';
       const response = await httpClient.get(url);
@@ -92,9 +93,11 @@ const trackerService = {
   /**
    * Search trackers
    */
-  async searchTrackers(query: string): Promise<Tracker[]> {
+  async searchTrackers(query: string, companyId?: number): Promise<Tracker[]> {
     try {
-      const response = await httpClient.get(`/trackers/search?q=${encodeURIComponent(query)}`);
+      const params: any = { q: query };
+      if (companyId) params.companyId = companyId;
+      const response = await httpClient.get('/trackers/search', { params });
       return response.data;
     } catch (error) {
       console.error(`TrackerService: Error searching trackers with query "${query}":`, error);
@@ -182,9 +185,10 @@ const trackerService = {
   /**
    * Get tracker statistics
    */
-  async getTrackerStatistics(): Promise<TrackerStatistics> {
+  async getTrackerStatistics(companyId?: number): Promise<TrackerStatistics> {
     try {
-      const response = await httpClient.get('/trackers/statistics');
+      const params = companyId ? { companyId } : {};
+      const response = await httpClient.get('/trackers/statistics', { params });
       return response.data;
     } catch (error) {
       console.error('TrackerService: Error fetching tracker statistics:', error);
