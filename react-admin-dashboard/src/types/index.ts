@@ -117,7 +117,7 @@ export interface User {
   fullName: string;
   surname?: string;
   position?: string;
-  role: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER';
+  role: 'ADMIN' | 'FLEET_MANAGER' | 'CUSTOMER';
   isActive: boolean;
   lastLogin?: Date;
   companyId?: number;
@@ -212,7 +212,7 @@ export interface LoginResponse {
   expiresAt: string; // ISO timestamp
   email: string;
   fullName: string;
-  role: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER';
+  role: 'ADMIN' | 'FLEET_MANAGER' | 'CUSTOMER';
   companyId?: number;
 }
 

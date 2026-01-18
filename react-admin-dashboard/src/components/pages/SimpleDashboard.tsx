@@ -32,7 +32,7 @@ const SimpleDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const companyId = user?.role === 'COMPANY_ADMIN' ? user.companyId : undefined;
+      const companyId = user?.role === 'FLEET_MANAGER' ? user.companyId : undefined;
       const data = await dashboardService.getDashboardStats(companyId);
       setStats(data);
     } catch (err) {

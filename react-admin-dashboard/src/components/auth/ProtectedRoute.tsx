@@ -5,7 +5,7 @@ import { Box, CircularProgress } from '@mui/material';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRoles?: Array<'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER'>;
+  requiredRoles?: Array<'ADMIN' | 'FLEET_MANAGER' | 'CUSTOMER'>;
 }
 
 /**
@@ -51,7 +51,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       // Redirect to appropriate dashboard based on role
       const roleRedirects: Record<string, string> = {
         ADMIN: '/dashboard',
-        COMPANY_ADMIN: '/company',
+        FLEET_MANAGER: '/company',
         CUSTOMER: '/customer',
       };
       const redirectPath = roleRedirects[user.role] || '/dashboard';
@@ -66,7 +66,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 /**
  * Hook to programmatically check if user has required roles
  */
-export const useAuthorization = (requiredRoles: Array<'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER'>) => {
+export const useAuthorization = (requiredRoles: Array<'ADMIN' | 'FLEET_MANAGER' | 'CUSTOMER'>) => {
   const { user } = useAuth();
   return user ? requiredRoles.includes(user.role) : false;
 };
@@ -76,7 +76,7 @@ export const useAuthorization = (requiredRoles: Array<'ADMIN' | 'COMPANY_ADMIN' 
  */
 interface RoleBasedViewProps {
   children: React.ReactNode;
-  allowedRoles: Array<'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER'>;
+  allowedRoles: Array<'ADMIN' | 'FLEET_MANAGER' | 'CUSTOMER'>;
   fallback?: React.ReactNode;
 }
 

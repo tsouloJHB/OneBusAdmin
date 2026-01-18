@@ -190,7 +190,7 @@ const CompanyUsers: React.FC<CompanyUsersProps> = ({ companyId, companyName }) =
                                         <Chip
                                             label={user.role.replace('_', ' ')}
                                             size="small"
-                                            color={user.role === 'COMPANY_ADMIN' ? 'primary' : 'default'}
+                                            color={user.role === 'FLEET_MANAGER' ? 'primary' : 'default'}
                                         />
                                     </TableCell>
                                     <TableCell>

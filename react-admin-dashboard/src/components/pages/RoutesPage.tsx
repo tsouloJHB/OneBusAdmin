@@ -104,8 +104,8 @@ const RoutesPage: React.FC = () => {
       const companiesData = await busCompanyService.getAllCompanies();
       setCompanies(companiesData);
 
-      // Pre-select company for COMPANY_ADMIN
-      if (user?.role === 'COMPANY_ADMIN' && user.companyId) {
+      // Pre-select company for FLEET_MANAGER
+      if (user?.role === 'FLEET_MANAGER' && user.companyId) {
         const userCompany = companiesData.find(c => c.id === user.companyId?.toString());
         if (userCompany) {
           setSelectedCompany(userCompany);
@@ -492,39 +492,54 @@ const RoutesPage: React.FC = () => {
         </Button>
       </Box>
 
-      {/* Company Selection */}
+      {/* Company Selection - Only show for ADMIN users */}
       <Box sx={{ mb: 3 }}>
-        <FormControl sx={{ minWidth: { xs: '100%', sm: 300 } }}>
-          <InputLabel>Select Company</InputLabel>
-          <Select
-            value={selectedCompany?.id || ''}
-            label="Select Company"
-            onChange={(e) => handleCompanyChange(e.target.value)}
-            disabled={companiesLoading}
-            startAdornment={
-              <InputAdornment position="start">
-                <BusinessIcon />
-              </InputAdornment>
-            }
-          >
-            <MenuItem value="">
-              <em>Choose a company...</em>
-            </MenuItem>
-            {companies.map((company) => (
-              <MenuItem key={company.id} value={company.id}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography>{company.name}</Typography>
-                  <Chip
-                    label={company.status}
-                    size="small"
-                    color={company.status === 'active' ? 'success' : 'default'}
-                    sx={{ ml: 1 }}
-                  />
-                </Box>
+        {user?.role === 'ADMIN' && (
+          <FormControl sx={{ minWidth: { xs: '100%', sm: 300 } }}>
+            <InputLabel>Select Company</InputLabel>
+            <Select
+              value={selectedCompany?.id || ''}
+              label="Select Company"
+              onChange={(e) => handleCompanyChange(e.target.value)}
+              disabled={companiesLoading}
+              startAdornment={
+                <InputAdornment position="start">
+                  <BusinessIcon />
+                </InputAdornment>
+              }
+            >
+              <MenuItem value="">
+                <em>Choose a company...</em>
               </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+              {companies.map((company) => (
+                <MenuItem key={company.id} value={company.id}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography>{company.name}</Typography>
+                    <Chip
+                      label={company.status}
+                      size="small"
+                      color={company.status === 'active' ? 'success' : 'default'}
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+
+        {/* Display company name for FLEET_MANAGER */}
+        {user?.role === 'FLEET_MANAGER' && selectedCompany && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+            <BusinessIcon color="primary" />
+            <Typography variant="h6">{selectedCompany.name}</Typography>
+            <Chip
+              label={selectedCompany.status}
+              size="small"
+              color={selectedCompany.status === 'active' ? 'success' : 'default'}
+            />
+          </Box>
+        )}
 
         {companiesLoading && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
@@ -544,7 +559,7 @@ const RoutesPage: React.FC = () => {
           </Alert>
         )}
 
-        {!selectedCompany && !companiesLoading && !companiesError && (
+        {user?.role === 'ADMIN' && !selectedCompany && !companiesLoading && !companiesError && (
           <Alert severity="info" sx={{ mt: 1 }}>
             Please select a company to view and manage their routes.
           </Alert>

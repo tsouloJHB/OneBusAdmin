@@ -77,7 +77,7 @@ const TrackersPage: React.FC = () => {
   const loadTrackers = async () => {
     try {
       setLoading(true);
-      const data = await trackerService.getAllTrackers(user?.role === 'COMPANY_ADMIN' ? user.companyId : undefined);
+      const data = await trackerService.getAllTrackers(user?.role === 'FLEET_MANAGER' ? user.companyId : undefined);
       setTrackers(data);
     } catch (error) {
       showSnackbar('Failed to load trackers', 'error');
@@ -89,7 +89,7 @@ const TrackersPage: React.FC = () => {
 
   const loadStatistics = async () => {
     try {
-      const stats = await trackerService.getTrackerStatistics(user?.role === 'COMPANY_ADMIN' ? user.companyId : undefined);
+      const stats = await trackerService.getTrackerStatistics(user?.role === 'FLEET_MANAGER' ? user.companyId : undefined);
       setStatistics(stats);
     } catch (error) {
       console.error('Error loading statistics:', error);
@@ -106,7 +106,7 @@ const TrackersPage: React.FC = () => {
       setLoading(true);
       const results = await trackerService.searchTrackers(
         searchQuery,
-        user?.role === 'COMPANY_ADMIN' ? user.companyId : undefined
+        user?.role === 'FLEET_MANAGER' ? user.companyId : undefined
       );
       setTrackers(results);
     } catch (error) {

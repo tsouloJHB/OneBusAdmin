@@ -5,15 +5,15 @@ import { useAuthState } from '../../hooks/useAuthState';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER' | 'admin' | 'operator';
-  requiredRoles?: ('ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER' | 'admin' | 'operator')[];
+  requiredRole?: 'ADMIN' | 'FLEET_MANAGER' | 'CUSTOMER' | 'admin' | 'operator';
+  requiredRoles?: ('ADMIN' | 'FLEET_MANAGER' | 'CUSTOMER' | 'admin' | 'operator')[];
   fallbackPath?: string;
 }
 
 /**
  * Protected Route Component
  * Checks authentication and optionally enforces role-based access control
- * Supports both new JWT roles (ADMIN, COMPANY_ADMIN, CUSTOMER) and legacy roles (admin, operator)
+ * Supports both new JWT roles (ADMIN, FLEET_MANAGER, CUSTOMER) and legacy roles (admin, operator)
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
@@ -125,8 +125,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 // Higher-order component for protecting routes with specific roles
 export const withRoleProtection = (
   Component: React.ComponentType<any>,
-  requiredRole?: 'ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER' | 'admin' | 'operator',
-  requiredRoles?: ('ADMIN' | 'COMPANY_ADMIN' | 'CUSTOMER' | 'admin' | 'operator')[]
+  requiredRole?: 'ADMIN' | 'FLEET_MANAGER' | 'CUSTOMER' | 'admin' | 'operator',
+  requiredRoles?: ('ADMIN' | 'FLEET_MANAGER' | 'CUSTOMER' | 'admin' | 'operator')[]
 ) => {
   return (props: any) => (
     <ProtectedRoute requiredRole={requiredRole} requiredRoles={requiredRoles}>
@@ -143,13 +143,13 @@ export const AdminProtectedRoute: React.FC<{ children: ReactNode }> = ({ childre
 );
 
 export const CompanyAdminProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <ProtectedRoute requiredRole="COMPANY_ADMIN">
+  <ProtectedRoute requiredRole="FLEET_MANAGER">
     {children}
   </ProtectedRoute>
 );
 
 export const OperatorProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <ProtectedRoute requiredRoles={['ADMIN', 'COMPANY_ADMIN', 'admin', 'operator']}>
+  <ProtectedRoute requiredRoles={['ADMIN', 'FLEET_MANAGER', 'admin', 'operator']}>
     {children}
   </ProtectedRoute>
 );

@@ -105,6 +105,7 @@ export const protectedRoutes: RouteConfig[] = [
     showInNavigation: true,
     icon: 'business',
     order: 3,
+    allowedRoles: ['ADMIN', 'admin'],
     children: [
       {
         path: '/companies',
@@ -151,6 +152,7 @@ export const protectedRoutes: RouteConfig[] = [
     showInNavigation: true,
     icon: 'sensors',
     order: 5,
+    allowedRoles: ['ADMIN', 'admin'],
   },
   {
     path: '/drivers',
@@ -169,6 +171,7 @@ export const protectedRoutes: RouteConfig[] = [
     showInNavigation: true,
     icon: 'analytics',
     order: 7,
+    allowedRoles: ['ADMIN', 'admin'],
   },
   {
     path: '/documentation/onboarding',

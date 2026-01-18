@@ -45,8 +45,8 @@ const BusesPageContent: React.FC = () => {
           setLoading(false);
         }
       }
-      // Priority 2: user's own company (for COMPANY_ADMIN)
-      else if (user?.role === 'COMPANY_ADMIN' && user.companyId) {
+      // Priority 2: user's own company (for FLEET_MANAGER)
+      else if (user?.role === 'FLEET_MANAGER' && user.companyId) {
         setLoading(true);
         try {
           const company = await busCompanyService.getCompanyById(user.companyId.toString());
@@ -81,25 +81,28 @@ const BusesPageContent: React.FC = () => {
   // Render breadcrumbs
   const renderBreadcrumbs = () => (
     <Breadcrumbs sx={{ mb: 2 }}>
-      <Link
-        component="button"
-        variant="body1"
-        onClick={handleBackToCompanyList}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.5,
-          textDecoration: 'none',
-          color: view === 'list' ? 'text.primary' : 'primary.main',
-          cursor: view === 'list' ? 'default' : 'pointer',
-          '&:hover': {
-            textDecoration: view === 'list' ? 'none' : 'underline'
-          }
-        }}
-      >
-        <BusinessIcon fontSize="small" />
-        Companies
-      </Link>
+      {/* Only show Companies link for ADMIN users */}
+      {user?.role === 'ADMIN' && (
+        <Link
+          component="button"
+          variant="body1"
+          onClick={handleBackToCompanyList}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            textDecoration: 'none',
+            color: view === 'list' ? 'text.primary' : 'primary.main',
+            cursor: view === 'list' ? 'default' : 'pointer',
+            '&:hover': {
+              textDecoration: view === 'list' ? 'none' : 'underline'
+            }
+          }}
+        >
+          <BusinessIcon fontSize="small" />
+          Companies
+        </Link>
+      )}
 
       {selectedCompany && (
         <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>

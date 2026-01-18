@@ -4,7 +4,7 @@ import { useAuthToken } from './useAuthToken';
 
 /**
  * Custom hook for managing authentication state and side effects
- * Supports both JWT roles (ADMIN, COMPANY_ADMIN, CUSTOMER) and legacy roles (admin, operator)
+ * Supports both JWT roles (ADMIN, FLEET_MANAGER, CUSTOMER) and legacy roles (admin, operator)
  */
 export const useAuthState = () => {
   const auth = useAuth();
@@ -50,14 +50,19 @@ export const useAuthState = () => {
   // Get user permissions/roles - JWT roles
   const userPermissions = {
     isAdmin: auth.user?.role === 'ADMIN',
-    isCompanyAdmin: auth.user?.role === 'COMPANY_ADMIN',
+    isFleetManager: auth.user?.role === 'FLEET_MANAGER',
+    isCompanyAdmin: auth.user?.role === 'FLEET_MANAGER', // Backward compatibility
     isOperator: false,
     isCustomer: auth.user?.role === 'CUSTOMER',
-    canManageRoutes: auth.user?.role === 'ADMIN' || auth.user?.role === 'COMPANY_ADMIN',
-    canManageBuses: auth.user?.role === 'ADMIN' || auth.user?.role === 'COMPANY_ADMIN',
+    canManageRoutes: auth.user?.role === 'ADMIN' || auth.user?.role === 'FLEET_MANAGER',
+    canManageBuses: auth.user?.role === 'ADMIN' || auth.user?.role === 'FLEET_MANAGER',
     canViewActiveBuses: auth.user?.role !== 'CUSTOMER',
     canManageUsers: auth.user?.role === 'ADMIN',
     canManageCompanyAdmins: auth.user?.role === 'ADMIN',
+    canManageCompanies: auth.user?.role === 'ADMIN',
+    canManageTrackers: auth.user?.role === 'ADMIN',
+    canViewMetrics: auth.user?.role === 'ADMIN',
+    canViewDocumentation: auth.user?.role === 'ADMIN',
   };
 
   return {

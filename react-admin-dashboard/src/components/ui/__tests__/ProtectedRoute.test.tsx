@@ -129,7 +129,7 @@ describe('ProtectedRoute', () => {
 
     render(
       <MemoryRouter>
-        <ProtectedRoute requiredRoles={['ADMIN', 'COMPANY_ADMIN']}>
+        <ProtectedRoute requiredRoles={['ADMIN', 'FLEET_MANAGER']}>
           <div>Staff Content</div>
         </ProtectedRoute>
       </MemoryRouter>
@@ -221,17 +221,17 @@ describe('ProtectedRoute', () => {
       mockUseAuthState.mockReturnValue({
         isFullyAuthenticated: true,
         isAuthenticating: false,
-        user: { role: 'COMPANY_ADMIN' },
+        user: { role: 'FLEET_MANAGER' },
         userPermissions: { isAdmin: false, isOperator: true },
       });
       mockUseAuthToken.mockReturnValue({
-        hasRole: (role: string) => role === 'COMPANY_ADMIN',
-        hasAnyRole: (roles: string[]) => roles.includes('COMPANY_ADMIN'),
+        hasRole: (role: string) => role === 'FLEET_MANAGER',
+        hasAnyRole: (roles: string[]) => roles.includes('FLEET_MANAGER'),
       });
 
       render(
         <MemoryRouter>
-          <ProtectedRoute requiredRoles={['COMPANY_ADMIN']}>
+          <ProtectedRoute requiredRoles={['FLEET_MANAGER']}>
             <div>Operator Content</div>
           </ProtectedRoute>
         </MemoryRouter>
@@ -254,7 +254,7 @@ describe('ProtectedRoute', () => {
 
       render(
         <MemoryRouter>
-          <ProtectedRoute requiredRoles={['COMPANY_ADMIN', 'ADMIN']}>
+          <ProtectedRoute requiredRoles={['FLEET_MANAGER', 'ADMIN']}>
             <div>Operator Content</div>
           </ProtectedRoute>
         </MemoryRouter>
@@ -277,7 +277,7 @@ describe('ProtectedRoute', () => {
 
       render(
         <MemoryRouter>
-          <ProtectedRoute requiredRoles={['COMPANY_ADMIN']}>
+          <ProtectedRoute requiredRoles={['FLEET_MANAGER']}>
             <div>Operator Content</div>
           </ProtectedRoute>
         </MemoryRouter>
