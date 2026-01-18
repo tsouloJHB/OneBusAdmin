@@ -27,7 +27,7 @@ import routeService from '../../services/routeService';
 import { busCompanyService } from '../../services/busCompanyService';
 import { ActiveBus, ActiveBusFilters, Route, ApiError } from '../../types';
 import { BusCompany } from '../../types/busCompany';
-import { useNotification } from '../../contexts';
+import { useNotification, useAuth } from '../../contexts';
 import { invalidateActiveBusCache } from '../../services/httpClient';
 import { config } from '../../config';
 
@@ -37,6 +37,7 @@ const ActiveBusesPage: React.FC = () => {
   const theme = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
 
   // State management
   const [activeBuses, setActiveBuses] = useState<ActiveBus[]>([]);
@@ -129,13 +130,22 @@ const ActiveBusesPage: React.FC = () => {
       setCompaniesLoading(true);
       const companiesData = await busCompanyService.getAllCompanies();
       setCompanies(companiesData);
+
+      // Auto-select company for FLEET_MANAGER
+      if (user?.role === 'FLEET_MANAGER' && user.companyId) {
+        const userCompanyId = user.companyId.toString();
+        // Update filters to include the company
+        if (!filters.companyId) {
+          handleCompanyChange(userCompanyId);
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch companies:', err);
       // Continue without companies data, not a critical failure
     } finally {
       setCompaniesLoading(false);
     }
-  }, []);
+  }, [user, filters.companyId, handleCompanyChange]);
 
   // Fetch active buses data
   const fetchActiveBuses = useCallback(async (showLoading = false) => {
@@ -352,30 +362,31 @@ const ActiveBusesPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Company Selector */}
-      <Paper sx={{ p: 2, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5' }}>
-        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-          Filter by Bus Company
-        </Typography>
-        <FormControl sx={{ minWidth: 300 }} disabled={companiesLoading}>
-          <InputLabel id="company-select-label">Select Company</InputLabel>
-          <Select
-            labelId="company-select-label"
-            id="company-select"
-            value={filters.companyId || ''}
-            label="Select Company"
-            onChange={(e) => handleCompanyChange(e.target.value)}
-          >
-            <MenuItem value="">
-              <em>All Companies</em>
-            </MenuItem>
-            {companies.map((company) => (
-              <MenuItem key={company.id} value={company.id}>
-                {company.name} ({company.status})
+      {/* Company Selector - Only show for ADMIN users */}
+      {user?.role === 'ADMIN' && (
+        <Paper sx={{ p: 2, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5' }}>
+          <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+            Filter by Bus Company
+          </Typography>
+          <FormControl sx={{ minWidth: 300 }} disabled={companiesLoading}>
+            <InputLabel id="company-select-label">Select Company</InputLabel>
+            <Select
+              labelId="company-select-label"
+              id="company-select"
+              value={filters.companyId || ''}
+              label="Select Company"
+              onChange={(e) => handleCompanyChange(e.target.value)}
+            >
+              <MenuItem value="">
+                <em>All Companies</em>
               </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+              {companies.map((company) => (
+                <MenuItem key={company.id} value={company.id}>
+                  {company.name} ({company.status})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         {companiesLoading && (
           <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
             Loading companies...
@@ -387,6 +398,23 @@ const ActiveBusesPage: React.FC = () => {
           </Typography>
         )}
       </Paper>
+      )}
+
+      {/* Company Badge for Fleet Manager */}
+      {user?.role === 'FLEET_MANAGER' && filters.companyId && (
+        <Paper sx={{ p: 2, mb: 3, backgroundColor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f5f5f5' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Company:
+            </Typography>
+            <Chip 
+              label={companies.find(c => c.id.toString() === filters.companyId)?.name || `ID: ${filters.companyId}`}
+              color="primary"
+              size="small"
+            />
+          </Box>
+        </Paper>
+      )}
 
       {/* Filter Panel */}
       <FilterPanel

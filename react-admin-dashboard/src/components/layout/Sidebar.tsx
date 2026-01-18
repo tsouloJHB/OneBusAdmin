@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -33,6 +33,8 @@ import {
 import { designTokens } from '../../theme';
 import { OneBusLogo } from '../ui';
 import { useAuthState } from '../../hooks/useAuthState';
+import { busCompanyService } from '../../services/busCompanyService';
+import { BusCompany } from '../../types/busCompany';
 
 interface NavigationItem {
   id: string;
@@ -152,6 +154,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const { user } = useAuthState();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [company, setCompany] = useState<BusCompany | null>(null);
+
+  // Fetch company data for fleet managers
+  useEffect(() => {
+    const fetchCompany = async () => {
+      if (user?.role === 'FLEET_MANAGER' && user.companyId) {
+        try {
+          const companyData = await busCompanyService.getCompanyById(user.companyId.toString());
+          setCompany(companyData);
+        } catch (error) {
+          console.error('Failed to fetch company:', error);
+        }
+      }
+    };
+
+    fetchCompany();
+  }, [user]);
 
   const hasPermission = (item: NavigationItem): boolean => {
     if (!item.allowedRoles) return true;
@@ -327,7 +346,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         background: alpha(theme.palette.primary.main, 0.02),
       }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <OneBusLogo size={40} />
+          {user?.role === 'FLEET_MANAGER' && company?.imageUrl ? (
+            <img 
+              src={company.imageUrl} 
+              alt={company.name || 'Company Logo'} 
+              style={{ 
+                width: 40, 
+                height: 40, 
+                objectFit: 'contain',
+                borderRadius: '4px'
+              }} 
+            />
+          ) : (
+            <OneBusLogo size={40} />
+          )}
         </Box>
         <Typography
           variant="body2"

@@ -19,6 +19,8 @@ import { designTokens } from '../../theme';
 import dashboardService from '../../services/dashboardService';
 import { DashboardStats } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { busCompanyService } from '../../services/busCompanyService';
+import { BusCompany } from '../../types/busCompany';
 
 const SimpleDashboard: React.FC = () => {
   const theme = useTheme();
@@ -26,6 +28,7 @@ const SimpleDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [company, setCompany] = useState<BusCompany | null>(null);
 
   const loadDashboardStats = async () => {
     try {
@@ -47,6 +50,22 @@ const SimpleDashboard: React.FC = () => {
     loadDashboardStats();
   }, []);
 
+  // Fetch company data for fleet managers
+  useEffect(() => {
+    const fetchCompany = async () => {
+      if (user?.role === 'FLEET_MANAGER' && user.companyId) {
+        try {
+          const companyData = await busCompanyService.getCompanyById(user.companyId.toString());
+          setCompany(companyData);
+        } catch (error) {
+          console.error('Failed to fetch company:', error);
+        }
+      }
+    };
+
+    fetchCompany();
+  }, [user]);
+
   const handleRefresh = () => {
     loadDashboardStats();
   };
@@ -60,9 +79,22 @@ const SimpleDashboard: React.FC = () => {
       {/* Header */}
       <Box sx={{ mb: { xs: 3, sm: 4 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 2, sm: 3 } }}>
-          <OneBusLogo
-            size={{ xs: 48, sm: 64 }} // Responsive logo size
-          />
+          {user?.role === 'FLEET_MANAGER' && company?.imageUrl ? (
+            <img 
+              src={company.imageUrl} 
+              alt={company.name || 'Company Logo'} 
+              style={{ 
+                width: 64, 
+                height: 64, 
+                objectFit: 'contain',
+                borderRadius: '8px'
+              }} 
+            />
+          ) : (
+            <OneBusLogo
+              size={{ xs: 48, sm: 64 }} // Responsive logo size
+            />
+          )}
         </Box>
         <Box sx={{ textAlign: 'center' }}>
           <Typography
