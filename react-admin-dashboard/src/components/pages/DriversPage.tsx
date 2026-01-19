@@ -33,11 +33,13 @@ import {
   PersonAdd as PersonAddIcon,
   Visibility as VisibilityIcon,
   Business as BusinessIcon,
+  DirectionsBus as DirectionsBusIcon,
+  RemoveCircle as RemoveCircleIcon,
 } from '@mui/icons-material';
 import { driverService } from '../../services/driverService';
 import { busCompanyService } from '../../services/busCompanyService';
 import { Driver, DriverRegistrationRequest, DriverStatistics } from '../../types/driver';
-import { BusCompany } from '../../types/busCompany';
+import { BusCompany, RegisteredBus } from '../../types/busCompany';
 import { useNotification, useAuth } from '../../contexts';
 import DriverDetailsDialog from '../driver/DriverDetailsDialog';
 
@@ -64,6 +66,12 @@ const DriversPage: React.FC = () => {
   const [statistics, setStatistics] = useState<DriverStatistics | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
+  
+  // Bus assignment state
+  const [openBusAssignDialog, setOpenBusAssignDialog] = useState(false);
+  const [assigningDriver, setAssigningDriver] = useState<Driver | null>(null);
+  const [availableBuses, setAvailableBuses] = useState<RegisteredBus[]>([]);
+  const [selectedBusForAssignment, setSelectedBusForAssignment] = useState<string>('');
 
   const [formData, setFormData] = useState<DriverRegistrationRequest>({
     driverId: '',
@@ -282,6 +290,76 @@ const DriversPage: React.FC = () => {
       const errorMessage = 'Failed to update driver status.';
       setError(errorMessage);
       showNotification(errorMessage, 'error');
+    }
+  };
+
+  const handleOpenBusAssignDialog = async (driver: Driver) => {
+    if (!selectedCompany) {
+      showNotification('Please select a company first', 'warning');
+      return;
+    }
+    
+    setAssigningDriver(driver);
+    setSelectedBusForAssignment('');
+    
+    try {
+      // Load available buses for the company
+      const buses = await busCompanyService.getRegisteredBusesByCompany(selectedCompany.id);
+      setAvailableBuses(buses);
+      setOpenBusAssignDialog(true);
+    } catch (err) {
+      showNotification('Failed to load available buses', 'error');
+    }
+  };
+
+  const handleCloseBusAssignDialog = () => {
+    setOpenBusAssignDialog(false);
+    setAssigningDriver(null);
+    setSelectedBusForAssignment('');
+  };
+
+  const handleAssignDriverToBus = async () => {
+    if (!assigningDriver || !selectedBusForAssignment) {
+      showNotification('Please select a bus', 'warning');
+      return;
+    }
+
+    try {
+      await driverService.assignDriverToBus(assigningDriver.id, selectedBusForAssignment);
+      showNotification(
+        `Driver ${assigningDriver.fullName} assigned to bus ${selectedBusForAssignment} successfully`,
+        'success'
+      );
+      loadDrivers();
+      handleCloseBusAssignDialog();
+    } catch (err) {
+      const errorMessage = 'Failed to assign driver to bus.';
+      setError(errorMessage);
+      showNotification(errorMessage, 'error');
+    }
+  };
+
+  const handleRemoveDriverFromBus = async (driver: Driver) => {
+    if (!driver.currentlyAssignedBusNumber) {
+      showNotification('Driver is not assigned to any bus', 'warning');
+      return;
+    }
+
+    if (window.confirm(
+      `Are you sure you want to remove ${driver.fullName} from bus ${driver.currentlyAssignedBusNumber}? The driver will be set to INACTIVE.`
+    )) {
+      try {
+        await driverService.removeDriverFromBus(driver.id);
+        showNotification(
+          `Driver ${driver.fullName} removed from bus successfully and set to INACTIVE`,
+          'success'
+        );
+        loadDrivers();
+      } catch (err) {
+        const errorMessage = 'Failed to remove driver from bus.';
+        setError(errorMessage);
+        showNotification(errorMessage, 'error');
+      }
     }
   };
 
@@ -559,7 +637,7 @@ const DriversPage: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell align="right">
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                         <IconButton
                           size="small"
                           onClick={() => handleOpenDetailsDialog(driver)}
@@ -575,6 +653,25 @@ const DriversPage: React.FC = () => {
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
+                        {driver.currentlyAssignedBusNumber ? (
+                          <IconButton
+                            size="small"
+                            color="warning"
+                            onClick={() => handleRemoveDriverFromBus(driver)}
+                            title="Remove from Bus"
+                          >
+                            <RemoveCircleIcon fontSize="small" />
+                          </IconButton>
+                        ) : (
+                          <IconButton
+                            size="small"
+                            color="success"
+                            onClick={() => handleOpenBusAssignDialog(driver)}
+                            title="Assign to Bus"
+                          >
+                            <DirectionsBusIcon fontSize="small" />
+                          </IconButton>
+                        )}
                         <IconButton
                           size="small"
                           color="error"
@@ -704,6 +801,79 @@ const DriversPage: React.FC = () => {
         driver={selectedDriver}
         onClose={handleCloseDetailsDialog}
       />
+
+      {/* Bus Assignment Dialog */}
+      <Dialog open={openBusAssignDialog} onClose={handleCloseBusAssignDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Assign Driver to Bus
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          {assigningDriver && (
+            <>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Assigning driver: <strong>{assigningDriver.fullName}</strong> ({assigningDriver.driverId})
+                <br />
+                Current status: <strong>{assigningDriver.status}</strong>
+                {assigningDriver.currentlyAssignedBusNumber && (
+                  <>
+                    <br />
+                    Current bus: <strong>{assigningDriver.currentlyAssignedBusNumber}</strong>
+                  </>
+                )}
+              </Alert>
+
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Select Bus</InputLabel>
+                <Select
+                  value={selectedBusForAssignment}
+                  onChange={(e) => setSelectedBusForAssignment(e.target.value)}
+                  label="Select Bus"
+                >
+                  {availableBuses.length === 0 ? (
+                    <MenuItem disabled>No buses available</MenuItem>
+                  ) : (
+                    availableBuses.map((bus) => (
+                      <MenuItem key={bus.id} value={bus.registrationNumber}>
+                        {bus.registrationNumber} - {bus.model} (Status: {bus.status})
+                        {bus.driverName && ` - Current driver: ${bus.driverName}`}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+              </FormControl>
+
+              {selectedBusForAssignment && (
+                <Alert severity="warning" sx={{ mt: 2 }}>
+                  {(() => {
+                    const selectedBus = availableBuses.find(b => b.registrationNumber === selectedBusForAssignment);
+                    if (selectedBus?.driverName) {
+                      return (
+                        <>
+                          This bus currently has driver <strong>{selectedBus.driverName}</strong> assigned.
+                          <br />
+                          The existing driver will be removed and set to <strong>INACTIVE</strong>.
+                        </>
+                      );
+                    }
+                    return `Driver status will be synchronized with bus status (${selectedBus?.status}).`;
+                  })()}
+                </Alert>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseBusAssignDialog}>Cancel</Button>
+          <Button 
+            onClick={handleAssignDriverToBus} 
+            variant="contained" 
+            color="primary"
+            disabled={!selectedBusForAssignment}
+          >
+            Assign to Bus
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

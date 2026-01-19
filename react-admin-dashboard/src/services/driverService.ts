@@ -129,4 +129,30 @@ export const driverService = {
       throw error;
     }
   },
+
+  // Assign driver to bus
+  assignDriverToBus: async (driverId: number, busRegistrationNumber: string): Promise<Driver> => {
+    try {
+      const response = await httpClient.post<{driver: Driver}>(`${API_BASE_URL}/${driverId}/assign-to-bus`, null, {
+        params: { busRegistrationNumber },
+      });
+      return response.data.driver;
+    } catch (error: any) {
+      console.error(`Error assigning driver ${driverId} to bus:`, error);
+      const message = error?.response?.data?.error || 'Error assigning driver to bus';
+      throw new Error(message);
+    }
+  },
+
+  // Remove driver from bus
+  removeDriverFromBus: async (driverId: number): Promise<Driver> => {
+    try {
+      const response = await httpClient.post<{driver: Driver}>(`${API_BASE_URL}/${driverId}/remove-from-bus`);
+      return response.data.driver;
+    } catch (error: any) {
+      console.error(`Error removing driver ${driverId} from bus:`, error);
+      const message = error?.response?.data?.error || 'Error removing driver from bus';
+      throw new Error(message);
+    }
+  },
 };

@@ -17,7 +17,9 @@ import {
 } from '@mui/material';
 import { RegisteredBusFormData, RegisteredBus } from '../../types/busCompany';
 import { Tracker } from '../../types';
+import { Driver } from '../../types/driver';
 import { busCompanyService } from '../../services/busCompanyService';
+import { driverService } from '../../services/driverService';
 import { registeredBusToFormData } from '../../utils/busCompanyUtils';
 import { ImeiSelector } from '../ui';
 
@@ -68,6 +70,8 @@ const RegisteredBusForm: React.FC<RegisteredBusFormProps> = ({
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [selectedTracker, setSelectedTracker] = useState<Tracker | null>(null);
   const [autoSetInactive, setAutoSetInactive] = useState(false);
+  const [companyDrivers, setCompanyDrivers] = useState<Driver[]>([]);
+  const [loadingDrivers, setLoadingDrivers] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -100,6 +104,28 @@ const RegisteredBusForm: React.FC<RegisteredBusFormProps> = ({
       setAutoSetInactive(false);
     }
   }, [initialData]);
+
+  // Fetch drivers for the company
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      if (!companyId) return;
+      
+      setLoadingDrivers(true);
+      try {
+        const drivers = await driverService.getDriversByCompany(Number(companyId));
+        setCompanyDrivers(drivers);
+      } catch (error) {
+        console.error('Failed to fetch drivers for company:', error);
+        setCompanyDrivers([]);
+      } finally {
+        setLoadingDrivers(false);
+      }
+    };
+
+    if (open) {
+      fetchDrivers();
+    }
+  }, [companyId, open]);
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => {
@@ -236,19 +262,33 @@ const RegisteredBusForm: React.FC<RegisteredBusFormProps> = ({
               </Box>
             )}
 
-            <TextField
-              label="Driver ID (optional)"
-              value={(formData as any).driverId || ''}
-              onChange={(e) => handleChange('driverId', e.target.value)}
-              fullWidth
-            />
-
-            <TextField
-              label="Driver Name (optional)"
-              value={(formData as any).driverName || ''}
-              onChange={(e) => handleChange('driverName', e.target.value)}
-              fullWidth
-            />
+            <FormControl fullWidth>
+              <InputLabel>Driver (optional)</InputLabel>
+              <Select
+                label="Driver (optional)"
+                value={formData.driverId || ''}
+                onChange={(e) => {
+                  const selectedDriver = companyDrivers.find(d => d.driverId === e.target.value);
+                  if (selectedDriver) {
+                    handleChange('driverId', selectedDriver.driverId);
+                    handleChange('driverName', selectedDriver.fullName);
+                  } else {
+                    handleChange('driverId', undefined);
+                    handleChange('driverName', undefined);
+                  }
+                }}
+                disabled={loadingDrivers}
+              >
+                <MenuItem value="">
+                  {loadingDrivers ? 'Loading drivers...' : 'None'}
+                </MenuItem>
+                {companyDrivers.map(driver => (
+                  <MenuItem key={driver.id} value={driver.driverId}>
+                    {driver.fullName} ({driver.driverId}) - {driver.status}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <FormControl fullWidth>
               <InputLabel>Bus Number (optional)</InputLabel>
